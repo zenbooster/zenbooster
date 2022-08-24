@@ -1,0 +1,32 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "flex build",
+      "type": "shell",
+      "windows": {
+        "command": "win_flex -o src/lexer.c lexer.l"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "bison build",
+      "type": "shell",
+      "windows": {
+        "command": "win_bison -l -d -o src/parser.c ./parser.y"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "flex / bison build",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "flex build",
+        "bison build"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
