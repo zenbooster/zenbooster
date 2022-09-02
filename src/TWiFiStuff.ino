@@ -37,7 +37,8 @@ TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
   pWebSrv = new TWebSrv();
 
   xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 15000, this,
-    (tskIDLE_PRIORITY + 3), NULL, portNUM_PROCESSORS - 1);
+    //(tskIDLE_PRIORITY + 3), NULL, portNUM_PROCESSORS - 1);
+    (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
 }
 
 TWiFiStuff::~TWiFiStuff()
