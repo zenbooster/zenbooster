@@ -3,10 +3,12 @@
 
 namespace TgamPacketParser
 {
+typedef void (*tpfn_callback)(unsigned char code, unsigned char *data, void *arg);
+
 class TTgamPacketParser
 {
   private:
-    typedef void (*tpfn_calback)(unsigned char code, unsigned char *data, void *arg);
+    //typedef void (*tpfn_callback)(unsigned char code, unsigned char *data, void *arg);
   
     static const char SYNC = 0xAA;
     static const char EXCODE = 0x55;
@@ -19,14 +21,14 @@ class TTgamPacketParser
     unsigned char c;
     unsigned char i;
 
-    tpfn_calback callback;
+    tpfn_callback callback;
     void *cb_arg;
 
     uint8_t _read_byte(void);
     int _parse_payload( unsigned char *payload, unsigned char pLength );
 
   public:
-    TTgamPacketParser(BluetoothSerial *p, tpfn_calback callback, void *cb_arg = NULL);
+    TTgamPacketParser(BluetoothSerial *p, tpfn_callback callback, void *cb_arg = NULL);
     void run(void);
 };
 }

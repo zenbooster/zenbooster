@@ -1,20 +1,19 @@
 #include <time.h>
 #include <esp_coexist.h>
 #include <WiFiManager.h>
+#include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
-#include <BluetoothSerial.h> // работает в 1.0.6; в 2.0.0 ... 2.0.4 не работает из-за багов в BluetoothSerial ((
 #include "TPrefs.h"
 #include <string>
 #include <exception>
 #include "TNoise.h"
-#include "TTgamPacketParser.h"
 #include "expression.h"
 #include "parser.h"
 #include "lexer.h"
 
 using namespace std;
 using namespace Noise;
-using namespace TgamPacketParser;
+using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
 
@@ -55,12 +54,7 @@ float evaluate(SExpression *e)
         case eVAL:
             return e->val;
         case eVAR:
-        {
-            //Serial.print("evaluate: e->var=");
-            //Serial.println(e->p_var);
-
             return (float)*e->p_var;
-        }
         case eDIV:
             return evaluate(e->left) / evaluate(e->right);
         case eMUL:
@@ -179,16 +173,8 @@ class TMyApplication
     TRingBufferOutItem ring_buffer_out[1024];
     int ring_buffer_out_index;
     
-    BluetoothSerial SerialBT;
-
-    String MACadd;
-    uint8_t address[6];
-    String name;
-    String pin;
-    bool connected;
-
-    TTgamPacketParser *p_tpp;
     TNoise *p_noise;
+    TBluetoothStuff *p_bluetooth_stuff;
     TWiFiStuff *p_wifi_stuff;
     TPrefs *p_prefs;
     static TCalcFormula *p_calc_formula;
@@ -303,11 +289,6 @@ TMyApplication::TMyApplication():
   ring_buffer_in_size(0),
   ring_buffer_out({}),
   ring_buffer_out_index(0),
-  MACadd("20:21:04:08:39:93"),
-  address({0x20, 0x21, 0x04, 0x08, 0x39, 0x93}),
-  name("MindWave"),
-  pin("0000"),
-  p_tpp(NULL),
   p_noise(NULL),
   p_prefs(NULL)
 {
@@ -390,60 +371,27 @@ TMyApplication::TMyApplication():
   });
 
   p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs);
-  SerialBT.setPin(pin.c_str());
-  SerialBT.begin(DEVICE_NAME, true);
-  Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
-  
+  p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, this, callback);
+  //p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs);
   p_noise = new TNoise();
-  p_tpp = new TTgamPacketParser(&SerialBT, callback, this);
 }
 
 TMyApplication::~TMyApplication()
 {
   if(p_prefs)
     delete p_prefs;
+  if(p_bluetooth_stuff)
+    delete p_bluetooth_stuff;
   if(p_wifi_stuff)
     delete p_wifi_stuff;
-  if(p_tpp)
-    delete p_tpp;
   if(p_noise)
     delete p_noise;
 }
 
 void TMyApplication::run(void)
 {
-  if (SerialBT.available())
-  {
-    digitalWrite(LED_BUILTIN, HIGH);
-    // Synchronize on [SYNC] bytes
-    try
-    {
-      p_tpp->run();
-    }
-    catch(exception e)
-    {
-      // это, например, если во время чтения пропала связь с устройством, и мы бросили исключение...
-    }
-    catch(string e)
-    {
-      Serial.println(e.c_str());
-    }
-  }
-  else
-  if (!SerialBT.connected())
-  {
-    digitalWrite(LED_BUILTIN, LOW);
-    TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
-
-    connected = SerialBT.connect(address);//, 1, ESP_SPP_SEC_AUTHENTICATE);
-    //connected = SerialBT.connect(name);
-    
-    if(connected) {
-      Serial.println("Connected Succesfully!");
-    } else {
-        Serial.println(F("Failed to connect. Make sure remote device is available and in range."));
-    }
-  }
+  //vTaskDelay(portMAX_DELAY);
+  vTaskDelete(NULL);
 }
 
 TMyApplication *p_app = NULL;
@@ -451,6 +399,8 @@ void setup()
 {
   esp_coex_preference_set(ESP_COEX_PREFER_BALANCE);
   Serial.begin(115200);
+  Serial.print("Setup: priority = ");
+  Serial.println(uxTaskPriorityGet(NULL));
 
   p_app = new TMyApplication();
 }

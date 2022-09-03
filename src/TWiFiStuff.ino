@@ -19,11 +19,14 @@ void TWiFiStuff::task(void *p)
       pWebSrv->run();
 
     vTaskDelay(10);
+    //vTaskDelay(300);
+    //yield();
   }
 }
 
 TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
   dev_name(dev_name),
+  h_task(NULL),
   pTgmBot(NULL),
   pWebSrv(NULL)
 {
@@ -36,14 +39,14 @@ TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
   pTgmBot = new TTgmBot(dev_name, p_prefs);
   pWebSrv = new TWebSrv();
 
-  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 15000, this,
-    //(tskIDLE_PRIORITY + 3), NULL, portNUM_PROCESSORS - 1);
-    (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
+  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,
+    (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 
 TWiFiStuff::~TWiFiStuff()
 {
-  // сделать удаление задачи.
+  if(h_task)
+    vTaskDelete(h_task);
   --ref_cnt;
   if(pWebSrv)
     delete pWebSrv;

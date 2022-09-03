@@ -5,7 +5,7 @@ namespace TgamPacketParser
 {
 using namespace std;
 
-TTgamPacketParser::TTgamPacketParser(BluetoothSerial *p, tpfn_calback callback, void *cb_arg):
+TTgamPacketParser::TTgamPacketParser(BluetoothSerial *p, tpfn_callback callback, void *cb_arg):
   p_serial(p),
   callback(callback),
   cb_arg(cb_arg)
