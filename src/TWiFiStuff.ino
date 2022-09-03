@@ -39,7 +39,7 @@ TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
   pTgmBot = new TTgmBot(dev_name, p_prefs);
   pWebSrv = new TWebSrv();
 
-  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,
+  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7000, this,
     (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 

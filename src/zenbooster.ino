@@ -179,6 +179,8 @@ class TMyApplication
     TPrefs *p_prefs;
     static TCalcFormula *p_calc_formula;
     static SemaphoreHandle_t xCFSemaphore;
+    
+    static bool is_blue_pulse;
 
     int calc_formula_meditation();
     static int int_from_12bit(unsigned char *buf);
@@ -195,6 +197,7 @@ int TMyApplication::MED_THRESHOLD;
 int TMyApplication::MED_PRE_TRESHOLD_DELTA;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xCFSemaphore;
+bool TMyApplication::is_blue_pulse = true;
 
 int TMyApplication::calc_formula_meditation()
 {
@@ -229,6 +232,9 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
 
   if (code == 0x83)
   {
+    ledcWrite(2, is_blue_pulse ? 255: 128);
+    is_blue_pulse = !is_blue_pulse;
+
     int delta = int_from_12bit(data);
     int theta = int_from_12bit(data + 3);
     int alpha_lo = int_from_12bit(data + 6);
@@ -261,6 +267,8 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
     if(med > TMyApplication::MED_THRESHOLD)
     {
       TNoise::set_level(0);
+      ledcWrite(0, 255);
+      ledcWrite(1, 255);
     }
     else
     {
@@ -269,10 +277,15 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
       if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
       {
         TNoise::set_level((d * TNoise::MAX_NOISE_LEVEL) / TMyApplication::MED_PRE_TRESHOLD_DELTA);
+        int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
+        ledcWrite(0, led_lvl);
+        ledcWrite(1, led_lvl);
       }
       else
       {
         TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
+        ledcWrite(0, 0);
+        ledcWrite(1, 0);
       }
     }
   } // if (code == 0x83)
@@ -372,7 +385,6 @@ TMyApplication::TMyApplication():
 
   p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs);
   p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, this, callback);
-  //p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs);
   p_noise = new TNoise();
 }
 
@@ -402,7 +414,17 @@ void setup()
   Serial.print("Setup: priority = ");
   Serial.println(uxTaskPriorityGet(NULL));
 
+  ledcSetup(0, 50, 8);
+  ledcSetup(1, 50, 8);
+  ledcSetup(2, 50, 8);
+
+  ledcAttachPin(13, 2);
+  ledcAttachPin(12, 1);
+  ledcAttachPin(14, 0);
+
+  ledcWrite(0, 0xff);
   p_app = new TMyApplication();
+  ledcWrite(0, 0x40);
 }
 
 void loop()

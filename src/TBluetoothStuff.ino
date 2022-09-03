@@ -63,6 +63,10 @@ void TBluetoothStuff::task(void *p)
     if (pthis->SerialBT.available())
     {
         digitalWrite(LED_BUILTIN, HIGH);
+        if(!pthis->connected) // были отключены, а теперь подключились
+        {
+          ledcWrite(2, 255);
+        }
         // Synchronize on [SYNC] bytes
         try
         {
@@ -81,11 +85,14 @@ void TBluetoothStuff::task(void *p)
     if (!pthis->SerialBT.connected())
     {
         digitalWrite(LED_BUILTIN, LOW);
+        ledcWrite(2, 0);
         TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
 
         if(pthis->connected) // были подключены, а теперь отключились
         {
           //ESP.restart(); // Запарил...)
+          ledcWrite(0, 0x40);
+          ledcWrite(1, 0);
         }
 
         pthis->connected = pthis->SerialBT.connect(pthis->address);//, 1, ESP_SPP_SEC_AUTHENTICATE);
