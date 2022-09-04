@@ -7,7 +7,7 @@ namespace Noise
 int TNoise::MAX_NOISE_LEVEL = 255;
 int TNoise::level = 255;
 
-void IRAM_ATTR TNoise::timer0_ISR(void *ptr)
+void /*IRAM_ATTR*/ TNoise::timer0_ISR(void *ptr)
 {
   TNoise *p = (TNoise *)ptr;
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;

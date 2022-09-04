@@ -6,7 +6,7 @@ namespace SleepMode
     {
         private:
             static const uint8_t sleep_pin = GPIO_NUM_27;
-            static void /*IRAM_ATTR*/ isr_handle();
+            static void IRAM_ATTR isr_handle() __attribute__ ((noreturn));
 
         public:
             TSleepMode();
