@@ -8,7 +8,7 @@ class TNoise
     static const int SAMPLE_RATE = 11025;
     static int level;
 
-    static void IRAM_ATTR timer0_ISR(void *ptr);
+    static void /*IRAM_ATTR*/ timer0_ISR(void *ptr);
 
   public:
     static int MAX_NOISE_LEVEL;// = 5;

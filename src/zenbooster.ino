@@ -10,12 +10,14 @@
 #include "expression.h"
 #include "parser.h"
 #include "lexer.h"
+#include "TSleepMode.h"
 
 using namespace std;
 using namespace Noise;
 using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
+using namespace SleepMode;
 
 #if !defined(CONFIG_BT_SPP_ENABLED)
 #error Serial Bluetooth not available or not enabled. It is only available for the ESP32 chip.
@@ -160,6 +162,7 @@ class TMyApplication
     const char *WIFI_SSID = DEVICE_NAME;
     const char *WIFI_PASS = "zbdzbdzbd";
     
+    TSleepMode SleepMode;
     WiFiManager wifiManager;
 
     static int MED_THRESHOLD;// = 95;
@@ -414,9 +417,9 @@ void setup()
   Serial.print("Setup: priority = ");
   Serial.println(uxTaskPriorityGet(NULL));
 
-  ledcSetup(0, 50, 8);
-  ledcSetup(1, 50, 8);
-  ledcSetup(2, 50, 8);
+  ledcSetup(0, 40, 8);
+  ledcSetup(1, 40, 8);
+  ledcSetup(2, 40, 8);
 
   ledcAttachPin(13, 2);
   ledcAttachPin(12, 1);
