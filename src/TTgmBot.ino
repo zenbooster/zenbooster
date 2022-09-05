@@ -31,7 +31,7 @@ static inline std::string &trim(std::string &s) {
 void TTgmBot::show_help(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, "*Команды*:\n*help* \\- помощь\n*info* \\- информация о состоянии\n*reset* \\- перезагрузка\n");
+  pbot->sendMessage(msg, "*Команды*:\n*help* \\- помощь\n*info* \\- информация о состоянии\n*reset* \\- перезагрузка\n*shutdown* \\- выключение\n");
   pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_desc()).c_str());
   pbot->sendMessage(msg, "\nУстановить значение: *option\\=value*\nЗапросить значение: *option?*");
 }
@@ -96,6 +96,19 @@ void TTgmBot::run(void)// *p)
               delay(50);
             }
             ESP.restart();
+          }
+          else
+          if(text == "shutdown")
+          {
+            pbot->sendMessage(msg, (dev_name + " будет выключен...").c_str());
+            // Wait until bot synced with telegram to prevent cyclic reboot
+            while (!pbot->noNewMessage())
+            {
+              Serial.print(".");
+              Serial.flush();
+              delay(50);
+            }
+            esp_deep_sleep_start();
           }
           else
           {
