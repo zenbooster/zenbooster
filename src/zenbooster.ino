@@ -279,7 +279,7 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
 
       if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
       {
-        TNoise::set_level((d * TNoise::MAX_NOISE_LEVEL) / TMyApplication::MED_PRE_TRESHOLD_DELTA);
+        TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
         int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
         ledcWrite(0, led_lvl);
         ledcWrite(1, led_lvl);
@@ -342,15 +342,16 @@ TMyApplication::TMyApplication():
     return res;
   });
 
-  p_prefs->init_key("mnl", "максимальная громкость шума", "5", [](string value) -> bool {
-    bool res = is_number(value);
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(float\\)", "0.1", [](string value) -> bool {
+    bool res = true;//is_number(value);
 
     if(res)
     {
-      int old_lvl = TNoise::get_level();
-      int old_mnl = TNoise::MAX_NOISE_LEVEL;
-      TNoise::MAX_NOISE_LEVEL = atoi(value.c_str());
-      TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : 0);
+      float old_lvl = TNoise::get_level();
+      float old_mnl = TNoise::MAX_NOISE_LEVEL;
+      TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
+      //TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : 0);
+      TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
     }
     
     return res;
@@ -417,13 +418,16 @@ void setup()
   Serial.print("Setup: priority = ");
   Serial.println(uxTaskPriorityGet(NULL));
 
+  pinMode(GPIO_NUM_13, OUTPUT);
+  digitalWrite(GPIO_NUM_13, HIGH);
+
   ledcSetup(0, 40, 8);
   ledcSetup(1, 40, 8);
   ledcSetup(2, 40, 8);
 
-  ledcAttachPin(13, 2);
-  ledcAttachPin(12, 1);
-  ledcAttachPin(14, 0);
+  ledcAttachPin(22, 2);
+  ledcAttachPin(25, 1);
+  ledcAttachPin(26, 0);
 
   ledcWrite(0, 0xff);
   p_app = new TMyApplication();

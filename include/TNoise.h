@@ -5,16 +5,18 @@ namespace Noise
 class TNoise
 {
   private:
-    static const int SAMPLE_RATE = 11025;
-    static int level;
+    static const int i2s_num = 0;
+    static const int SAMPLE_RATE = 22050;//11025;
+    static float level;
 
-    static void IRAM_ATTR timer0_ISR(void *ptr);
+    //static void IRAM_ATTR timer0_ISR(void *ptr);
+    static void task(void *p);
 
   public:
-    static int MAX_NOISE_LEVEL;// = 5;
+    static float MAX_NOISE_LEVEL;// = 5;
 
     TNoise();
-    static int set_level(int lvl);
-    static int get_level(void);
+    static float set_level(float lvl);
+    static float get_level(void);
 };
 }

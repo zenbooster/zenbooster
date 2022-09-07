@@ -4,8 +4,8 @@
 //#include <WiFiClientSecure.h>
 #include ".\\AsyncTelegram2.h"
 
-#define BOT_TOKEN ""
-#define CHAT_ID 0
+#define BOT_TOKEN "5598056525:AAHlDjeiiU22e5Z4N3SVLp0Te3kPmMHO-5o" // zenbooster_dev
+#define CHAT_ID 443232875
 
 namespace TgmBot
 {
