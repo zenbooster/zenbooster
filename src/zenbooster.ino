@@ -425,9 +425,12 @@ void setup()
   ledcSetup(1, 40, 8);
   ledcSetup(2, 40, 8);
 
-  ledcAttachPin(22, 2);
-  ledcAttachPin(25, 1);
-  ledcAttachPin(26, 0);
+  //ledcAttachPin(21, 2);
+  //ledcAttachPin(19, 1);
+  //ledcAttachPin(22, 0);
+  ledcAttachPin(32, 2);
+  ledcAttachPin(33, 1);
+  ledcAttachPin(25, 0);
 
   ledcWrite(0, 0xff);
   p_app = new TMyApplication();

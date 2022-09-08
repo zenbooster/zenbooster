@@ -2,6 +2,7 @@
 #include <functional> 
 #include <cctype>
 #include <locale>
+#include <sstream>
 #include "TTgmBot.h"
 #include ".\\tg_certificate.h"
 
@@ -31,7 +32,7 @@ static inline std::string &trim(std::string &s) {
 void TTgmBot::show_help(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, "*Команды*:\n*help* \\- помощь\n*info* \\- информация о состоянии\n*reset* \\- перезагрузка\n*shutdown* \\- выключение\n");
+  pbot->sendMessage(msg, "*Команды*:\n*help* \\- помощь\n*info* \\- информация о состоянии\n*reset* \\- перезагрузка\n*shutdown* \\- выключение\n*charge* \\- уровень заряда\n");
   pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_desc()).c_str());
   pbot->sendMessage(msg, "\nУстановить значение: *option\\=value*\nЗапросить значение: *option?*");
 }
@@ -40,6 +41,16 @@ void TTgmBot::show_info(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
   pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_values()).c_str());
+}
+
+std::string ReplaceString(std::string subject, const std::string& search,
+                          const std::string& replace) {
+    size_t pos = 0;
+    while((pos = subject.find(search, pos)) != std::string::npos) {
+         subject.replace(pos, search.length(), replace);
+         pos += replace.length();
+    }
+    return subject;
 }
 
 void TTgmBot::run(void)// *p)
@@ -82,6 +93,19 @@ void TTgmBot::run(void)// *p)
           if(text == "info")
           {
             show_info(msg);
+            break;
+          }
+          else
+          if(text == "charge")
+          {
+              msg.isMarkdownEnabled = true;
+              std::ostringstream ss;
+              ss  << "Напряжение: " << battery.getBatteryVolts() << " в.\n"
+                  << "Уровень заряда: " << battery.getBatteryChargeLevel() << "%\n"
+                  << "Уровень заряда \\(по таблице\\): " << battery.getBatteryChargeLevel(true) << "%\n";
+              string s = ReplaceString(ss.str(), ".", "\\.");
+
+            pbot->sendMessage(msg, s.c_str());
             break;
           }
           else
@@ -143,9 +167,9 @@ void TTgmBot::run(void)// *p)
         else
         {
           // Здесь можно завести колбэки OnSetValueBegin / OnSetValueEnd, чтобы вызывать функции таймера в них...
-          timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
+          /*timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
           p_prefs->set_value(opt, text.substr(pos_set+1));
-          timer_start(TIMER_GROUP_0, TIMER_0);
+          timer_start(TIMER_GROUP_0, TIMER_0);*/
           pbot->sendMessage(msg, "Ok!");
         }
         break;
@@ -159,7 +183,8 @@ void TTgmBot::run(void)// *p)
 
 TTgmBot::TTgmBot(string dev_name, TPrefs *p_prefs):
   dev_name(dev_name),
-  p_prefs(p_prefs)
+  p_prefs(p_prefs),
+  battery(35)
 {
   if(ref_cnt)
   {

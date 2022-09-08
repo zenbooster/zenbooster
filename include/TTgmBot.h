@@ -3,6 +3,7 @@
 #include <SSLClient.h>
 //#include <WiFiClientSecure.h>
 #include ".\\AsyncTelegram2.h"
+#include <Battery18650Stats.h>
 
 #define BOT_TOKEN ""
 #define CHAT_ID 0
@@ -21,6 +22,7 @@ class TTgmBot
     SSLClient *pcli;
     //WiFiClientSecure *pcli;
     AsyncTelegram2 *pbot;
+    Battery18650Stats battery;
     static int ref_cnt;
 
   public:
