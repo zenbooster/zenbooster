@@ -15,7 +15,8 @@
 #endif
 
 #ifndef LED_BUILTIN
-#define LED_BUILTIN 2
+//#define LED_BUILTIN 2 // DevKit v1
+#define LED_BUILTIN 5 // T_Energy T18 v3.0
 #endif
 
 #include "Client.h"

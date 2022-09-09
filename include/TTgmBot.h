@@ -3,8 +3,11 @@
 #include <SSLClient.h>
 //#include <WiFiClientSecure.h>
 #include ".\\AsyncTelegram2.h"
+#ifdef PIN_BATTARY
+# include <Battery18650Stats.h>
+#endif
 
-#define BOT_TOKEN ""
+#define BOT_TOKEN "" // zenbooster_device
 #define CHAT_ID 0
 
 namespace TgmBot
@@ -21,6 +24,9 @@ class TTgmBot
     SSLClient *pcli;
     //WiFiClientSecure *pcli;
     AsyncTelegram2 *pbot;
+  #ifdef PIN_BATTARY
+    Battery18650Stats battery;
+  #endif
     static int ref_cnt;
 
   public:

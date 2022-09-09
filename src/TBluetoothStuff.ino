@@ -12,54 +12,8 @@ void TBluetoothStuff::task(void *p)
 {
   TBluetoothStuff *pthis = static_cast<TBluetoothStuff *>(p);
 
-  /*BluetoothSerial SerialBT;
-
-  pthis->p_tpp = new TTgamPacketParser(&SerialBT, pthis->pfn_callback, pthis->p_app);
-  SerialBT.setPin(pthis->pin.c_str());
-  SerialBT.begin(pthis->dev_name.c_str(), true);
-  Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
-  */
-  
   for(;;)
   {
-    /*if (SerialBT.available())
-    {
-        digitalWrite(LED_BUILTIN, HIGH);
-        // Synchronize on [SYNC] bytes
-        try
-        {
-        pthis->p_tpp->run();
-        }
-        catch(exception e)
-        {
-        // это, например, если во время чтения пропала связь с устройством, и мы бросили исключение...
-        }
-        catch(string e)
-        {
-        Serial.println(e.c_str());
-        }
-    }
-    else
-    if (!SerialBT.connected())
-    {
-        digitalWrite(LED_BUILTIN, LOW);
-        TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
-        SerialBT.end();
-        vTaskDelay(3000);
-        //delete pthis->p_tpp;
-        //pthis->p_tpp = new TTgamPacketParser(&SerialBT, pthis->pfn_callback, pthis->p_app);
-        SerialBT.begin(pthis->dev_name.c_str(), true);
-
-        pthis->connected = SerialBT.connect(pthis->address);//, 1, ESP_SPP_SEC_AUTHENTICATE);
-        //connected = SerialBT.connect(name);
-        
-        if(pthis->connected) {
-        Serial.println("Connected Succesfully!");
-        } else {
-            Serial.println(F("Failed to connect. Make sure remote device is available and in range."));
-        }
-    }*/
-
     if (pthis->SerialBT.available())
     {
         digitalWrite(LED_BUILTIN, HIGH);

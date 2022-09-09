@@ -1,6 +1,6 @@
 #include <time.h>
 #include <esp_coexist.h>
-#include <WiFiManager.h>
+#include "WiFiManager.h"
 #include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
 #include "TPrefs.h"
@@ -11,6 +11,7 @@
 #include "parser.h"
 #include "lexer.h"
 #include "TSleepMode.h"
+#include "common.h"
 
 using namespace std;
 using namespace Noise;
@@ -18,6 +19,7 @@ using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
 using namespace SleepMode;
+using namespace common;
 
 #if !defined(CONFIG_BT_SPP_ENABLED)
 #error Serial Bluetooth not available or not enabled. It is only available for the ESP32 chip.
@@ -279,7 +281,7 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
 
       if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
       {
-        TNoise::set_level((d * TNoise::MAX_NOISE_LEVEL) / TMyApplication::MED_PRE_TRESHOLD_DELTA);
+        TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
         int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
         ledcWrite(0, led_lvl);
         ledcWrite(1, led_lvl);
@@ -342,15 +344,16 @@ TMyApplication::TMyApplication():
     return res;
   });
 
-  p_prefs->init_key("mnl", "максимальная громкость шума", "5", [](string value) -> bool {
-    bool res = is_number(value);
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(float\\)", "0.1", [](string value) -> bool {
+    bool res = true;//is_number(value);
 
     if(res)
     {
-      int old_lvl = TNoise::get_level();
-      int old_mnl = TNoise::MAX_NOISE_LEVEL;
-      TNoise::MAX_NOISE_LEVEL = atoi(value.c_str());
-      TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : 0);
+      float old_lvl = TNoise::get_level();
+      float old_mnl = TNoise::MAX_NOISE_LEVEL;
+      TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
+      //TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : 0);
+      TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
     }
     
     return res;
@@ -417,13 +420,17 @@ void setup()
   Serial.print("Setup: priority = ");
   Serial.println(uxTaskPriorityGet(NULL));
 
+#ifdef SOUND_I2S
+  pinMode(PIN_I2S_SD, OUTPUT);
+  digitalWrite(PIN_I2S_SD, HIGH);
+#endif
   ledcSetup(0, 40, 8);
   ledcSetup(1, 40, 8);
   ledcSetup(2, 40, 8);
 
-  ledcAttachPin(13, 2);
-  ledcAttachPin(12, 1);
-  ledcAttachPin(14, 0);
+  ledcAttachPin(PIN_LED_R, 0);
+  ledcAttachPin(PIN_LED_G, 1);
+  ledcAttachPin(PIN_LED_B, 2);
 
   ledcWrite(0, 0xff);
   p_app = new TMyApplication();
