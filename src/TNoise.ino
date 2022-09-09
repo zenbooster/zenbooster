@@ -1,30 +1,41 @@
 #include "TNoise.h"
 #include "driver/timer.h"
-#include "driver/dac.h"
-#include "driver/i2s.h"
+#ifdef SOUND_DAC
+# include "driver/dac.h"
+#endif
+#ifdef SOUND_I2S
+# include "driver/i2s.h"
+# include "common.h"
+#endif
 
 namespace Noise
 {
-float TNoise::MAX_NOISE_LEVEL = 0.1;
-float TNoise::level = TNoise::MAX_NOISE_LEVEL;
+numeric TNoise::MAX_NOISE_LEVEL = 0.1;
+//numeric TNoise::MAX_NOISE_LEVEL = 2;
+numeric TNoise::level = TNoise::MAX_NOISE_LEVEL;
 
-/*void TNoise::timer0_ISR(void *ptr)
+#ifdef SOUND_DAC
+void TNoise::timer0_ISR(void *ptr)
 {
-  TNoise *p = (TNoise *)ptr;
+  TNoise *pthis = static_cast<TNoise *>(ptr);
 
   //Reset irq and set for next time
   TIMERG0.int_clr_timers.t0 = 1;
   TIMERG0.hw_timer[0].config.alarm_en = 1;
 
-  char val = p->level ? esp_random() % p->level : 0;
+  //char val = p->level ? esp_random() % p->level : 0;
+  uint8_t val = esp_random() & 0xff;
+  val = pthis->level ? ((val * pthis->level) / 100) : 0;
   dac_output_voltage(DAC_CHANNEL_1, val);
-}*/
+}
+#endif
 
-void TNoise::task(void *p)
+#ifdef SOUND_I2S
+void TNoise::task_i2s(void *p)
 {
   TNoise *pthis = static_cast<TNoise *>(p);
-  uint16_t buf[512];
 
+  uint16_t buf[512];
 
   for(;;)
   {
@@ -37,50 +48,19 @@ void TNoise::task(void *p)
       *pb++ = val;
     }
     
-    //i2s_write_bytes((i2s_port_t)i2s_num, (const char *)&val, sizeof(uint16_t), 100);
     i2s_write_bytes((i2s_port_t)i2s_num, (const char *)&buf, sizeof(buf), 100);
     yield();
   }
 }
+#endif
 
 TNoise::TNoise()
 {
   //level = MAX_NOISE_LEVEL;
+#ifdef SOUND_DAC
+  ESP_ERROR_CHECK(dac_output_enable(DAC_CHANNEL_1));
 
-  i2s_config_t i2s_config = {
-      .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-      .sample_rate = SAMPLE_RATE,
-      .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-      //.bits_per_sample = I2S_BITS_PER_SAMPLE_8BIT,
-      .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-      .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-      .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // high interrupt priority
-      .dma_buf_count = 8,
-      .dma_buf_len = 64   //Interrupt level 1
-      };
-      
-  i2s_pin_config_t pin_config = {
-      .bck_io_num = 14, //this is BCK pin
-      .ws_io_num = 27, // this is LRCK pin
-      .data_out_num = 12, // this is DATA output pin
-      .data_in_num = -1   //Not used
-  };
-
-  i2s_driver_install((i2s_port_t)i2s_num, &i2s_config, 0, NULL);
-  i2s_set_pin((i2s_port_t)i2s_num, &pin_config);
-  //set sample rates of i2s to sample rate of wav file
-  i2s_set_sample_rates((i2s_port_t)i2s_num, SAMPLE_RATE); 
-
-  //ESP_ERROR_CHECK(dac_output_enable(DAC_CHANNEL_1));
-
-  /*for(;;)
-  {
-    //char val = level ? esp_random() % level : 0;
-    uint32_t val = esp_random() & 0xffff;
-    i2s_write_bytes((i2s_port_t)i2s_num, (const char *)&val, sizeof(uint32_t), 100);
-  }*/
-
-  /*timer_config_t config = {
+  timer_config_t config = {
     .alarm_en = TIMER_ALARM_EN, // Включить прерывание Alarm
     .counter_en = TIMER_PAUSE, // Состояние - пауза
     .intr_type = TIMER_INTR_LEVEL, // Прерывание по уровню
@@ -94,27 +74,54 @@ TNoise::TNoise()
   // Установить начальное значение счетчика
   ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL));
   // Установить значение счетчика для срабатывания прерывания Alarm
-  ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, TIMER_BASE_CLK / config.divider / SAMPLE_RATE));
+  ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, TIMER_BASE_CLK / config.divider / SAMPLE_RATE_DAC));
   // Разрешить прерывания
   ESP_ERROR_CHECK(timer_enable_intr(TIMER_GROUP_0, TIMER_0));
   // Зарегистрировать обработчик прерывания
   timer_isr_register(TIMER_GROUP_0, TIMER_0, timer0_ISR, this, ESP_INTR_FLAG_IRAM, NULL);
   // Запустить таймер
   timer_start(TIMER_GROUP_0, TIMER_0);
-  */
-   int res = xTaskCreatePinnedToCore(task, "TNoise::task", 2000, this,
+#endif
+
+#ifdef SOUND_I2S
+  i2s_config_t i2s_config = {
+      .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
+      .sample_rate = SAMPLE_RATE_I2S,
+      .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+      //.bits_per_sample = I2S_BITS_PER_SAMPLE_8BIT,
+      .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+      .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+      .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // high interrupt priority
+      .dma_buf_count = 8,
+      .dma_buf_len = 64   //Interrupt level 1
+      };
+      
+  i2s_pin_config_t pin_config = {
+      .bck_io_num = PIN_I2S_BCK, //this is BCK pin
+      .ws_io_num = PIN_I2S_LRCK, // this is LRCK pin
+      .data_out_num = PIN_I2S_DATA, // this is DATA output pin
+      .data_in_num = -1   //Not used
+  };
+
+  i2s_driver_install((i2s_port_t)i2s_num, &i2s_config, 0, NULL);
+  i2s_set_pin((i2s_port_t)i2s_num, &pin_config);
+  //set sample rates of i2s to sample rate of wav file
+  i2s_set_sample_rates((i2s_port_t)i2s_num, SAMPLE_RATE_I2S); 
+
+  xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 2000, this,
     (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 2);
+#endif
 }
 
-float TNoise::set_level(float lvl)
+numeric TNoise::set_level(numeric lvl)
 {
-  float res = level;
+  numeric res = level;
   level = lvl;
 
   return res;
 }
 
-float TNoise::get_level(void)
+numeric TNoise::get_level(void)
 {
   return level;
 }

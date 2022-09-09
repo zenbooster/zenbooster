@@ -32,7 +32,11 @@ static inline std::string &trim(std::string &s) {
 void TTgmBot::show_help(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, "*Команды*:\n*help* \\- помощь\n*info* \\- информация о состоянии\n*reset* \\- перезагрузка\n*shutdown* \\- выключение\n*charge* \\- уровень заряда\n");
+  pbot->sendMessage(msg, "*Команды*:\n*help* \\- помощь\n*info* \\- информация о состоянии\n*reset* \\- перезагрузка\n*shutdown* \\- выключение\n"
+  #ifdef PIN_BATTARY
+    "*charge* \\- уровень заряда\n"
+  #endif  
+  );
   pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_desc()).c_str());
   pbot->sendMessage(msg, "\nУстановить значение: *option\\=value*\nЗапросить значение: *option?*");
 }
@@ -96,6 +100,7 @@ void TTgmBot::run(void)// *p)
             break;
           }
           else
+        #ifdef PIN_BATTARY
           if(text == "charge")
           {
               msg.isMarkdownEnabled = true;
@@ -109,6 +114,7 @@ void TTgmBot::run(void)// *p)
             break;
           }
           else
+        #endif
           if(text == "reset")
           {
             pbot->sendMessage(msg, (dev_name + " будет перезагружен...").c_str());
@@ -167,9 +173,13 @@ void TTgmBot::run(void)// *p)
         else
         {
           // Здесь можно завести колбэки OnSetValueBegin / OnSetValueEnd, чтобы вызывать функции таймера в них...
-          /*timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
+        #ifdef SOUND_DAC
+          timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
+        #endif
           p_prefs->set_value(opt, text.substr(pos_set+1));
-          timer_start(TIMER_GROUP_0, TIMER_0);*/
+        #ifdef SOUND_DAC
+          timer_start(TIMER_GROUP_0, TIMER_0);
+        #endif
           pbot->sendMessage(msg, "Ok!");
         }
         break;
@@ -183,8 +193,10 @@ void TTgmBot::run(void)// *p)
 
 TTgmBot::TTgmBot(string dev_name, TPrefs *p_prefs):
   dev_name(dev_name),
-  p_prefs(p_prefs),
-  battery(35)
+  p_prefs(p_prefs)
+#ifdef PIN_BATTARY
+  , battery(PIN_BATTARY)
+#endif
 {
   if(ref_cnt)
   {
