@@ -30,7 +30,7 @@ namespace Prefs
       bool init_key(string key, string desc, string defval, TCbChangeFunction cb_change);
       bool contains(const string key) const;
       string operator [](string key);
-      bool set_value(string key, string value);
+      bool set_value(const string key, const string value);
       string get_desc(void);
       string get_values(void);
   };

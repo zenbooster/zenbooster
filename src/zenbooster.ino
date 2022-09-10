@@ -5,6 +5,7 @@
 #include "TWiFiStuff.h"
 #include "TPrefs.h"
 #include <string>
+#include <sstream>
 #include <exception>
 #include "TNoise.h"
 #include "expression.h"
@@ -23,6 +24,10 @@ using namespace common;
 
 #if !defined(CONFIG_BT_SPP_ENABLED)
 #error Serial Bluetooth not available or not enabled. It is only available for the ESP32 chip.
+#endif
+
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2 // DevKit v1
 #endif
 
 int yyparse(SExpression **expression, yyscan_t scanner);
@@ -72,8 +77,6 @@ float evaluate(SExpression *e)
             return 0;
     }
 }
-
-//const int LED_BUILTIN = 2;
 
 //
 // SerialPrintf
@@ -185,6 +188,7 @@ class TMyApplication
     static TCalcFormula *p_calc_formula;
     static SemaphoreHandle_t xCFSemaphore;
     
+    static bool is_blink_on_packets; // мигнуть при поступлении нового пакета от гарнитуры?
     static bool is_blue_pulse;
 
     int calc_formula_meditation();
@@ -202,6 +206,7 @@ int TMyApplication::MED_THRESHOLD;
 int TMyApplication::MED_PRE_TRESHOLD_DELTA;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xCFSemaphore;
+bool TMyApplication::is_blink_on_packets = true;
 bool TMyApplication::is_blue_pulse = true;
 
 int TMyApplication::calc_formula_meditation()
@@ -237,8 +242,11 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
 
   if (code == 0x83)
   {
-    ledcWrite(2, is_blue_pulse ? 255: 128);
-    is_blue_pulse = !is_blue_pulse;
+    if(is_blink_on_packets)
+    {
+      ledcWrite(2, is_blue_pulse ? 255: 128);
+      is_blue_pulse = !is_blue_pulse;
+    }
 
     int delta = int_from_12bit(data);
     int theta = int_from_12bit(data + 3);
@@ -301,6 +309,19 @@ bool is_number(const std::string &s)
   return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
+bool is_numeric(const std::string &s)
+{
+  double num;
+  bool res = (std::istringstream(s) >> num).eof();
+  return res;
+}
+
+bool is_bool(const std::string &s)
+{
+  return (s == "true") || (s == "false");
+}
+
+
 TMyApplication::TMyApplication():
   ring_buffer_in({}),
   ring_buffer_in_index(0),
@@ -344,8 +365,8 @@ TMyApplication::TMyApplication():
     return res;
   });
 
-  p_prefs->init_key("mnl", "максимальная громкость шума \\(float\\)", "0.1", [](string value) -> bool {
-    bool res = true;//is_number(value);
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](string value) -> bool {
+    bool res = is_numeric(value);
 
     if(res)
     {
@@ -354,6 +375,17 @@ TMyApplication::TMyApplication():
       TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
       //TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : 0);
       TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
+    }
+    
+    return res;
+  });
+
+  p_prefs->init_key("bop", "blink on packets \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "true", [](string value) -> bool {
+    bool res = is_bool(value);
+
+    if(res)
+    {
+      is_blink_on_packets = (value == "true");//!strcmp(value.c_str(), "true");
     }
     
     return res;

@@ -50,7 +50,7 @@ string TPrefs::operator [](string key)
   return data[key].value;
 }
 
-bool TPrefs::set_value(string key, string value)
+bool TPrefs::set_value(const string key, const string value)
 {
   bool res = true;
 

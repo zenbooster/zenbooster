@@ -176,7 +176,8 @@ void TTgmBot::run(void)// *p)
         #ifdef SOUND_DAC
           timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
         #endif
-          p_prefs->set_value(opt, text.substr(pos_set+1));
+          string value = text.substr(pos_set+1);
+          p_prefs->set_value(opt, trim(value));
         #ifdef SOUND_DAC
           timer_start(TIMER_GROUP_0, TIMER_0);
         #endif
