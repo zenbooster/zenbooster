@@ -33,8 +33,7 @@ TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
 
   pTgmBot = new TTgmBot(dev_name, p_prefs);
   
-  //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 6500, this, // размер стека, если ещё поднимаем TWebSrv
-  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 6000, this,
+  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 6500, this,
     (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 
