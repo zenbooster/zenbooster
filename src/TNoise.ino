@@ -35,8 +35,7 @@ void TNoise::task_i2s(void *p)
 {
   TNoise *pthis = static_cast<TNoise *>(p);
 
-  //uint16_t buf[512];
-  uint16_t buf[256];
+  uint16_t buf[16];
 
   for(;;)
   {
@@ -109,8 +108,8 @@ TNoise::TNoise()
   //set sample rates of i2s to sample rate of wav file
   i2s_set_sample_rates((i2s_port_t)i2s_num, SAMPLE_RATE_I2S); 
 
-  //xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 2000, this,
-  xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 1800, this,
+  //xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 1400, this,
+  xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 1200, this,
     (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 2);
 #endif
 }

@@ -8,27 +8,22 @@ void TWiFiStuff::task(void *p)
 {
   TWiFiStuff *pthis = static_cast<TWiFiStuff *>(p);
   TTgmBot *pTgmBot = pthis->pTgmBot;
-  TWebSrv *pWebSrv = pthis->pWebSrv;
 
   for(;;)
   {
     if (pTgmBot)
       pTgmBot->run();
 
-    if(pWebSrv)
-      pWebSrv->run();
-
-    vTaskDelay(10);
+    //vTaskDelay(10);
     //vTaskDelay(300);
-    //yield();
+    yield();
   }
 }
 
 TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
   dev_name(dev_name),
   h_task(NULL),
-  pTgmBot(NULL),
-  pWebSrv(NULL)
+  pTgmBot(NULL)
 {
   if(ref_cnt)
   {
@@ -37,9 +32,9 @@ TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
   ref_cnt++;
 
   pTgmBot = new TTgmBot(dev_name, p_prefs);
-  pWebSrv = new TWebSrv();
-
-  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 3000, this,
+  
+  //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 6500, this, // размер стека, если ещё поднимаем TWebSrv
+  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 6000, this,
     (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 
@@ -48,8 +43,6 @@ TWiFiStuff::~TWiFiStuff()
   if(h_task)
     vTaskDelete(h_task);
   --ref_cnt;
-  if(pWebSrv)
-    delete pWebSrv;
   if(pTgmBot)
     delete pTgmBot;
 }

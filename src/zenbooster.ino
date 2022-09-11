@@ -178,7 +178,8 @@ class TMyApplication
     int ring_buffer_in_size;
 
     // размер подобрать под ширину отображаемого графика:
-    TRingBufferOutItem ring_buffer_out[1024];
+    //TRingBufferOutItem ring_buffer_out[1024];
+    TRingBufferOutItem ring_buffer_out[512];
     int ring_buffer_out_index;
     
     TNoise *p_noise;
