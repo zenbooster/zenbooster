@@ -10,7 +10,7 @@ namespace SleepMode
     #ifdef SOUND_I2S
         digitalWrite(PIN_I2S_SD, LOW); // I2S усилок тоже идёт спать...
     #endif
-        ets_delay_us(100); // борьба с дребезгом
+        ets_delay_us(100 * 1000); // борьба с дребезгом
         esp_deep_sleep_start();
     }
 
