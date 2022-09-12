@@ -88,7 +88,7 @@ void TTgmBot::run(void)// *p)
 
         if(!(is_get ^ is_set)) // если не опция:
         {
-          if(text == "help")
+          if(text == "help" || text == "/start")
           {
             show_help(msg);
             break;

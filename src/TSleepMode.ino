@@ -7,9 +7,6 @@ namespace SleepMode
         Serial.printf("Нажата клавиша на пине GPIO_NUM_%d.\n", sleep_pin);
         Serial.printf("Идём баиньки...\n");
 
-    #ifdef SOUND_I2S
-        digitalWrite(PIN_I2S_SD, LOW); // I2S усилок тоже идёт спать...
-    #endif
         ets_delay_us(100 * 1000); // борьба с дребезгом
         esp_deep_sleep_start();
     }
