@@ -11,7 +11,6 @@
 namespace Noise
 {
 numeric TNoise::MAX_NOISE_LEVEL = 0.1;
-//numeric TNoise::MAX_NOISE_LEVEL = 2;
 numeric TNoise::level = TNoise::MAX_NOISE_LEVEL;
 
 #ifdef SOUND_DAC
@@ -23,7 +22,6 @@ void TNoise::timer0_ISR(void *ptr)
   TIMERG0.int_clr_timers.t0 = 1;
   TIMERG0.hw_timer[0].config.alarm_en = 1;
 
-  //char val = p->level ? esp_random() % p->level : 0;
   uint8_t val = esp_random() & 0xff;
   val = pthis->level ? ((val * pthis->level) / 100) : 0;
   dac_output_voltage(DAC_CHANNEL_1, val);
@@ -35,7 +33,7 @@ void TNoise::task_i2s(void *p)
 {
   TNoise *pthis = static_cast<TNoise *>(p);
 
-  uint16_t buf[16];
+  uint16_t buf[128]; // Было 16. Посмотрим, останутся ли подвисания звука...
 
   for(;;)
   {
@@ -108,7 +106,6 @@ TNoise::TNoise()
   //set sample rates of i2s to sample rate of wav file
   i2s_set_sample_rates((i2s_port_t)i2s_num, SAMPLE_RATE_I2S); 
 
-  //xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 1400, this,
   xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 1200, this,
     (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 2);
 #endif

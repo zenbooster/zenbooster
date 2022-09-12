@@ -167,6 +167,7 @@ class TMyApplication
     const char *WIFI_SSID = DEVICE_NAME;
     const char *WIFI_PASS = "zbdzbdzbd";
     
+    TPrefs *p_prefs;
     TSleepMode SleepMode;
     WiFiManager wifiManager;
 
@@ -185,7 +186,6 @@ class TMyApplication
     TNoise *p_noise;
     TBluetoothStuff *p_bluetooth_stuff;
     TWiFiStuff *p_wifi_stuff;
-    TPrefs *p_prefs;
     static TCalcFormula *p_calc_formula;
     static SemaphoreHandle_t xCFSemaphore;
     
@@ -207,7 +207,7 @@ int TMyApplication::MED_THRESHOLD;
 int TMyApplication::MED_PRE_TRESHOLD_DELTA;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xCFSemaphore;
-bool TMyApplication::is_blink_on_packets = true;
+bool TMyApplication::is_blink_on_packets = false;
 bool TMyApplication::is_blue_pulse = true;
 
 int TMyApplication::calc_formula_meditation()
@@ -324,25 +324,29 @@ bool is_bool(const std::string &s)
 
 
 TMyApplication::TMyApplication():
+  p_prefs(new TPrefs(DEVICE_NAME)),
   ring_buffer_in({}),
   ring_buffer_in_index(0),
   ring_buffer_in_size(0),
   ring_buffer_out({}),
   ring_buffer_out_index(0),
-  p_noise(NULL),
-  p_prefs(NULL)
+  p_noise(NULL)
 {
-  //Serial.begin(115200);
+  p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)", "false", [](string value) -> bool {
+    bool res = is_bool(value);
 
-  pinMode(LED_BUILTIN, OUTPUT);
-
-  // инициализация WiFi:
-  // Временно запретим wifi, т.к. есть проблемы сосуществования wifi и bluetooth на одном радио.
-  // Ждём модуль bluetooth HC-06 - он должен рещить все проблемы.
-  wifiManager.setHostname(DEVICE_NAME);
-  wifiManager.autoConnect(WIFI_SSID, WIFI_PASS);
-
-  p_prefs = new TPrefs(DEVICE_NAME);
+    if(res)
+    {
+      esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+      if((value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED))
+      {
+        Serial.println("Согласно настройкам, засыпаем по возобновлении питания...");
+        esp_deep_sleep_start();
+      }
+    }
+    
+    return res;
+  });
 
   p_prefs->init_key("tr", "установка порога", "95", [](string value) -> bool {
     bool res = is_number(value);
@@ -381,12 +385,12 @@ TMyApplication::TMyApplication():
     return res;
   });
 
-  p_prefs->init_key("bop", "blink on packets \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "true", [](string value) -> bool {
+  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](string value) -> bool {
     bool res = is_bool(value);
 
     if(res)
     {
-      is_blink_on_packets = (value == "true");//!strcmp(value.c_str(), "true");
+      is_blink_on_packets = (value == "true");
     }
     
     return res;
@@ -422,9 +426,33 @@ TMyApplication::TMyApplication():
     return res;
   });
 
+#ifdef SOUND_I2S
+  pinMode(PIN_I2S_SD, OUTPUT);
+  digitalWrite(PIN_I2S_SD, HIGH);
+#endif
+  ledcSetup(0, 40, 8);
+  ledcSetup(1, 40, 8);
+  ledcSetup(2, 40, 8);
+
+  ledcAttachPin(PIN_LED_R, 0);
+  ledcAttachPin(PIN_LED_G, 1);
+  ledcAttachPin(PIN_LED_B, 2);
+
+  ledcWrite(0, 0xff);
+
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // инициализация WiFi:
+  // Временно запретим wifi, т.к. есть проблемы сосуществования wifi и bluetooth на одном радио.
+  // Ждём модуль bluetooth HC-06 - он должен рещить все проблемы.
+  wifiManager.setHostname(DEVICE_NAME);
+  wifiManager.autoConnect(WIFI_SSID, WIFI_PASS);
+
   p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs);
   p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, this, callback);
   p_noise = new TNoise();
+
+  ledcWrite(0, 0x40);
 }
 
 TMyApplication::~TMyApplication()
@@ -453,19 +481,6 @@ void setup()
   Serial.print("Setup: priority = ");
   Serial.println(uxTaskPriorityGet(NULL));
 
-#ifdef SOUND_I2S
-  pinMode(PIN_I2S_SD, OUTPUT);
-  digitalWrite(PIN_I2S_SD, HIGH);
-#endif
-  ledcSetup(0, 40, 8);
-  ledcSetup(1, 40, 8);
-  ledcSetup(2, 40, 8);
-
-  ledcAttachPin(PIN_LED_R, 0);
-  ledcAttachPin(PIN_LED_G, 1);
-  ledcAttachPin(PIN_LED_B, 2);
-
-  ledcWrite(0, 0xff);
   p_app = new TMyApplication();
   ledcWrite(0, 0x40);
 }
