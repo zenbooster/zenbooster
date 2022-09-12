@@ -426,10 +426,6 @@ TMyApplication::TMyApplication():
     return res;
   });
 
-#ifdef SOUND_I2S
-  pinMode(PIN_I2S_SD, OUTPUT);
-  digitalWrite(PIN_I2S_SD, HIGH);
-#endif
   ledcSetup(0, 40, 8);
   ledcSetup(1, 40, 8);
   ledcSetup(2, 40, 8);

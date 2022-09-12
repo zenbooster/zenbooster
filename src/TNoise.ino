@@ -82,6 +82,9 @@ TNoise::TNoise()
 #endif
 
 #ifdef SOUND_I2S
+  pinMode(PIN_I2S_SD, OUTPUT);
+  digitalWrite(PIN_I2S_SD, HIGH);
+
   i2s_config_t i2s_config = {
       .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
       .sample_rate = SAMPLE_RATE_I2S,
