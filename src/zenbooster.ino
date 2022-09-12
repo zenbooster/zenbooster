@@ -154,11 +154,11 @@ TCalcFormula::TCalcFormula(string ex)
   }
 }
 
-struct TRingBufferOutItem
+/*struct TRingBufferOutItem
 {
   time_t time;
   int meditation;
-};
+};*/
 
 class TMyApplication
 {
@@ -180,8 +180,8 @@ class TMyApplication
 
     // размер подобрать под ширину отображаемого графика:
     //TRingBufferOutItem ring_buffer_out[1024];
-    TRingBufferOutItem ring_buffer_out[512];
-    int ring_buffer_out_index;
+    //TRingBufferOutItem ring_buffer_out[512];
+    //int ring_buffer_out_index;
     
     TNoise *p_noise;
     TBluetoothStuff *p_bluetooth_stuff;
@@ -272,9 +272,10 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
     int med = p_this->calc_formula_meditation();
     p_this->ring_buffer_in_index = (p_this->ring_buffer_in_index + 1) & 3;
     
-    TRingBufferOutItem item = {now, med};
+    /*TRingBufferOutItem item = {now, med};
     p_this->ring_buffer_out[p_this->ring_buffer_out_index] = item;
     p_this->ring_buffer_out_index = (p_this->ring_buffer_out_index + 1) & 3;
+    */
 
     SerialPrintf("delta=%d, theta=%d, alpha_lo=%d, alpha_hi=%d, beta_lo=%d, beta_hi=%d, gamma_lo=%d, gamma_md=%d; --> f_med=%d\n", delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md, med);
 
@@ -328,8 +329,8 @@ TMyApplication::TMyApplication():
   ring_buffer_in({}),
   ring_buffer_in_index(0),
   ring_buffer_in_size(0),
-  ring_buffer_out({}),
-  ring_buffer_out_index(0),
+  /*ring_buffer_out({}),
+  ring_buffer_out_index(0),*/
   p_noise(NULL)
 {
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)", "false", [](string value) -> bool {
