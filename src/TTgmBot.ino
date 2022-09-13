@@ -125,7 +125,8 @@ void TTgmBot::run(void)// *p)
               Serial.flush();
               delay(50);
             }
-            ESP.restart();
+            TMyApplication::is_soft_reset = true;
+            esp_deep_sleep(0); // так хитро, чтоб не затёрлась is_soft_reset
           }
           else
           if(text == "shutdown")

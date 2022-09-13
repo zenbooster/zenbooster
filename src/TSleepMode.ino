@@ -4,7 +4,7 @@ namespace SleepMode
 {
     void /*IRAM_ATTR*/ TSleepMode::isr_handle()
     {
-        Serial.printf("Нажата клавиша на пине GPIO_NUM_%d.\n", sleep_pin);
+        Serial.printf("Нажата кнопка на пине GPIO_NUM_%d.\n", sleep_pin);
         Serial.printf("Идём баиньки...\n");
 
         ets_delay_us(100 * 1000); // борьба с дребезгом

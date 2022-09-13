@@ -199,10 +199,14 @@ class TMyApplication
   public:
     TMyApplication();
     ~TMyApplication();
+
+    RTC_DATA_ATTR static bool is_soft_reset;
+
     void run(void);
   
 };
 
+bool TMyApplication::is_soft_reset = false;
 int TMyApplication::MED_THRESHOLD;
 int TMyApplication::MED_PRE_TRESHOLD_DELTA;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
@@ -339,10 +343,22 @@ TMyApplication::TMyApplication():
     if(res)
     {
       esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-      if((value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED))
+      Serial.printf("wakeup_reason=%d\n", wakeup_reason);
+      if(is_soft_reset)
       {
-        Serial.println("Согласно настройкам, засыпаем по возобновлении питания...");
-        esp_deep_sleep_start();
+        Serial.println("Перезагрузились по требованию.");
+        is_soft_reset = false;
+      }
+      else
+      {
+        if(value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED)
+        {
+          Serial.println("Согласно настройкам, засыпаем по возобновлении питания...");
+          pinMode(PIN_LED_R, OUTPUT); // после загрузки, и после перехода в сон, именно на этом пине может остаться маленькое напряжение,
+          digitalWrite(PIN_LED_R, LOW); // и подсветка будет светиться тускло-красным даже восне! Поэтому сбрасываем.
+          esp_deep_sleep_start();
+        }
+        Serial.println("Проснулись по нажатию кнопки.");
       }
     }
     
@@ -479,7 +495,6 @@ void setup()
   Serial.println(uxTaskPriorityGet(NULL));
 
   p_app = new TMyApplication();
-  ledcWrite(0, 0x40);
 }
 
 void loop()
