@@ -200,13 +200,10 @@ class TMyApplication
     TMyApplication();
     ~TMyApplication();
 
-    RTC_DATA_ATTR static bool is_soft_reset;
-
     void run(void);
   
 };
 
-bool TMyApplication::is_soft_reset = false;
 int TMyApplication::MED_THRESHOLD;
 int TMyApplication::MED_PRE_TRESHOLD_DELTA;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
@@ -344,10 +341,15 @@ TMyApplication::TMyApplication():
     {
       esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
       Serial.printf("wakeup_reason=%d\n", wakeup_reason);
-      if(is_soft_reset)
+      esp_reset_reason_t reset_reason = esp_reset_reason();
+      Serial.printf("reset_reason=%d\n", reset_reason);
+
+      if(reset_reason != ESP_RST_POWERON && reset_reason != ESP_RST_DEEPSLEEP)
       {
-        Serial.println("Перезагрузились по требованию.");
-        is_soft_reset = false;
+        if(reset_reason == ESP_RST_SW)
+        {
+          Serial.println("Перезагрузились по требованию.");
+        }
       }
       else
       {

@@ -3,6 +3,7 @@
 #include <cctype>
 #include <locale>
 #include <sstream>
+#include <tcpip_adapter.h>
 #include "TTgmBot.h"
 #include ".\\tg_certificate.h"
 
@@ -11,28 +12,34 @@ namespace TgmBot
 int TTgmBot::ref_cnt = 0;
 
 // trim from start
-static inline std::string &ltrim(std::string &s) {
+static inline string &ltrim(string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(),
             std::not1(std::ptr_fun<int, int>(std::isspace))));
     return s;
 }
 
 // trim from end
-static inline std::string &rtrim(std::string &s) {
+static inline string &rtrim(string &s) {
     s.erase(std::find_if(s.rbegin(), s.rend(),
             std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
     return s;
 }
 
 // trim from both ends
-static inline std::string &trim(std::string &s) {
+static inline string &trim(string &s) {
     return ltrim(rtrim(s));
 }
 
 void TTgmBot::show_help(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, "*Команды*:\n*help* \\- помощь\n*info* \\- информация о состоянии\n*reset* \\- перезагрузка\n*shutdown* \\- выключение\n"
+  pbot->sendMessage(msg, 
+    "*Команды*:\n"
+    "*help* \\- помощь\n"
+    "*info* \\- информация о состоянии\n"
+    "*sysinfo* \\- системная информация\n"
+    "*reset* \\- перезагрузка\n"
+    "*shutdown* \\- выключение\n"
   #ifdef PIN_BATTARY
     "*charge* \\- уровень заряда\n"
   #endif  
@@ -47,10 +54,44 @@ void TTgmBot::show_info(TBMessage& msg)
   pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_values()).c_str());
 }
 
-std::string ReplaceString(std::string subject, const std::string& search,
-                          const std::string& replace) {
+String ip2str(ip4_addr_t& ip)
+{
+  char buf[IP4ADDR_STRLEN_MAX];
+  sprintf(buf, IPSTR, IP2STR(&ip));
+  return buf;
+}
+
+void TTgmBot::show_sysinfo(TBMessage& msg)
+{
+  msg.isMarkdownEnabled = true;
+  
+  String s_idf_ver = esp_get_idf_version();
+  s_idf_ver.replace(".", "\\.");
+  s_idf_ver.replace("-", "\\-");
+
+  tcpip_adapter_ip_info_t ipInfo;
+  tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipInfo);
+  String s_adapter_ip = TgmBot::ip2str(ipInfo.ip);
+  s_adapter_ip.replace(".", "\\.");
+  String s_adapter_gw = TgmBot::ip2str(ipInfo.gw);
+  s_adapter_gw.replace(".", "\\.");
+
+  pbot->sendMessage(msg, (
+    String("*Система*:\n")+
+    "*версия IDF*: " + s_idf_ver + "\n"
+    "*MAC адрес адаптера*: " + WiFi.macAddress() + "\n"
+    "*IP адрес адаптера*: " + s_adapter_ip + "\n"
+    "*IP адрес шлюза*: " + s_adapter_gw + "\n"
+    "*reset\\_reason*: " + esp_reset_reason() + "\n"
+    "*размер свободной кучи*: " + heap_caps_get_free_size(MALLOC_CAP_8BIT) + "\n"
+    "*максимальный размер свободного блока в куче*: " + heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) + "\n"
+    ).c_str());
+}
+
+string ReplaceString(string subject, const string& search,
+                          const string& replace) {
     size_t pos = 0;
-    while((pos = subject.find(search, pos)) != std::string::npos) {
+    while((pos = subject.find(search, pos)) != string::npos) {
          subject.replace(pos, search.length(), replace);
          pos += replace.length();
     }
@@ -100,6 +141,12 @@ void TTgmBot::run(void)// *p)
             break;
           }
           else
+          if(text == "sysinfo")
+          {
+            show_sysinfo(msg);
+            break;
+          }
+          else
         #ifdef PIN_BATTARY
           if(text == "charge")
           {
@@ -125,8 +172,7 @@ void TTgmBot::run(void)// *p)
               Serial.flush();
               delay(50);
             }
-            TMyApplication::is_soft_reset = true;
-            esp_deep_sleep(0); // так хитро, чтоб не затёрлась is_soft_reset
+            esp_restart();
           }
           else
           if(text == "shutdown")

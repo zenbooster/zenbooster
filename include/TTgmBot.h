@@ -29,12 +29,13 @@ class TTgmBot
   #endif
     static int ref_cnt;
 
+    void show_help(TBMessage& msg);
+    void show_info(TBMessage& msg);
+    void show_sysinfo(TBMessage& msg);
   public:
     TTgmBot(string dev_name, TPrefs *p_prefs);
     ~TTgmBot();
 
     void run(void);
-    void show_help(TBMessage& msg);
-    void show_info(TBMessage& msg);
 };
 }
