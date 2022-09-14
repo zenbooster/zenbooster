@@ -17,7 +17,7 @@ using namespace Prefs;
 class TTgmBot
 {
   private:
-    const unsigned long mtbs = 1000;//250; // mean time between scan messages
+    const unsigned long mtbs = 250; // mean time between scan messages
     string dev_name;
     TPrefs *p_prefs;
     WiFiClient wfcli;
