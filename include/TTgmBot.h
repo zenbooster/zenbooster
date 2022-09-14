@@ -1,8 +1,7 @@
 #pragma once
 #include "TPrefs.h"
-#include <SSLClient.h>
-//#include <WiFiClientSecure.h>
-#include ".\\AsyncTelegram2.h"
+#include <WiFiClientSecure.h>
+#include <UniversalTelegramBot.h>
 #ifdef PIN_BATTARY
 # include <Battery18650Stats.h>
 #endif
@@ -18,23 +17,25 @@ class TTgmBot
 {
   private:
     const unsigned long mtbs = 1000;//250; // mean time between scan messages
-    string dev_name;
+    unsigned long bot_lasttime;
+    String dev_name;
     TPrefs *p_prefs;
-    WiFiClient wfcli;
-    SSLClient *pcli;
-    //WiFiClientSecure *pcli;
-    AsyncTelegram2 *pbot;
+    WiFiClientSecure *pcli;
+    UniversalTelegramBot *pbot;
   #ifdef PIN_BATTARY
     Battery18650Stats battery;
   #endif
     static int ref_cnt;
+
+    void send_message_markdown(String s);
+    void handleNewMessages(int numNewMessages);
 
   public:
     TTgmBot(string dev_name, TPrefs *p_prefs);
     ~TTgmBot();
 
     void run(void);
-    void show_help(TBMessage& msg);
-    void show_info(TBMessage& msg);
+    void show_help();
+    void show_info();
 };
 }
