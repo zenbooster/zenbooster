@@ -1,5 +1,9 @@
 ### ZenBooster - human and device )
+ESP-WROOM-32 DAC output:
 <img align="left" src="https://repository-images.githubusercontent.com/528599757/c50f149a-702b-4de3-976e-ba768c6d971d">
+
+TTGO-T-Energy-T18-v3 I2S output:
+<img align="left" src="https://github.com/zenbooster/zenbooster/blob/main/doc/t18-v3.jpg?raw=true">
 <!--
 👋
 **zenbooster/zenbooster** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
