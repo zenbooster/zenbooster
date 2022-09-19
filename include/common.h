@@ -10,8 +10,11 @@ namespace common {
 #endif
 */
 
-#if !(defined(SOUND_DAC) || defined(SOUND_I2S))
+/*#if !(defined(SOUND_DAC) || defined(SOUND_I2S))
 #   error Какой способ вывода звука будет использоваться? Нужно указать один из макросов, SOUND_DAC или SOUND_I2S!
+#endif*/
+#if defined(SOUND_DAC) || defined(SOUND_I2S)
+#   define SOUND
 #endif
 
 #ifdef ARDUINO_ESP32_DEV
@@ -41,6 +44,24 @@ namespace common {
 #   endif
 
 #   define PIN_BATTARY _VBAT
+#else
+#ifdef LILYGO_WATCH_2020_V2
+#   define TFT_WIDTH 240
+#   define TFT_HEIGHT 240
+
+#   define TFT_MISO (gpio_num_t)0
+#   define TFT_MOSI (gpio_num_t)19
+#   define TFT_SCLK (gpio_num_t)18
+#   define TFT_CS (gpio_num_t)5
+#   define TFT_DC (gpio_num_t)27
+#   define TFT_RST (gpio_num_t)-1
+#   define TFT_BL (gpio_num_t)25
+
+#   ifdef _VBAT
+#       define PIN_BATTARY _VBAT
+#   endif
+#   define A0 36
+#endif
 #endif
 #endif
 }

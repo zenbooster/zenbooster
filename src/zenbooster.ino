@@ -7,19 +7,27 @@
 #include <string>
 #include <sstream>
 #include <exception>
-#include "TNoise.h"
+#ifdef SOUND
+# include "TNoise.h"
+#endif
 #include "expression.h"
 #include "parser.h"
 #include "lexer.h"
-#include "TSleepMode.h"
+#ifdef PIN_BTN
+# include "TSleepMode.h"
+#endif
 #include "common.h"
 
 using namespace std;
+#ifdef SOUND
 using namespace Noise;
+#endif
 using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
+#ifdef PIN_BTN
 using namespace SleepMode;
+#endif
 using namespace common;
 
 #if !defined(CONFIG_BT_SPP_ENABLED)
@@ -168,7 +176,9 @@ class TMyApplication
     const char *WIFI_PASS = "zbdzbdzbd";
     
     TPrefs *p_prefs;
+#ifdef PIN_BTN
     TSleepMode SleepMode;
+#endif
     WiFiManager wifiManager;
 
     static int MED_THRESHOLD;// = 95;
@@ -183,7 +193,9 @@ class TMyApplication
     //TRingBufferOutItem ring_buffer_out[512];
     //int ring_buffer_out_index;
     
+  #ifdef SOUND
     TNoise *p_noise;
+  #endif
     TBluetoothStuff *p_bluetooth_stuff;
     TWiFiStuff *p_wifi_stuff;
     static TCalcFormula *p_calc_formula;
@@ -246,7 +258,9 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
   {
     if(is_blink_on_packets)
     {
+    #ifdef PIN_BTN
       ledcWrite(2, is_blue_pulse ? 255: 128);
+    #endif
       is_blue_pulse = !is_blue_pulse;
     }
 
@@ -282,9 +296,13 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
 
     if(med > TMyApplication::MED_THRESHOLD)
     {
+    #ifdef SOUND
       TNoise::set_level(0);
+    #endif
+    #ifdef PIN_BTN
       ledcWrite(0, 255);
       ledcWrite(1, 255);
+    #endif
     }
     else
     {
@@ -292,16 +310,24 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
 
       if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
       {
+      #ifdef SOUND
         TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
+      #endif
+      #ifdef PIN_BTN
         int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
         ledcWrite(0, led_lvl);
         ledcWrite(1, led_lvl);
+      #endif
       }
       else
       {
+      #ifdef SOUND
         TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
+      #endif
+      #ifdef PIN_BTN
         ledcWrite(0, 0);
         ledcWrite(1, 0);
+      #endif
       }
     }
   } // if (code == 0x83)
@@ -329,12 +355,21 @@ TMyApplication::TMyApplication():
   p_prefs(new TPrefs(DEVICE_NAME)),
   ring_buffer_in({}),
   ring_buffer_in_index(0),
-  ring_buffer_in_size(0),
-  /*ring_buffer_out({}),
-  ring_buffer_out_index(0),*/
-  p_noise(NULL)
+  ring_buffer_in_size(0)
+  /*, ring_buffer_out({})
+  , ring_buffer_out_index(0)*/
+#ifdef SOUND
+  , p_noise(NULL)
+#endif
 {
-  p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)", "false", [](string value) -> bool {
+  p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
+  #ifdef LILYGO_WATCH_2020_V2
+    "true",
+  #else
+    "false",
+  #endif
+    [](string value) -> bool
+  {
     bool res = is_bool(value);
 
     if(res)
@@ -389,6 +424,7 @@ TMyApplication::TMyApplication():
     return res;
   });
 
+#ifdef SOUND
   p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](string value) -> bool {
     bool res = is_numeric(value);
 
@@ -403,7 +439,7 @@ TMyApplication::TMyApplication():
     
     return res;
   });
-
+#endif
   p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](string value) -> bool {
     bool res = is_bool(value);
 
@@ -445,6 +481,7 @@ TMyApplication::TMyApplication():
     return res;
   });
 
+#ifdef PIN_BTN
   ledcSetup(0, 40, 8);
   ledcSetup(1, 40, 8);
   ledcSetup(2, 40, 8);
@@ -454,7 +491,7 @@ TMyApplication::TMyApplication():
   ledcAttachPin(PIN_LED_B, 2);
 
   ledcWrite(0, 0xff);
-
+#endif
   pinMode(LED_BUILTIN, OUTPUT);
 
   // инициализация WiFi:
@@ -465,9 +502,12 @@ TMyApplication::TMyApplication():
 
   p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs);
   p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, this, callback);
+#ifdef SOUND
   p_noise = new TNoise();
-
+#endif
+#ifdef PIN_BTN
   ledcWrite(0, 0x40);
+#endif
 }
 
 TMyApplication::~TMyApplication()
@@ -478,8 +518,10 @@ TMyApplication::~TMyApplication()
     delete p_bluetooth_stuff;
   if(p_wifi_stuff)
     delete p_wifi_stuff;
+#ifdef SOUND
   if(p_noise)
     delete p_noise;
+#endif
 }
 
 void TMyApplication::run(void)

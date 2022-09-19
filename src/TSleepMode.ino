@@ -2,6 +2,7 @@
 
 namespace SleepMode
 {
+#ifdef PIN_BTN
     void /*IRAM_ATTR*/ TSleepMode::isr_handle()
     {
         Serial.printf("Нажата кнопка на пине GPIO_NUM_%d.\n", sleep_pin);
@@ -32,4 +33,5 @@ namespace SleepMode
         attachInterrupt(sleep_pin, isr_handle, RISING);
         esp_sleep_enable_ext0_wakeup((gpio_num_t)sleep_pin, 0);
     }
+#endif
 }
