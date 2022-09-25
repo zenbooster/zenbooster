@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <exception>
+#include "common.h"
 #ifdef SOUND
 # include "TNoise.h"
 #endif
@@ -16,7 +17,6 @@
 #ifdef PIN_BTN
 # include "TSleepMode.h"
 #endif
-#include "common.h"
 
 using namespace std;
 #ifdef SOUND
