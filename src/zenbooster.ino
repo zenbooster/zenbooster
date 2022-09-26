@@ -4,6 +4,7 @@
 #include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
 #include "TPrefs.h"
+#include "TFormulaDB.h"
 #include <string>
 #include <sstream>
 #include <exception>
@@ -25,6 +26,7 @@ using namespace Noise;
 using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
+using namespace FormulaDB;
 #ifdef PIN_BTN
 using namespace SleepMode;
 #endif
@@ -176,6 +178,7 @@ class TMyApplication
     const char *WIFI_PASS = "zbdzbdzbd";
     
     TPrefs *p_prefs;
+    TFormulaDB *p_fdb;
 #ifdef PIN_BTN
     TSleepMode SleepMode;
 #endif
@@ -356,6 +359,7 @@ bool is_bool(const std::string &s)
 
 TMyApplication::TMyApplication():
   p_prefs(new TPrefs(DEVICE_NAME)),
+  p_fdb(new TFormulaDB(string(DEVICE_NAME) + "-formula-db")),
   ring_buffer_in({}),
   ring_buffer_in_index(0),
   ring_buffer_in_size(0)
@@ -515,6 +519,8 @@ TMyApplication::TMyApplication():
 
 TMyApplication::~TMyApplication()
 {
+  if(p_fdb)
+    delete p_fdb;
   if(p_prefs)
     delete p_prefs;
   if(p_bluetooth_stuff)
