@@ -213,7 +213,6 @@ class TMyApplication
     ~TMyApplication();
 
     void run(void);
-  
 };
 
 int TMyApplication::MED_THRESHOLD;
@@ -256,13 +255,17 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
 
   if (code == 0x83)
   {
-    if(is_blink_on_packets)
-    {
     #ifdef PIN_BTN
-      ledcWrite(2, is_blue_pulse ? 255: 128);
+      if(is_blink_on_packets)
+      {
+        ledcWrite(2, is_blue_pulse ? 255: 128);
+        is_blue_pulse = !is_blue_pulse;
+      }
+      else
+      {
+        ledcWrite(2, 255);
+      }
     #endif
-      is_blue_pulse = !is_blue_pulse;
-    }
 
     int delta = int_from_12bit(data);
     int theta = int_from_12bit(data + 3);

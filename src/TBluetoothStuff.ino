@@ -17,9 +17,6 @@ void TBluetoothStuff::task(void *p)
     if (pthis->SerialBT.available())
     {
       digitalWrite(LED_BUILTIN, HIGH);
-    #ifdef PIN_BTN
-      ledcWrite(2, 255);
-    #endif
       // Synchronize on [SYNC] bytes
       try
       {
