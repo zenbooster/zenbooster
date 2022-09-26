@@ -46,7 +46,9 @@ void TNoise::task_i2s(void *p)
       *pb++ = val;
     }
     
-    i2s_write_bytes((i2s_port_t)i2s_num, (const char *)&buf, sizeof(buf), 100);
+    //i2s_write_bytes((i2s_port_t)i2s_num, (const char *)&buf, sizeof(buf), 100);
+    size_t bytes_written;
+    i2s_write((i2s_port_t)i2s_num, (const char *)&buf, sizeof(buf), &bytes_written, 100);
     yield();
   }
 }
