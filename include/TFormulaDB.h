@@ -16,11 +16,11 @@ class TFormulaDB
         const string name_list;
         Preferences prefs;
 
-        static String get_chunk_name(uint8_t i);
+        static inline String get_chunk_name(uint8_t i);
 
         static inline uint16_t pop16(uint16_t x);
         static inline uint8_t get_first_zero_bit(uint8_t x);
-        TFirstZeroBitResult get_first_zero_bit(size_t len);
+        TFirstZeroBitResult get_first_zero_bit();
 
         void write_bit(uint8_t n, bool is);
 
@@ -29,5 +29,6 @@ class TFormulaDB
         ~TFormulaDB();
 
         bool assign(const string key, const string val);
+        String list(void);
 };
 }

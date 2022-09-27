@@ -373,7 +373,15 @@ TMyApplication::TMyApplication():
   p_fdb->assign("gamma_med", "qwer");
   p_fdb->assign("med", "sdfg");
   p_fdb->assign("gamma_med", "");
-  p_fdb->assign("med_1", "dfgbf");*/
+  p_fdb->assign("med_1", "dfgbf");
+  */
+  /*p_fdb->assign("alpha_med", "");
+  p_fdb->assign("gamma_med", "");
+  p_fdb->assign("med", "");
+  p_fdb->assign("med_1", "");
+  */
+
+  //Serial.printf("[begin list]\n%s[end list]\n", p_fdb->list().c_str());
 
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2

@@ -53,7 +53,7 @@ inline uint8_t TFormulaDB::get_first_zero_bit(uint8_t x)
     return pop16(t) - 1;
 }
 
-TFirstZeroBitResult TFormulaDB::get_first_zero_bit(size_t len)
+TFirstZeroBitResult TFormulaDB::get_first_zero_bit()
 {
     uint16_t res = 0;
     uint8_t i = 0;
@@ -71,9 +71,9 @@ TFirstZeroBitResult TFormulaDB::get_first_zero_bit(size_t len)
         {
             continue;
         }
-    } while(i < len && n == 8);
+    } while(i < bitmap_size && n == 8);
 
-    return TFirstZeroBitResult(res, len);
+    return TFirstZeroBitResult(res, bitmap_size);
 }
 
 String TFormulaDB::get_chunk_name(uint8_t i)
@@ -144,14 +144,17 @@ bool TFormulaDB::assign(const string key, const string val)
     {
         prefs.begin(name.c_str(), false);
         bool is_key = prefs.isKey(key.c_str());
+        prefs.end();
         uint16_t id;
 
         if(is_key)
         {
             Serial.printf("TFormulaDB::assign(..): ключ \"%s\" существует.\n", key.c_str());
+            prefs.begin(name.c_str(), false);
             size_t sz_data = prefs.getBytesLength(key.c_str());
             uint8_t *p_data = new uint8_t[sz_data];
             prefs.getBytes(key.c_str(), p_data, sz_data);
+            prefs.end();
 
             string value((char*)p_data + 1, sz_data - 1);
 
@@ -164,7 +167,6 @@ bool TFormulaDB::assign(const string key, const string val)
 
             id = p_data[0];
         }
-        prefs.end();
 
         if(val.empty())
         {
@@ -191,7 +193,9 @@ bool TFormulaDB::assign(const string key, const string val)
                 Serial.printf("TFormulaDB::assign(..): ключ \"%s\" ещё не существует.\n", key.c_str());
                 prefs.begin(name_list.c_str(), false);
                 // найти номер первого нулевого бита в битовой карте:
-                TFirstZeroBitResult fzb = get_first_zero_bit(bitmap_size);
+                TFirstZeroBitResult fzb = get_first_zero_bit();
+                prefs.end();
+
                 if(!fzb.check())
                 {
                     Serial.println("TFormulaDB::assign(..): в битовой карте не осталось места!");
@@ -204,6 +208,7 @@ bool TFormulaDB::assign(const string key, const string val)
 
                 Serial.printf("TFormulaDB::assign(..): id = %d\n", id);
                 Serial.println("TFormulaDB::assign(..): записываем ссылку на формулу в список.");
+                prefs.begin(name_list.c_str(), false);
                 prefs.putString(String(id, 0x10).c_str(), key.c_str());
                 prefs.end();
             }
@@ -217,12 +222,88 @@ bool TFormulaDB::assign(const string key, const string val)
             p_data[0] = id;
             memcpy(p_data + 1, val.c_str(), sz_data - 1);
             prefs.putBytes(key.c_str(), p_data, sz_data);
-
             prefs.end();
         }
         b_res = true;
     } while (false);
 
     return b_res;
+}
+
+String TFormulaDB::list(void)
+{
+    String res;
+    uint8_t i = 0;
+    uint8_t j = 0;
+
+    do
+    {
+        uint8_t t = 0;
+        uint8_t n = 0;
+        String s_chunk_name = get_chunk_name(i);
+        prefs.begin(name_list.c_str(), false);
+        uint8_t chunk = prefs.getUChar(s_chunk_name.c_str());
+        prefs.end();
+
+        bool is_skip_zeroes = !(chunk & 1);
+
+        Serial.printf("HIT.1: i = %d; s_chunk_name=%s; chunk=%s\n", i, s_chunk_name.c_str(), String(chunk, 2).c_str());
+        for(; n < 8; is_skip_zeroes = !is_skip_zeroes)
+        {
+            if(is_skip_zeroes)
+            {
+                Serial.println("HIT.2");
+                chunk = ~chunk;
+                n = get_first_zero_bit(chunk);
+
+                if(n == 8)
+                {
+                    j += 8 - t;
+                    break;
+                }
+                t += n;
+                j += n;
+    
+                chunk >>= n;
+                chunk = ~chunk;
+                chunk &= 0b11111111 >> t;
+            }
+            else
+            {
+                Serial.println("HIT.3");
+                n = get_first_zero_bit(chunk);
+
+                for(uint8_t k = 0; k < n; k++)
+                {
+                    String key;
+                    prefs.begin(name_list.c_str(), false);
+                    key = prefs.getString(String(j++, 0x10).c_str());
+                    Serial.printf("HIT.4: key=%s\n", key.c_str());
+                    prefs.end();
+
+                    res += key + " = ";
+
+                    prefs.begin(name.c_str(), false);
+                    //res += prefs.getString(key.c_str());
+                    size_t sz_data = prefs.getBytesLength(key.c_str());
+                    uint8_t *p_data = new uint8_t[sz_data];
+                    prefs.getBytes(key.c_str(), p_data, sz_data);
+
+                    string value((char*)p_data + 1, sz_data - 1);
+                    Serial.printf("HIT.5: value=%s\n", value.c_str());
+
+                    res += value.c_str();
+
+                    prefs.end();
+
+                    res += "\n";
+                }
+                chunk >>= n;
+                t += n;
+            }
+        } // for(; n < 8; is_skip_zeroes = !is_skip_zeroes)
+    } while(++i < bitmap_size);
+
+    return res;
 }
 }
