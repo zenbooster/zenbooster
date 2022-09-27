@@ -359,7 +359,7 @@ bool is_bool(const std::string &s)
 
 TMyApplication::TMyApplication():
   p_prefs(new TPrefs(DEVICE_NAME)),
-  p_fdb(new TFormulaDB(string(DEVICE_NAME) + "-formula-db")),
+  p_fdb(new TFormulaDB("formula-db")),
   ring_buffer_in({}),
   ring_buffer_in_index(0),
   ring_buffer_in_size(0)
@@ -369,6 +369,12 @@ TMyApplication::TMyApplication():
   , p_noise(NULL)
 #endif
 {
+  /*p_fdb->assign("alpha_med", "wqrf");
+  p_fdb->assign("gamma_med", "qwer");
+  p_fdb->assign("med", "sdfg");
+  p_fdb->assign("gamma_med", "");
+  p_fdb->assign("med_1", "dfgbf");*/
+
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2
     "true",

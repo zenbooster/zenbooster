@@ -2,7 +2,49 @@
 
 namespace FormulaDB
 {
-inline uint16_t pop16(uint16_t x)
+class TFirstZeroBit
+{
+    private:
+        Preferences& prefs;
+        size_t len;
+
+        inline uint16_t pop16(uint16_t x);
+        inline uint8_t get_first_zero_bit(uint8_t x);
+
+    public:
+        TFirstZeroBit(Preferences& prefs, size_t len);
+        ~TFirstZeroBit();
+
+        uint16_t get_first_zero_bit();
+        bool check_result(uint16_t r);
+        static String get_chunk_name(uint8_t i);
+
+};
+
+TFirstZeroBit::TFirstZeroBit(Preferences& prefs, size_t len):
+    prefs(prefs),
+    len(len)
+{
+    for(int i = 0; i < 32; i++)
+    {
+        String s_chunk_name = get_chunk_name(i);
+        const char *chunk_name = s_chunk_name.c_str();
+
+        // проверяем существование всех чанков, т.к. в процессе первичной инициализации могло отключиться питание:
+        if(!prefs.isKey(chunk_name))
+        {
+            Serial.printf("TFirstZeroBit::TFirstZeroBit(..): первичная инициализация чанка %s\n", chunk_name);
+            prefs.putUChar(chunk_name, 0);
+        }
+    }
+}
+
+TFirstZeroBit::~TFirstZeroBit()
+{
+    //
+}
+
+inline uint16_t TFirstZeroBit::pop16(uint16_t x)
 {
 	const uint16_t m1 = 0x5555; //binary: 0101...
     const uint16_t m2 = 0x3333; //binary: 00110011..
@@ -15,7 +57,7 @@ inline uint16_t pop16(uint16_t x)
     return x & 0x7f;
 }
 
-inline uint8_t get_first_zero_bit(uint8_t x)
+inline uint8_t TFirstZeroBit::get_first_zero_bit(uint8_t x)
 {
     uint16_t t = x;
     t = ~t;
@@ -24,17 +66,17 @@ inline uint8_t get_first_zero_bit(uint8_t x)
     return pop16(t) - 1;
 }
 
-#define FDB_OUT_OF_BITMAP (8 * 256)
-inline uint8_t get_first_zero_bit(uint8_t *buf, size_t len)
+uint16_t TFirstZeroBit::get_first_zero_bit()
 {
-    uint8_t res = 0;
-    uint8_t *p = buf;
-    uint8_t *p_end = p + len;
+    uint16_t res = 0;
+    uint8_t i = 0;
     uint8_t n;
 
     do
     {
-        n = get_first_zero_bit(*p++);
+        String s_chunk_name = TFirstZeroBit::get_chunk_name(i++);
+        uint8_t chunk = prefs.getUChar(s_chunk_name.c_str());
+        n = get_first_zero_bit(chunk);
 
         res += n;
 
@@ -42,25 +84,66 @@ inline uint8_t get_first_zero_bit(uint8_t *buf, size_t len)
         {
             continue;
         }
-    } while(p < p_end && n == 8);
-
-    if(n == 8)
-        res = FDB_OUT_OF_BITMAP;
+    } while(i < len && n == 8);
 
     return res;
 }
 
+bool TFirstZeroBit::check_result(uint16_t r)
+{
+    return r < (len << 3);
+}
+
+String TFirstZeroBit::get_chunk_name(uint8_t i)
+{
+    return "bmp_" + String(i, 0x10);
+}
+
+////////
 TFormulaDB::TFormulaDB(const string name):
     name(name),
     name_list(name + "-list")
 {
     prefs.begin(name_list.c_str(), false);
-    if(!prefs.isKey("bitmap"))
-    {
-        uint8_t bitmap[32] = {};
-        prefs.putBytes("bitmap", bitmap, 256);
-    }
+    p_fzb = new TFirstZeroBit(prefs, 32);
     prefs.end();
+}
+
+TFormulaDB::~TFormulaDB()
+{
+    if(p_fzb)
+    {
+        delete p_fzb;
+    }
+}
+
+void TFormulaDB::write_bit(uint8_t n, bool is)
+{
+    uint8_t chunk_num = n >> 3;
+    Serial.printf("TFormulaDB::write_bit(..): номер чанка: \"%d\".\n", chunk_num);
+
+    uint8_t bit_num = n - (chunk_num << 3);
+    Serial.printf("TFormulaDB::write_bit(..): номер бита в чанке: \"%d\".\n", bit_num);
+
+    String s_chunk_name = TFirstZeroBit::get_chunk_name(chunk_num);
+    
+    prefs.begin(name_list.c_str(), false);
+    uint8_t chunk = prefs.getUChar(s_chunk_name.c_str());
+    Serial.printf("TFormulaDB::write_bit(..): прочитали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
+
+    if(is)
+    {
+        chunk |= 1 << bit_num; // устанавливаем бит
+    }
+    else
+    {
+        chunk &= ~(1 << bit_num); // сбрасываем бит
+    }
+
+    prefs.putUChar(s_chunk_name.c_str(), chunk);
+    prefs.end();
+
+    Serial.printf("TFormulaDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
 }
 
 bool TFormulaDB::assign(const string key, const string val)
@@ -71,35 +154,81 @@ bool TFormulaDB::assign(const string key, const string val)
     {
         prefs.begin(name.c_str(), false);
         bool is_key = prefs.isKey(key.c_str());
+        uint16_t id;
 
         if(is_key)
         {
-            string value = prefs.getString(key.c_str()).c_str();
+            Serial.printf("TFormulaDB::assign(..): ключ \"%s\" существует.\n", key.c_str());
+            //string value = prefs.getString(key.c_str()).c_str();
+            size_t sz_data = prefs.getBytesLength(key.c_str());
+            uint8_t *p_data = new uint8_t[sz_data];
+            prefs.getBytes(key.c_str(), p_data, sz_data);
+
+            string value((char*)p_data + 1, sz_data - 1);
+
             if(value == val)
             {
+                Serial.println("TFormulaDB::assign(..): Новое значение совпадает со старым.");
                 b_res = true;
                 break;
             }
+
+            id = p_data[0];
         }
         prefs.end();
 
-        if(!is_key) // новый элемент
+        if(val.empty())
         {
-            prefs.begin(name_list.c_str(), false);
-            uint8_t bitmap[32];
+            Serial.printf("TFormulaDB::assign(..): удаление ключа \"%s\".\n", key.c_str());
+            if(!is_key) // новый элемент
+            {
+                Serial.println("TFormulaDB::assign(..): попытка удалить несуществующий ключ!");
+                break;
+            }
 
-            prefs.getBytes("bitmap", bitmap, 256);
+            // Сбросить соответствующий бит в битовой карте:
+            write_bit(id, false);
 
-            uint8_t id;
-            // найти номер первого нулевого бита в битовой карте:
-            //
-            prefs.putString(String(id).c_str(), val.c_str());
+            Serial.println("TFormulaDB::assign(..): удаляем формулу.");
+            prefs.begin(name.c_str(), false);
+            prefs.remove(key.c_str());
             prefs.end();
         }
+        else
+        {
+            Serial.printf("TFormulaDB::assign(..): добавление ключа \"%s\".\n", key.c_str());
+            if(!is_key) // новый элемент
+            {
+                Serial.printf("TFormulaDB::assign(..): ключ \"%s\" ещё не существует.\n", key.c_str());
+                prefs.begin(name_list.c_str(), false);
+                // найти номер первого нулевого бита в битовой карте:
+                id = p_fzb->get_first_zero_bit();
+                if(!p_fzb->check_result(id))
+                {
+                    Serial.println("TFormulaDB::assign(..): в битовой карте не осталось места!");
+                    break; // не осталось места
+                }
 
-        prefs.begin(name.c_str(), false);
-        prefs.putString(key.c_str(), val.c_str());
-        prefs.end();
+                write_bit(id, true);
+
+                Serial.printf("TFormulaDB::assign(..): id = %d\n", id);
+                Serial.println("TFormulaDB::assign(..): записываем ссылку на формулу в список.");
+                prefs.putString(String(id, 0x10).c_str(), key.c_str());
+                prefs.end();
+            }
+
+            prefs.begin(name.c_str(), false);
+            Serial.println("TFormulaDB::assign(..): записываем формулу.");
+
+            size_t sz_data = 1 + val.length();
+            uint8_t *p_data = new uint8_t[sz_data];
+
+            p_data[0] = id;
+            memcpy(p_data + 1, val.c_str(), sz_data - 1);
+            prefs.putBytes(key.c_str(), p_data, sz_data);
+
+            prefs.end();
+        }
         b_res = true;
     } while (false);
 
