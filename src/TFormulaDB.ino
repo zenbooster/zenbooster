@@ -24,6 +24,32 @@ inline uint8_t get_first_zero_bit(uint8_t x)
     return pop16(t) - 1;
 }
 
+#define FDB_OUT_OF_BITMAP (8 * 256)
+inline uint8_t get_first_zero_bit(uint8_t *buf, size_t len)
+{
+    uint8_t res = 0;
+    uint8_t *p = buf;
+    uint8_t *p_end = p + len;
+    uint8_t n;
+
+    do
+    {
+        n = get_first_zero_bit(*p++);
+
+        res += n;
+
+        if(n == 8)
+        {
+            continue;
+        }
+    } while(p < p_end && n == 8);
+
+    if(n == 8)
+        res = FDB_OUT_OF_BITMAP;
+
+    return res;
+}
+
 TFormulaDB::TFormulaDB(const string name):
     name(name),
     name_list(name + "-list")
