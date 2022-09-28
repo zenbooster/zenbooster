@@ -66,11 +66,6 @@ TFirstZeroBitResult TElementsDB::get_first_zero_bit()
         n = get_first_zero_bit(chunk);
 
         res += n;
-
-        if(n == 8)
-        {
-            continue;
-        }
     } while(i < bitmap_size && n == 8);
 
     return TFirstZeroBitResult(res, bitmap_size);
