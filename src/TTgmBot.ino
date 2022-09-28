@@ -34,12 +34,17 @@ void TTgmBot::show_help(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
   pbot->sendMessage(msg, 
-    "*Команды*:\n"
+    "*Команды общего назначения*:\n"
     "*help* \\- помощь\n"
     "*info* \\- информация о состоянии\n"
     "*sysinfo* \\- системная информация\n"
     "*reset* \\- перезагрузка\n"
-    "*shutdown* \\- выключение\n"
+    "*shutdown* \\- выключение\n\n"
+    "*Команды для работы с базой формул*:\n"
+    "*f\\_assign \\<имя\\> \\<текст\\>* \\- присвоить формуле с именем *\\<имя\\>* текст *\\<текст\\>*\n"
+    "*f\\_assign \\<имя\\>* \\- удалить формулу с именем *\\<имя\\>*\n"
+    "\\(*\\<имя\\>* должно иметь длину не больше 15 символов\\)\n"
+    "*f\\_list* \\- показать список всех формул\n"
   #ifdef PIN_BATTARY
     "*charge* \\- уровень заряда\n"
   #endif  
@@ -115,8 +120,9 @@ void TTgmBot::run(void)// *p)
       case MessageText:
       {
         // received a text message
-        string text = msg.text.c_str();
-        text = trim(text);
+        String text = msg.text.c_str();
+        //text = trim(text);
+        text.trim();
         transform(text.begin(), text.end(), text.begin(), ::tolower);
 
         Serial.print("\nText message received: ");
@@ -124,8 +130,10 @@ void TTgmBot::run(void)// *p)
 
         int opt_len;
         bool is_get = (text[text.length()-1] == '?');
-        int pos_set = text.find('=');
-        bool is_set = pos_set != string::npos;
+        //int pos_set = text.find('=');
+        int pos_set = text.indexOf('=');
+        //bool is_set = pos_set != string::npos;
+        bool is_set = pos_set != -1;
 
         if(!(is_get ^ is_set)) // если не опция:
         {
@@ -189,9 +197,51 @@ void TTgmBot::run(void)// *p)
           }
           else
           {
-            pbot->sendMessage(msg, "Ошибка синтаксиса!");
-            show_help(msg);
-            break;
+            char *s_cmd;
+            bool is_no_args;
+
+            if(s_cmd = "f_assign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+            {
+              if(is_no_args)
+              {
+                pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
+                break;
+              }
+              bool is_ok;
+              String args = text.substring(strlen(s_cmd));
+              args.trim();
+              int pos = args.indexOf(' ');
+              if(pos != -1)
+              {
+                String key = args.substring(0, pos);
+                String val = args.substring(pos + 1);
+                key.trim();
+                val.trim();
+                pbot->sendMessage(msg, String("Добавление ") + key + " = " + val);
+                is_ok = p_fdb->assign(key, val);
+              }
+              else
+              {
+                pbot->sendMessage(msg, String("Удаление ") + args);
+                is_ok = p_fdb->assign(args);
+              }
+              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + "!");
+              break;
+            }
+            else
+            if(text == "f_list")
+            {
+              msg.isMarkdownEnabled = true;
+              String s_list = p_fdb->list();
+              pbot->sendMessage(msg, String("*Список формул*:\n") + (s_list.length() ? s_list : "\\(пусто\\)"));
+              break;
+            }
+            else
+            {
+              pbot->sendMessage(msg, "Ошибка синтаксиса!");
+              show_help(msg);
+              break;
+            }
           }
         }
 
@@ -204,7 +254,8 @@ void TTgmBot::run(void)// *p)
           opt_len = pos_set;
         }
 
-        string opt = text.substr(0, opt_len);
+        //string opt = text.substr(0, opt_len);
+        string opt = text.substring(0, opt_len).c_str();
         opt = trim(opt);
 
         if(!p_prefs->contains(opt))
@@ -223,13 +274,14 @@ void TTgmBot::run(void)// *p)
         #ifdef SOUND_DAC
           timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
         #endif
-          string value = text.substr(pos_set+1);
+          //string value = text.substr(pos_set+1);
+          string value = text.substring(pos_set+1).c_str();
           {
             int res = p_prefs->set_value(opt, trim(value));
           #ifdef SOUND_DAC
             timer_start(TIMER_GROUP_0, TIMER_0);
           #endif
-            pbot->sendMessage(msg, String(res ? "Ok" : "Error") + "!");
+            pbot->sendMessage(msg, String(res ? "Ok" : "Ошибка") + "!");
           }
         }
         break;
@@ -241,9 +293,10 @@ void TTgmBot::run(void)// *p)
   }
 }
 
-TTgmBot::TTgmBot(string dev_name, TPrefs *p_prefs):
+TTgmBot::TTgmBot(string dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
   dev_name(dev_name),
-  p_prefs(p_prefs)
+  p_prefs(p_prefs),
+  p_fdb(p_fdb)
 #ifdef PIN_BATTARY
   , battery(PIN_BATTARY)
 #endif

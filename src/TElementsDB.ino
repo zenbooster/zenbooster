@@ -1,6 +1,6 @@
-#include "TFormulaDB.h"
+#include "TElementsDB.h"
 
-namespace FormulaDB
+namespace ElementsDB
 {
 class TFirstZeroBitResult
 {
@@ -31,7 +31,7 @@ TFirstZeroBitResult::operator uint8_t() const
     return res;
 }
 
-inline uint16_t TFormulaDB::pop16(uint16_t x)
+inline uint16_t TElementsDB::pop16(uint16_t x)
 {
 	const uint16_t m1 = 0x5555; //binary: 0101...
     const uint16_t m2 = 0x3333; //binary: 00110011..
@@ -44,7 +44,7 @@ inline uint16_t TFormulaDB::pop16(uint16_t x)
     return x & 0x7f;
 }
 
-inline uint8_t TFormulaDB::get_first_zero_bit(uint8_t x)
+inline uint8_t TElementsDB::get_first_zero_bit(uint8_t x)
 {
     uint16_t t = x;
     t = ~t;
@@ -53,7 +53,7 @@ inline uint8_t TFormulaDB::get_first_zero_bit(uint8_t x)
     return pop16(t) - 1;
 }
 
-TFirstZeroBitResult TFormulaDB::get_first_zero_bit()
+TFirstZeroBitResult TElementsDB::get_first_zero_bit()
 {
     uint16_t res = 0;
     uint8_t i = 0;
@@ -76,50 +76,60 @@ TFirstZeroBitResult TFormulaDB::get_first_zero_bit()
     return TFirstZeroBitResult(res, bitmap_size);
 }
 
-String TFormulaDB::get_chunk_name(uint8_t i)
+String TElementsDB::get_chunk_name(uint8_t i)
 {
     return "bmp_" + String(i, 0x10);
 }
 
-TFormulaDB::TFormulaDB(const string name):
-    name(name),
-    name_list(name + "-list")
+void TElementsDB::init_chunks(void)
 {
-    prefs.begin(name_list.c_str(), false);
-
-    for(int i = 0; i < 32; i++)
+    Serial.println("TElementsDB::init_chunks(..): проверяем существование всех чанков, т.к. в процессе первичной инициализации могло отключиться питание...");
+    for(int i = 0; i < bitmap_size; i++)
     {
         String s_chunk_name = get_chunk_name(i);
         const char *chunk_name = s_chunk_name.c_str();
 
-        // проверяем существование всех чанков, т.к. в процессе первичной инициализации могло отключиться питание:
         if(!prefs.isKey(chunk_name))
         {
-            Serial.printf("TFirstZeroBitResult::TFirstZeroBitResult(..): первичная инициализация чанка %s\n", chunk_name);
+            Serial.printf("TElementsDB::init_chunks(..): первичная инициализация чанка %s\n", chunk_name);
             prefs.putUChar(chunk_name, 0);
         }
     }
+}
 
+void TElementsDB::integrity_check(void)
+{
+    // Under construction...
+    //Serial.println("TElementsDB::integrity_check(..): проверяем целостность БД...");
+}
+
+TElementsDB::TElementsDB(const String name):
+    name(name),
+    name_list(name + "-list")
+{
+    prefs.begin(name_list.c_str(), false);
+    init_chunks();
+    integrity_check();
     prefs.end();
 }
 
-TFormulaDB::~TFormulaDB()
+TElementsDB::~TElementsDB()
 {
 }
 
-void TFormulaDB::write_bit(uint8_t n, bool is)
+void TElementsDB::write_bit(uint8_t n, bool is)
 {
     uint8_t chunk_num = n >> 3;
-    Serial.printf("TFormulaDB::write_bit(..): номер чанка: \"%d\".\n", chunk_num);
+    Serial.printf("TElementsDB::write_bit(..): номер чанка: \"%d\".\n", chunk_num);
 
     uint8_t bit_num = n - (chunk_num << 3);
-    Serial.printf("TFormulaDB::write_bit(..): номер бита в чанке: \"%d\".\n", bit_num);
+    Serial.printf("TElementsDB::write_bit(..): номер бита в чанке: \"%d\".\n", bit_num);
 
     String s_chunk_name = get_chunk_name(chunk_num);
     
     prefs.begin(name_list.c_str(), false);
     uint8_t chunk = prefs.getUChar(s_chunk_name.c_str());
-    Serial.printf("TFormulaDB::write_bit(..): прочитали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
+    Serial.printf("TElementsDB::write_bit(..): прочитали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
 
     if(is)
     {
@@ -133,10 +143,10 @@ void TFormulaDB::write_bit(uint8_t n, bool is)
     prefs.putUChar(s_chunk_name.c_str(), chunk);
     prefs.end();
 
-    Serial.printf("TFormulaDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
+    Serial.printf("TElementsDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
 }
 
-bool TFormulaDB::assign(const string key, const string val)
+bool TElementsDB::assign(const String key, const String val)
 {
     bool b_res = false;
 
@@ -145,52 +155,29 @@ bool TFormulaDB::assign(const string key, const string val)
         prefs.begin(name.c_str(), false);
         bool is_key = prefs.isKey(key.c_str());
         prefs.end();
-        uint16_t id;
+        uint16_t id = 0;
 
         if(is_key)
         {
-            Serial.printf("TFormulaDB::assign(..): ключ \"%s\" существует.\n", key.c_str());
+            Serial.printf("TElementsDB::assign(..): ключ \"%s\" существует.\n", key.c_str());
             prefs.begin(name.c_str(), false);
-            size_t sz_data = prefs.getBytesLength(key.c_str());
-            uint8_t *p_data = new uint8_t[sz_data];
-            prefs.getBytes(key.c_str(), p_data, sz_data);
+            String value = get_value_id(key, (uint8_t*)&id);
             prefs.end();
-
-            string value((char*)p_data + 1, sz_data - 1);
 
             if(value == val)
             {
-                Serial.println("TFormulaDB::assign(..): Новое значение совпадает со старым.");
+                Serial.println("TElementsDB::assign(..): Новое значение совпадает со старым.");
                 b_res = true;
                 break;
             }
-
-            id = p_data[0];
         }
 
-        if(val.empty())
+        if(val.length())
         {
-            Serial.printf("TFormulaDB::assign(..): удаление ключа \"%s\".\n", key.c_str());
+            Serial.printf("TElementsDB::assign(..): добавление ключа \"%s\".\n", key.c_str());
             if(!is_key) // новый элемент
             {
-                Serial.println("TFormulaDB::assign(..): попытка удалить несуществующий ключ!");
-                break;
-            }
-
-            // Сбросить соответствующий бит в битовой карте:
-            write_bit(id, false);
-
-            Serial.println("TFormulaDB::assign(..): удаляем формулу.");
-            prefs.begin(name.c_str(), false);
-            prefs.remove(key.c_str());
-            prefs.end();
-        }
-        else
-        {
-            Serial.printf("TFormulaDB::assign(..): добавление ключа \"%s\".\n", key.c_str());
-            if(!is_key) // новый элемент
-            {
-                Serial.printf("TFormulaDB::assign(..): ключ \"%s\" ещё не существует.\n", key.c_str());
+                Serial.printf("TElementsDB::assign(..): ключ \"%s\" ещё не существует.\n", key.c_str());
                 prefs.begin(name_list.c_str(), false);
                 // найти номер первого нулевого бита в битовой карте:
                 TFirstZeroBitResult fzb = get_first_zero_bit();
@@ -198,7 +185,7 @@ bool TFormulaDB::assign(const string key, const string val)
 
                 if(!fzb.check())
                 {
-                    Serial.println("TFormulaDB::assign(..): в битовой карте не осталось места!");
+                    Serial.println("TElementsDB::assign(..): в битовой карте не осталось места!");
                     break; // не осталось места
                 }
 
@@ -206,15 +193,15 @@ bool TFormulaDB::assign(const string key, const string val)
 
                 write_bit(id, true);
 
-                Serial.printf("TFormulaDB::assign(..): id = %d\n", id);
-                Serial.println("TFormulaDB::assign(..): записываем ссылку на формулу в список.");
+                Serial.printf("TElementsDB::assign(..): id = %d\n", id);
+                Serial.println("TElementsDB::assign(..): записываем ссылку на элемент в список.");
                 prefs.begin(name_list.c_str(), false);
                 prefs.putString(String(id, 0x10).c_str(), key.c_str());
                 prefs.end();
             }
 
             prefs.begin(name.c_str(), false);
-            Serial.println("TFormulaDB::assign(..): записываем формулу.");
+            Serial.println("TElementsDB::assign(..): записываем элемент.");
 
             size_t sz_data = 1 + val.length();
             uint8_t *p_data = new uint8_t[sz_data];
@@ -222,6 +209,24 @@ bool TFormulaDB::assign(const string key, const string val)
             p_data[0] = id;
             memcpy(p_data + 1, val.c_str(), sz_data - 1);
             prefs.putBytes(key.c_str(), p_data, sz_data);
+            delete [] p_data;
+            prefs.end();
+        }
+        else
+        {
+            Serial.printf("TElementsDB::assign(..): удаление ключа \"%s\".\n", key.c_str());
+            if(!is_key) // новый элемент
+            {
+                Serial.println("TElementsDB::assign(..): попытка удалить несуществующий ключ!");
+                break;
+            }
+
+            // Сбросить соответствующий бит в битовой карте:
+            write_bit(id, false);
+
+            Serial.println("TElementsDB::assign(..): удаляем элемент.");
+            prefs.begin(name.c_str(), false);
+            prefs.remove(key.c_str());
             prefs.end();
         }
         b_res = true;
@@ -230,7 +235,32 @@ bool TFormulaDB::assign(const string key, const string val)
     return b_res;
 }
 
-String TFormulaDB::list(void)
+String screen_mark_down(const String s)
+{
+    String res = s;
+    char c2r[] = "\\`~!@#$%^&*()-_=+[{]}|;:'\",<.>/?";
+
+    char *p = c2r;
+    char *p_end = p + sizeof(c2r);
+    for(; p < p_end;)
+    {
+        char c = *p++;
+
+        if(res.indexOf(c) > -1)
+        {
+            char src[] = " ";
+            char dst[] = "\\ ";
+
+            src[0] = c;
+            dst[1] = c;
+            res.replace(src, dst);
+        }
+    }
+
+    return res;
+}
+
+String TElementsDB::list(void)
 {
     String res;
     uint8_t i = 0;
@@ -247,12 +277,10 @@ String TFormulaDB::list(void)
 
         bool is_skip_zeroes = !(chunk & 1);
 
-        Serial.printf("HIT.1: i = %d; s_chunk_name=%s; chunk=%s\n", i, s_chunk_name.c_str(), String(chunk, 2).c_str());
         for(; n < 8; is_skip_zeroes = !is_skip_zeroes)
         {
             if(is_skip_zeroes)
             {
-                Serial.println("HIT.2");
                 chunk = ~chunk;
                 n = get_first_zero_bit(chunk);
 
@@ -270,7 +298,6 @@ String TFormulaDB::list(void)
             }
             else
             {
-                Serial.println("HIT.3");
                 n = get_first_zero_bit(chunk);
 
                 for(uint8_t k = 0; k < n; k++)
@@ -278,31 +305,61 @@ String TFormulaDB::list(void)
                     String key;
                     prefs.begin(name_list.c_str(), false);
                     key = prefs.getString(String(j++, 0x10).c_str());
-                    Serial.printf("HIT.4: key=%s\n", key.c_str());
                     prefs.end();
 
-                    res += key + " = ";
+                    res += "*" + ElementsDB::screen_mark_down(key) + "* \\= `";
 
                     prefs.begin(name.c_str(), false);
-                    //res += prefs.getString(key.c_str());
-                    size_t sz_data = prefs.getBytesLength(key.c_str());
-                    uint8_t *p_data = new uint8_t[sz_data];
-                    prefs.getBytes(key.c_str(), p_data, sz_data);
-
-                    string value((char*)p_data + 1, sz_data - 1);
-                    Serial.printf("HIT.5: value=%s\n", value.c_str());
-
-                    res += value.c_str();
-
+                    res += ElementsDB::screen_mark_down(get_value_id(key));
                     prefs.end();
 
-                    res += "\n";
+                    res += "`\n";
                 }
                 chunk >>= n;
                 t += n;
             }
         } // for(; n < 8; is_skip_zeroes = !is_skip_zeroes)
     } while(++i < bitmap_size);
+
+    return res;
+}
+
+String TElementsDB::get_value_id(const String key, uint8_t *id)
+{
+    String res;
+
+    size_t sz_data = prefs.getBytesLength(key.c_str());
+    uint8_t *p_data = new uint8_t[sz_data];
+    prefs.getBytes(key.c_str(), p_data, sz_data);
+
+    if(id)
+    {
+        *id = *(uint8_t*)p_data;
+    }
+
+    char *t = new char[sz_data];
+    memcpy(t, p_data + 1, sz_data - 1);
+    t[sz_data - 1] = 0;
+    res = t;
+
+    delete [] t;
+    delete [] p_data;
+
+    return res;
+}
+
+String TElementsDB::get_value(const String key)
+{
+    String res;
+
+    prefs.begin(name.c_str(), false);
+    bool is_key = prefs.isKey(key.c_str());
+
+    if(is_key)
+    {
+        res = get_value_id(key);
+    }
+    prefs.end();
 
     return res;
 }

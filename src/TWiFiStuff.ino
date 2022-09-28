@@ -20,7 +20,7 @@ void TWiFiStuff::task(void *p)
   }
 }
 
-TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
+TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
   dev_name(dev_name),
   h_task(NULL),
   pTgmBot(NULL)
@@ -31,9 +31,9 @@ TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs):
   }
   ref_cnt++;
 
-  pTgmBot = new TTgmBot(dev_name, p_prefs);
+  pTgmBot = new TTgmBot(dev_name, p_prefs, p_fdb);
   
-  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7000, this,
+  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,
     (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 

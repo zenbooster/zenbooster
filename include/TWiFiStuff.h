@@ -1,11 +1,14 @@
 #pragma once
 #include <string>
 #include "TPrefs.h"
+#include "TElementsDB.h"
 #include "TTgmBot.h"
 
 namespace WiFiStuff
 {
 using namespace std;
+using namespace Prefs;
+using namespace ElementsDB;
 using namespace TgmBot;
 
 class TWiFiStuff
@@ -19,7 +22,7 @@ class TWiFiStuff
     static void task(void *p);
 
   public:
-    TWiFiStuff(string dev_name, TPrefs *p_prefs);
+    TWiFiStuff(string dev_name, TPrefs *p_prefs, TElementsDB *p_fdb);
     ~TWiFiStuff();
 };
 }

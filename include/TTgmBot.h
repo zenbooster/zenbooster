@@ -1,5 +1,6 @@
 #pragma once
 #include "TPrefs.h"
+#include "TElementsDB.h"
 #include <SSLClient.h>
 //#include <WiFiClientSecure.h>
 #include ".\\AsyncTelegram2.h"
@@ -13,6 +14,7 @@
 namespace TgmBot
 {
 using namespace Prefs;
+using namespace ElementsDB;
 
 class TTgmBot
 {
@@ -20,6 +22,7 @@ class TTgmBot
     const unsigned long mtbs = 250; // mean time between scan messages
     string dev_name;
     TPrefs *p_prefs;
+    TElementsDB *p_fdb;
     WiFiClient wfcli;
     SSLClient *pcli;
     //WiFiClientSecure *pcli;
@@ -33,7 +36,7 @@ class TTgmBot
     void show_info(TBMessage& msg);
     void show_sysinfo(TBMessage& msg);
   public:
-    TTgmBot(string dev_name, TPrefs *p_prefs);
+    TTgmBot(string dev_name, TPrefs *p_prefs, TElementsDB *p_fdb);
     ~TTgmBot();
 
     void run(void);

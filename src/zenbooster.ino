@@ -4,7 +4,7 @@
 #include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
 #include "TPrefs.h"
-#include "TFormulaDB.h"
+#include "TElementsDB.h"
 #include <string>
 #include <sstream>
 #include <exception>
@@ -26,7 +26,7 @@ using namespace Noise;
 using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
-using namespace FormulaDB;
+using namespace ElementsDB;
 #ifdef PIN_BTN
 using namespace SleepMode;
 #endif
@@ -178,7 +178,7 @@ class TMyApplication
     const char *WIFI_PASS = "zbdzbdzbd";
     
     TPrefs *p_prefs;
-    TFormulaDB *p_fdb;
+    TElementsDB *p_fdb;
 #ifdef PIN_BTN
     TSleepMode SleepMode;
 #endif
@@ -356,10 +356,9 @@ bool is_bool(const std::string &s)
   return (s == "true") || (s == "false");
 }
 
-
 TMyApplication::TMyApplication():
   p_prefs(new TPrefs(DEVICE_NAME)),
-  p_fdb(new TFormulaDB("formula-db")),
+  p_fdb(new TElementsDB("formula-db")),
   ring_buffer_in({}),
   ring_buffer_in_index(0),
   ring_buffer_in_size(0)
@@ -521,7 +520,7 @@ TMyApplication::TMyApplication():
   wifiManager.setHostname(DEVICE_NAME);
   wifiManager.autoConnect(WIFI_SSID, WIFI_PASS);
 
-  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs);
+  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs, p_fdb);
   p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, this, callback);
 #ifdef SOUND
   p_noise = new TNoise();
