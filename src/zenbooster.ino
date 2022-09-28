@@ -375,30 +375,40 @@ TMyApplication::TMyApplication():
 
   p_fdb = new TElementsDB("formula-db");
 
-  p_prefs->init_key("f", "формула", "gl/50", [](string value) -> bool {
-    xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
-    TCalcFormula *pcf;
-    try
-    {
-      pcf = new TCalcFormula(value);
-    }
-    catch(string e)
-    {
-      Serial.println(e.c_str());
-    }
+  if(p_fdb->list().isEmpty())
+  {
+    p_fdb->assign("anapana", "10 * (gl + gm) / d");
+  }
 
-    if (pcf)
+  p_prefs->init_key("f", "формула", "anapana", [this](string value) -> bool {
+    value = this->p_fdb->get_value(value.c_str()).c_str();
+    bool res = value.length();
+
+    if(res)
     {
-      if (p_calc_formula)
+      xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
+      TCalcFormula *pcf;
+      try
       {
-        delete p_calc_formula;
+        pcf = new TCalcFormula(value);
       }
-      p_calc_formula = pcf;
+      catch(string e)
+      {
+        Serial.println(e.c_str());
+      }
+
+      if (pcf)
+      {
+        if (p_calc_formula)
+        {
+          delete p_calc_formula;
+        }
+        p_calc_formula = pcf;
+      }
+
+      res = pcf;
+      xSemaphoreGive(xCFSemaphore);
     }
-
-    bool res = pcf;
-    xSemaphoreGive(xCFSemaphore);
-
     return res;
   });
 
