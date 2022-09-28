@@ -6,9 +6,12 @@
 #include <tcpip_adapter.h>
 #include "TTgmBot.h"
 #include ".\\tg_certificate.h"
+#include "TCalcFormula.h"
 
 namespace TgmBot
 {
+using namespace CalcFormula;
+
 int TTgmBot::ref_cnt = 0;
 
 // trim from start
@@ -207,7 +210,8 @@ void TTgmBot::run(void)// *p)
                 pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
                 break;
               }
-              bool is_ok;
+              bool is_ok = false;
+              String e_desc;
               String args = text.substring(strlen(s_cmd));
               args.trim();
               int pos = args.indexOf(' ');
@@ -218,14 +222,29 @@ void TTgmBot::run(void)// *p)
                 key.trim();
                 val.trim();
                 pbot->sendMessage(msg, String("Добавление ") + key + " = " + val);
-                is_ok = p_fdb->assign(key, val);
+
+                TCalcFormula *pcf;
+                try
+                {
+                  pcf = new TCalcFormula(string(val.c_str()));
+                  is_ok = true;
+                }
+                catch(string e)
+                {
+                  e_desc = e.c_str();
+                }
+
+                if(is_ok)
+                {
+                  is_ok = p_fdb->assign(key, val);
+                }
               }
               else
               {
                 pbot->sendMessage(msg, String("Удаление ") + args);
                 is_ok = p_fdb->assign(args);
               }
-              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + "!");
+              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + String(e_desc.isEmpty() ? "!" : ": "+e_desc));
               break;
             }
             else

@@ -1,5 +1,5 @@
-#include <time.h>
 #include <esp_coexist.h>
+#include "TCalcFormula.h"
 #include "WiFiManager.h"
 #include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
@@ -12,14 +12,12 @@
 #ifdef SOUND
 # include "TNoise.h"
 #endif
-#include "expression.h"
-#include "parser.h"
-#include "lexer.h"
 #ifdef PIN_BTN
 # include "TSleepMode.h"
 #endif
 
 using namespace std;
+using namespace CalcFormula;
 #ifdef SOUND
 using namespace Noise;
 #endif
@@ -39,54 +37,6 @@ using namespace common;
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2 // DevKit v1
 #endif
-
-int yyparse(SExpression **expression, yyscan_t scanner);
-
-SExpression *getAST(const char *expr)
-{
-    SExpression *expression;
-    yyscan_t scanner;
-    YY_BUFFER_STATE state;
-
-    if (yylex_init(&scanner)) {
-        /* could not initialize */
-        return NULL;
-    }
-
-    state = yy_scan_string(expr, scanner);
-
-    if (yyparse(&expression, scanner)) {
-        /* error parsing */
-        return NULL;
-    }
-
-    yy_delete_buffer(state, scanner);
-
-    yylex_destroy(scanner);
-
-    return expression;
-}
-
-float evaluate(SExpression *e)
-{
-    switch (e->type) {
-        case eVAL:
-            return e->val;
-        case eVAR:
-            return (float)*e->p_var;
-        case eDIV:
-            return evaluate(e->left) / evaluate(e->right);
-        case eMUL:
-            return evaluate(e->left) * evaluate(e->right);
-        case eSUB:
-            return evaluate(e->left) - evaluate(e->right);
-        case eADD:
-            return evaluate(e->left) + evaluate(e->right);
-        default:
-            /* should not be here */
-            return 0;
-    }
-}
 
 //
 // SerialPrintf
@@ -112,57 +62,6 @@ const size_t SerialPrintf (const char *szFormat, ...)
   free(szBuffer);
   return nBufferLength - 1;
 } // const size_t SerialPrintf (const char *szFormat, ...)
-
-struct TRingBufferInItem
-{
-  time_t time;
-  int delta;
-  int theta;
-  int alpha_lo;
-  int alpha_hi;
-  int beta_lo;
-  int beta_hi;
-  int gamma_lo;
-  int gamma_md;
-};
-
-class TCalcFormula: public TRingBufferInItem
-{
-  private:
-    SExpression *p_ast;
-
-  public:
-    TCalcFormula(string ex);
-    ~TCalcFormula()
-    {
-      deleteExpression(p_ast);
-      dict_name_id.clear();
-      dict_id_ptr.clear();
-    }
-
-    float run(void)
-    {
-      return evaluate(p_ast);
-    }
-};
-
-TCalcFormula::TCalcFormula(string ex)
-{
-  reg_var("d", &delta);
-  reg_var("t", &theta);
-  reg_var("al", &alpha_lo);
-  reg_var("ah", &alpha_hi);
-  reg_var("bl", &beta_lo);
-  reg_var("bh", &beta_hi);
-  reg_var("gl", &gamma_lo);
-  reg_var("gm", &gamma_md);
-  p_ast = getAST(ex.c_str());
-
-  if(!p_ast)
-  {
-    throw string("Не могу скомпилировать формулу!");
-  }
-}
 
 /*struct TRingBufferOutItem
 {
@@ -358,7 +257,7 @@ bool is_bool(const std::string &s)
 
 TMyApplication::TMyApplication():
   p_prefs(new TPrefs(DEVICE_NAME)),
-  p_fdb(new TElementsDB("formula-db")),
+  p_fdb(NULL),
   ring_buffer_in({}),
   ring_buffer_in_index(0),
   ring_buffer_in_size(0)
@@ -473,6 +372,8 @@ TMyApplication::TMyApplication():
 
   xCFSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(xCFSemaphore);
+
+  p_fdb = new TElementsDB("formula-db");
 
   p_prefs->init_key("f", "формула", "gl/50", [](string value) -> bool {
     xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
