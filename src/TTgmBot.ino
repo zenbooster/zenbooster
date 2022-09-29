@@ -2,36 +2,19 @@
 #include <functional> 
 #include <cctype>
 #include <locale>
-#include <sstream>
+#include <WiFi.h>
 #include <tcpip_adapter.h>
 #include "TTgmBot.h"
 #include ".\\tg_certificate.h"
+#include "TUtil.h"
 #include "TCalcFormula.h"
 
 namespace TgmBot
 {
 using namespace CalcFormula;
+using namespace Util;
 
 int TTgmBot::ref_cnt = 0;
-
-// trim from start
-static inline string &ltrim(string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
-            std::not1(std::ptr_fun<int, int>(std::isspace))));
-    return s;
-}
-
-// trim from end
-static inline string &rtrim(string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(),
-            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-    return s;
-}
-
-// trim from both ends
-static inline string &trim(string &s) {
-    return ltrim(rtrim(s));
-}
 
 void TTgmBot::show_help(TBMessage& msg)
 {
@@ -96,16 +79,6 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
     ).c_str());
 }
 
-string ReplaceString(string subject, const string& search,
-                          const string& replace) {
-    size_t pos = 0;
-    while((pos = subject.find(search, pos)) != string::npos) {
-         subject.replace(pos, search.length(), replace);
-         pos += replace.length();
-    }
-    return subject;
-}
-
 void TTgmBot::run(void)// *p)
 {
   // a variable to store telegram message data
@@ -133,9 +106,7 @@ void TTgmBot::run(void)// *p)
 
         int opt_len;
         bool is_get = (text[text.length()-1] == '?');
-        //int pos_set = text.find('=');
         int pos_set = text.indexOf('=');
-        //bool is_set = pos_set != string::npos;
         bool is_set = pos_set != -1;
 
         if(!(is_get ^ is_set)) // если не опция:
@@ -161,12 +132,11 @@ void TTgmBot::run(void)// *p)
         #ifdef PIN_BATTARY
           if(text == "charge")
           {
-              msg.isMarkdownEnabled = true;
-              std::ostringstream ss;
-              ss  << "Напряжение: " << battery.getBatteryVolts() << " в.\n"
-                  << "Уровень заряда: " << battery.getBatteryChargeLevel() << "%\n"
-                  << "Уровень заряда \\(по таблице\\): " << battery.getBatteryChargeLevel(true) << "%\n";
-              string s = ReplaceString(ss.str(), ".", "\\.");
+            msg.isMarkdownEnabled = true;
+            String s = TUtil::screen_mark_down(
+              "Напряжение: " + String(battery.getBatteryVolts()) + " в.\n"
+              "Уровень заряда: " + String(battery.getBatteryChargeLevel()) + "%\n"
+              "Уровень заряда (по таблице): " + battery.getBatteryChargeLevel(true) + "%\n");
 
             pbot->sendMessage(msg, s.c_str());
             break;
@@ -228,12 +198,12 @@ void TTgmBot::run(void)// *p)
                 TCalcFormula *pcf;
                 try
                 {
-                  pcf = new TCalcFormula(string(val.c_str()));
+                  pcf = new TCalcFormula(val);
                   is_ok = true;
                 }
-                catch(string e)
+                catch(String e)
                 {
-                  e_desc = e.c_str();
+                  e_desc = e;
                 }
 
                 if(is_ok) // Если формула не имеет ошибок
@@ -254,7 +224,7 @@ void TTgmBot::run(void)// *p)
                 pbot->sendMessage(msg, String("Удаление ") + args);
                 is_ok = p_fdb->assign(args);
               }
-              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + String(e_desc.isEmpty() ? "!" : ": "+e_desc));
+              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + String(e_desc.isEmpty() ? "!" : ": " + e_desc));
               break;
             }
             else
@@ -284,10 +254,10 @@ void TTgmBot::run(void)// *p)
         }
 
         //string opt = text.substr(0, opt_len);
-        string opt = text.substring(0, opt_len).c_str();
-        opt = trim(opt);
+        String opt = text.substring(0, opt_len);
+        opt.trim();
 
-        if(!p_prefs->contains(opt))
+        if(!p_prefs->contains(opt.c_str()))
         {
           pbot->sendMessage(msg, (opt + " не является опцией!").c_str());
           break;
@@ -295,7 +265,7 @@ void TTgmBot::run(void)// *p)
 
         if(is_get)
         {
-          pbot->sendMessage(msg, (opt + " = " + string((*p_prefs)[opt])).c_str());
+          pbot->sendMessage(msg, (opt + " = " + String((*p_prefs)[opt.c_str()].c_str())).c_str());
         }
         else
         {
@@ -304,9 +274,10 @@ void TTgmBot::run(void)// *p)
           timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
         #endif
           //string value = text.substr(pos_set+1);
-          string value = text.substring(pos_set+1).c_str();
+          String value = text.substring(pos_set+1).c_str();
           {
-            int res = p_prefs->set_value(opt, trim(value));
+            value.trim();
+            int res = p_prefs->set_value(opt.c_str(), value.c_str());
           #ifdef SOUND_DAC
             timer_start(TIMER_GROUP_0, TIMER_0);
           #endif
@@ -322,7 +293,7 @@ void TTgmBot::run(void)// *p)
   }
 }
 
-TTgmBot::TTgmBot(string dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
+TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
   dev_name(dev_name),
   p_prefs(p_prefs),
   p_fdb(p_fdb)

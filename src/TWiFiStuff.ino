@@ -14,13 +14,11 @@ void TWiFiStuff::task(void *p)
     if (pTgmBot)
       pTgmBot->run();
 
-    //vTaskDelay(10);
-    //vTaskDelay(300);
     yield();
   }
 }
 
-TWiFiStuff::TWiFiStuff(string dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
+TWiFiStuff::TWiFiStuff(String dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
   dev_name(dev_name),
   h_task(NULL),
   pTgmBot(NULL)

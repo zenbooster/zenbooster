@@ -52,7 +52,7 @@ float TCalcFormula::evaluate(SExpression *e)
     }
 }
 
-TCalcFormula::TCalcFormula(string ex)
+TCalcFormula::TCalcFormula(String ex)
 {
   reg_var("d", &delta);
   reg_var("t", &theta);
@@ -66,7 +66,7 @@ TCalcFormula::TCalcFormula(string ex)
 
   if(!p_ast)
   {
-    throw string("Не могу скомпилировать формулу!");
+    throw String("Не могу скомпилировать формулу!");
   }
 }
 

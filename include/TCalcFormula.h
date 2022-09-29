@@ -1,12 +1,11 @@
 #pragma once
+#include <Arduino.h>
 #include "TRingBufferInItem.h"
 #include "expression.h"
-#include <string>
 
 namespace CalcFormula
 {
 using namespace RingBufferInItem;
-using namespace std;
 
 class TCalcFormula: public TRingBufferInItem
 {
@@ -16,7 +15,7 @@ class TCalcFormula: public TRingBufferInItem
     static float evaluate(SExpression *e);
 
   public:
-    TCalcFormula(string ex);
+    TCalcFormula(String ex);
     ~TCalcFormula();
 
     float run(void);

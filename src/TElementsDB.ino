@@ -1,7 +1,10 @@
 #include "TElementsDB.h"
+#include "TUtil.h"
 
 namespace ElementsDB
 {
+using namespace Util;
+
 class TFirstZeroBitResult
 {
     private:
@@ -239,31 +242,6 @@ bool TElementsDB::assign(const String key, const String val)
     return b_res;
 }
 
-String screen_mark_down(const String s)
-{
-    String res = s;
-    char c2r[] = "\\`~!@#$%^&*()-_=+[{]}|;:'\",<.>/?";
-
-    char *p = c2r;
-    char *p_end = p + sizeof(c2r);
-    for(; p < p_end;)
-    {
-        char c = *p++;
-
-        if(res.indexOf(c) > -1)
-        {
-            char src[] = " ";
-            char dst[] = "\\ ";
-
-            src[0] = c;
-            dst[1] = c;
-            res.replace(src, dst);
-        }
-    }
-
-    return res;
-}
-
 String TElementsDB::list(void)
 {
     String res;
@@ -311,10 +289,10 @@ String TElementsDB::list(void)
                     key = prefs.getString(String(j++, 0x10).c_str());
                     prefs.end();
 
-                    res += "*" + ElementsDB::screen_mark_down(key) + "* \\= `";
+                    res += "*" + TUtil::screen_mark_down(key) + "* \\= `";
 
                     prefs.begin(name.c_str(), false);
-                    res += ElementsDB::screen_mark_down(get_value_id(key));
+                    res += TUtil::screen_mark_down(get_value_id(key));
                     prefs.end();
 
                     res += "`\n";

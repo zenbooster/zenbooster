@@ -1,4 +1,5 @@
 #pragma once
+#include "common.h"
 #include "TPrefs.h"
 #include "TElementsDB.h"
 #include <SSLClient.h>
@@ -20,7 +21,7 @@ class TTgmBot
 {
   private:
     const unsigned long mtbs = 250; // mean time between scan messages
-    string dev_name;
+    String dev_name;
     TPrefs *p_prefs;
     TElementsDB *p_fdb;
     WiFiClient wfcli;
@@ -36,7 +37,7 @@ class TTgmBot
     void show_info(TBMessage& msg);
     void show_sysinfo(TBMessage& msg);
   public:
-    TTgmBot(string dev_name, TPrefs *p_prefs, TElementsDB *p_fdb);
+    TTgmBot(String dev_name, TPrefs *p_prefs, TElementsDB *p_fdb);
     ~TTgmBot();
 
     void run(void);

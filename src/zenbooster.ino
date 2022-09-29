@@ -391,9 +391,9 @@ TMyApplication::TMyApplication():
       TCalcFormula *pcf;
       try
       {
-        pcf = new TCalcFormula(value);
+        pcf = new TCalcFormula(value.c_str());
       }
-      catch(string e)
+      catch(String e)
       {
         Serial.println(e.c_str());
       }
