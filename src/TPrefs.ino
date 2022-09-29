@@ -2,13 +2,13 @@
 
 namespace Prefs
 {
-TPrefs::TPrefs(const string name):
+TPrefs::TPrefs(const String name):
   name(name)
 {
   //
 }
 
-bool TPrefs::init_key(string key, string desc, string defval, TCbChangeFunction cb_change)
+bool TPrefs::init_key(String key, String desc, String defval, TCbChangeFunction cb_change)
 {
   bool res;
   TPrefValue &pv = data[key];
@@ -18,7 +18,7 @@ bool TPrefs::init_key(string key, string desc, string defval, TCbChangeFunction 
   prefs.begin(name.c_str(), false);
   if(prefs.isKey(key.c_str()))
   {
-    string value = prefs.getString(key.c_str()).c_str();
+    String value = prefs.getString(key.c_str()).c_str();
     res = cb_change(value);
     if(res)
     {
@@ -39,18 +39,18 @@ bool TPrefs::init_key(string key, string desc, string defval, TCbChangeFunction 
   return res;
 }
 
-bool TPrefs::contains(const string key) const
+bool TPrefs::contains(const String key) const
 {
   //return data.contains(key);
   return data.count(key);
 }
 
-string TPrefs::operator [](string key)
+String TPrefs::operator [](String key)
 {
   return data[key].value;
 }
 
-bool TPrefs::set_value(const string key, const string value)
+bool TPrefs::set_value(const String key, const String value)
 {
   bool res = true;
 
@@ -72,37 +72,37 @@ bool TPrefs::set_value(const string key, const string value)
   return res;
 }
 
-bool TPrefs::reinit_value(const string key)
+bool TPrefs::reinit_value(const String key)
 {
   return set_value(key, (*this)[key]);
 }
 
-string TPrefs::get_desc(void)
+String TPrefs::get_desc(void)
 {
-  string res;
+  String res;
 
-  for(std::map<string, TPrefValue>::iterator iter = data.begin(); iter != data.end(); ++iter)
+  for(std::map<String, TPrefValue>::iterator iter = data.begin(); iter != data.end(); ++iter)
   {
-    string k =  iter->first;
+    String k =  iter->first;
     TPrefValue v = iter->second;
 
-    string line = "*" + k + "* \\- " + v.desc + "\n";
+    String line = "*" + k + "* \\- " + v.desc + "\n";
     res += line;
   }
   return res;
 }
 
-string TPrefs::get_values(void)
+String TPrefs::get_values(void)
 {
-  string res;
+  String res;
 
-  for(std::map<string, TPrefValue>::iterator iter = data.begin(); iter != data.end(); ++iter)
+  for(std::map<String, TPrefValue>::iterator iter = data.begin(); iter != data.end(); ++iter)
   {
-    string k =  iter->first;
+    String k =  iter->first;
     TPrefValue v = iter->second;
-    string s = v.value;
+    String s = v.value;
 
-    string line = "*" + k + "* \\= `" + s + "`\n";
+    String line = "*" + k + "* \\= `" + s + "`\n";
     res += line;
   }
   return res;

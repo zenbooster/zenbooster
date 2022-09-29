@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <esp_coexist.h>
 #include "TCalcFormula.h"
 #include "WiFiManager.h"
@@ -5,7 +6,6 @@
 #include "TWiFiStuff.h"
 #include "TPrefs.h"
 #include "TElementsDB.h"
-#include <string>
 #include <sstream>
 #include <exception>
 #include "common.h"
@@ -135,7 +135,7 @@ int TMyApplication::calc_formula_meditation()
     if (!p_calc_formula)
     {
       xSemaphoreGive(xCFSemaphore);
-      throw string("Объект формулы (TCalcFormula) равен NULL!");
+      throw String("Объект формулы (TCalcFormula) равен NULL!");
     }
 
     TRingBufferInItem *pcf = p_calc_formula;
@@ -238,19 +238,19 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
   } // if (code == 0x83)
 } // void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg)
 
-bool is_number(const std::string &s)
+bool is_number(const String &s)
 {
-  return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
+  return !s.isEmpty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
-bool is_numeric(const std::string &s)
+bool is_numeric(const String &s)
 {
   double num;
-  bool res = (std::istringstream(s) >> num).eof();
+  bool res = (std::istringstream(s.c_str()) >> num).eof();
   return res;
 }
 
-bool is_bool(const std::string &s)
+bool is_bool(const String &s)
 {
   return (s == "true") || (s == "false");
 }
@@ -267,27 +267,13 @@ TMyApplication::TMyApplication():
   , p_noise(NULL)
 #endif
 {
-  /*p_fdb->assign("alpha_med", "wqrf");
-  p_fdb->assign("gamma_med", "qwer");
-  p_fdb->assign("med", "sdfg");
-  p_fdb->assign("gamma_med", "");
-  p_fdb->assign("med_1", "dfgbf");
-  */
-  /*p_fdb->assign("alpha_med", "");
-  p_fdb->assign("gamma_med", "");
-  p_fdb->assign("med", "");
-  p_fdb->assign("med_1", "");
-  */
-
-  //Serial.printf("[begin list]\n%s[end list]\n", p_fdb->list().c_str());
-
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2
     "true",
   #else
     "false",
   #endif
-    [](string value) -> bool
+    [](String value) -> bool
   {
     bool res = is_bool(value);
 
@@ -321,7 +307,7 @@ TMyApplication::TMyApplication():
     return res;
   });
 
-  p_prefs->init_key("tr", "установка порога", "95", [](string value) -> bool {
+  p_prefs->init_key("tr", "установка порога", "95", [](String value) -> bool {
     bool res = is_number(value);
 
     if(res)
@@ -332,7 +318,7 @@ TMyApplication::TMyApplication():
     return res;
   });
 
-  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "10", [](string value) -> bool {
+  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "10", [](String value) -> bool {
     bool res = is_number(value);
 
     if(res)
@@ -344,7 +330,7 @@ TMyApplication::TMyApplication():
   });
 
 #ifdef SOUND
-  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](string value) -> bool {
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](String value) -> bool {
     bool res = is_numeric(value);
 
     if(res)
@@ -352,14 +338,13 @@ TMyApplication::TMyApplication():
       float old_lvl = TNoise::get_level();
       float old_mnl = TNoise::MAX_NOISE_LEVEL;
       TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
-      //TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : 0);
       TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
     }
     
     return res;
   });
 #endif
-  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](string value) -> bool {
+  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](String value) -> bool {
     bool res = is_bool(value);
 
     if(res)
@@ -381,9 +366,9 @@ TMyApplication::TMyApplication():
     p_fdb->assign("anapana", "100 * (gl + gm) / d");
   }
 
-  p_prefs->init_key("f", "формула", "anapana", [this](string value) -> bool {
-    value = this->p_fdb->get_value(value.c_str()).c_str();
-    bool res = value.length();
+  p_prefs->init_key("f", "формула", "anapana", [this](String value) -> bool {
+    value = this->p_fdb->get_value(value);
+    bool res = !value.isEmpty();
 
     if(res)
     {
@@ -391,7 +376,7 @@ TMyApplication::TMyApplication():
       TCalcFormula *pcf;
       try
       {
-        pcf = new TCalcFormula(value.c_str());
+        pcf = new TCalcFormula(value);
       }
       catch(String e)
       {

@@ -26,4 +26,22 @@ String TUtil::screen_mark_down(const String s)
 
     return res;
 }
+
+void TUtil::parse_bytes(const char* str, char sep, byte* bytes, int maxBytes, int base)
+{
+    for (int i = 0; i < maxBytes; i++) {
+        bytes[i] = strtoul(str, NULL, base);  // Convert byte
+        str = strchr(str, sep);               // Find next separator
+        if (str == NULL || *str == '\0') {
+            break;                            // No more separators, exit
+        }
+        str++;                                // Point to next character after separator
+    }
+}
+
+bool TUtil::mac_2_array(String mac, uint8_t *buf)
+{
+    parse_bytes(mac.c_str(), ':', buf, 6, 0x10);
+    return true;    
+}
 }

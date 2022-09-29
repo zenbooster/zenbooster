@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
+#include <Arduino.h>
 #include <BluetoothSerial.h> // работает в 1.0.6; в 2.0.0 ... 2.0.4 не работает из-за багов в BluetoothSerial ((
 #include "TTgamPacketParser.h"
 
@@ -16,7 +16,7 @@ class TBluetoothStuff
 {
   private:
     static int ref_cnt;
-    string dev_name;
+    String dev_name;
     TMyApplication *p_app;
     tpfn_callback pfn_callback;
 
@@ -33,7 +33,7 @@ class TBluetoothStuff
     static void task(void *p);
 
   public:
-    TBluetoothStuff(string dev_name, TMyApplication *p_app, tpfn_callback pfn_callback);
+    TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_callback pfn_callback);
     ~TBluetoothStuff();
 };
 }

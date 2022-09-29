@@ -18,6 +18,8 @@ namespace common {
 #endif
 
 #ifdef ARDUINO_ESP32_DEV
+static const uint8_t  LED_BUILTIN = 2;
+
 #   define PIN_BTN 27
 #   define PIN_LED_R 14
 #   define PIN_LED_G 12

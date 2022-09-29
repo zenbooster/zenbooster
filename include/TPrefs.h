@@ -1,38 +1,38 @@
 #pragma once
+#include <Arduino.h>
 #include <Preferences.h>
 #include <map>
-#include <string>
 #include <functional>
 
 namespace Prefs
 {
   using namespace std;
 
-  typedef function<bool(string)> TCbChangeFunction;
+  typedef function<bool(String)> TCbChangeFunction;
 
   struct TPrefValue
   {
-    string value; // это чтобы бот мог показать значение настройки по запросу
-    string desc;
+    String value; // это чтобы бот мог показать значение настройки по запросу
+    String desc;
     TCbChangeFunction cb_change;
   };
 
   class TPrefs
   {
     private:
-      const string name;
+      const String name;
       Preferences prefs;
-      std::map<string, TPrefValue> data;
+      std::map<String, TPrefValue> data;
 
     public:
-      TPrefs(const string name);
+      TPrefs(const String name);
 
-      bool init_key(string key, string desc, string defval, TCbChangeFunction cb_change);
-      bool contains(const string key) const;
-      string operator [](string key);
-      bool set_value(const string key, const string value);
-      bool reinit_value(const string key);
-      string get_desc(void);
-      string get_values(void);
+      bool init_key(String key, String desc, String defval, TCbChangeFunction cb_change);
+      bool contains(const String key) const;
+      String operator [](String key);
+      bool set_value(const String key, const String value);
+      bool reinit_value(const String key);
+      String get_desc(void);
+      String get_values(void);
   };
 }

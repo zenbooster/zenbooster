@@ -1,4 +1,3 @@
-#include <algorithm> 
 #include <functional> 
 #include <cctype>
 #include <locale>
@@ -96,7 +95,7 @@ void TTgmBot::run(void)// *p)
       case MessageText:
       {
         // received a text message
-        String text = msg.text.c_str();
+        String text = msg.text;
         //text = trim(text);
         text.trim();
         transform(text.begin(), text.end(), text.begin(), ::tolower);
@@ -212,9 +211,9 @@ void TTgmBot::run(void)// *p)
 
                   if(is_has_value) // Если изменили существующую формулу
                   {
-                    if(String((*p_prefs)["f"].c_str()) == key) // и она выбрана как текущая
+                    if((*p_prefs)["f"] == key) // и она выбрана как текущая
                     {
-                      p_prefs->reinit_value(key.c_str()); // перекомпилируем её, чтобы изменения вступили в силу.
+                      p_prefs->reinit_value(key); // перекомпилируем её, чтобы изменения вступили в силу.
                     }
                   }
                 }
@@ -257,7 +256,7 @@ void TTgmBot::run(void)// *p)
         String opt = text.substring(0, opt_len);
         opt.trim();
 
-        if(!p_prefs->contains(opt.c_str()))
+        if(!p_prefs->contains(opt))
         {
           pbot->sendMessage(msg, (opt + " не является опцией!").c_str());
           break;
@@ -265,7 +264,7 @@ void TTgmBot::run(void)// *p)
 
         if(is_get)
         {
-          pbot->sendMessage(msg, (opt + " = " + String((*p_prefs)[opt.c_str()].c_str())).c_str());
+          pbot->sendMessage(msg, (opt + " = " + (*p_prefs)[opt]).c_str());
         }
         else
         {
@@ -274,10 +273,10 @@ void TTgmBot::run(void)// *p)
           timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
         #endif
           //string value = text.substr(pos_set+1);
-          String value = text.substring(pos_set+1).c_str();
+          String value = text.substring(pos_set + 1);
           {
             value.trim();
-            int res = p_prefs->set_value(opt.c_str(), value.c_str());
+            int res = p_prefs->set_value(opt, value);
           #ifdef SOUND_DAC
             timer_start(TIMER_GROUP_0, TIMER_0);
           #endif
@@ -307,7 +306,7 @@ TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
   }
   ref_cnt++;
 
-  pcli = new SSLClient(wfcli, TAs, (size_t)TAs_NUM, A0, 1, SSLClient::SSL_ERROR );
+  pcli = new SSLClient(wfcli, TAs, (size_t)TAs_NUM, A0, 1, SSLClient::SSL_ERROR);
   //pcli = new WiFiClientSecure();
   //pcli->setCACert(telegram_cert);
   pbot = new AsyncTelegram2(*pcli);
@@ -315,7 +314,7 @@ TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
   pbot->setTelegramToken(BOT_TOKEN);
   
   Serial.print("\nTest Telegram connection... ");
-  pbot->begin() ? Serial.println("OK") : Serial.println("NOK");
+  pbot->begin() ? Serial.println("Ok!") : Serial.println("Ошибка!");
 
   char welcome_msg[128];
   snprintf(welcome_msg, 128, "BOT @%s в сети!\nНабери \"help\" для справки.", pbot->getBotName());

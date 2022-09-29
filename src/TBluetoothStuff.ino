@@ -1,9 +1,12 @@
 #include "TBluetoothStuff.h"
+#include "common.h"
+#include "TUtil.h"
 #include "TNoise.h"
 #include "freertos\\task.h"
 
 namespace BluetoothStuff
 {
+using namespace Util;
 using namespace Noise;
 
 int TBluetoothStuff::ref_cnt = 0;
@@ -26,7 +29,7 @@ void TBluetoothStuff::task(void *p)
       {
       // это, например, если во время чтения пропала связь с устройством, и мы бросили исключение...
       }
-      catch(string e)
+      catch(String e)
       {
       Serial.println(e.c_str());
       }
@@ -61,31 +64,33 @@ void TBluetoothStuff::task(void *p)
   }
 }
 
-TBluetoothStuff::TBluetoothStuff(string dev_name, TMyApplication *p_app, tpfn_callback pfn_callback):
+TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_callback pfn_callback):
   dev_name(dev_name),
   p_app(p_app),
-  pfn_callback(pfn_callback),
-  MACadd("20:21:04:08:39:93"),
-  address({0x20, 0x21, 0x04, 0x08, 0x39, 0x93}),
-  name("MindWave"),
-  pin("0000"),
-  connected(false),
-  p_tpp(NULL)
+  pfn_callback(pfn_callback)
 {
+  p_tpp = NULL;
+
   if(ref_cnt)
   {
     throw "Only one instance of TBluetoothStuff allowed!";
   }
   ref_cnt++;
 
+  connected = false;
+  pin = "0000";
+  name = "MindWave";
+  MACadd = "20:21:04:08:39:93";
+  TUtil::mac_2_array(MACadd, address);
+
   p_tpp = new TTgamPacketParser(&SerialBT, pfn_callback, p_app);
 
   SerialBT.setPin(pin.c_str());
-  SerialBT.begin(dev_name.c_str(), true);
+  SerialBT.begin(dev_name, true);
   Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
 
   //int res = xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
-  int res = xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1800, this,
+  /*int res = */xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1800, this,
       (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
 }
 
