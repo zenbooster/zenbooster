@@ -375,8 +375,9 @@ TMyApplication::TMyApplication():
 
   p_fdb = new TElementsDB("formula-db");
 
-  if(p_fdb->list().isEmpty())
+  if(p_fdb->is_empty())
   {
+    Serial.println("Выполняем первичную инициализацию базы формул.");
     p_fdb->assign("anapana", "100 * (gl + gm) / d");
   }
 

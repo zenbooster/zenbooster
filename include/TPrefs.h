@@ -31,6 +31,7 @@ namespace Prefs
       bool contains(const string key) const;
       string operator [](string key);
       bool set_value(const string key, const string value);
+      bool reinit_value(const string key);
       string get_desc(void);
       string get_values(void);
   };

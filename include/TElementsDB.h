@@ -31,8 +31,10 @@ class TElementsDB
         TElementsDB(const String name);
         ~TElementsDB();
 
+        bool has_value(const String key);
         bool assign(const String key, const String val = "");
         String list(void);
+        bool is_empty(void);
         String get_value(const String key);
 };
 }

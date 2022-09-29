@@ -141,6 +141,15 @@ void TElementsDB::write_bit(uint8_t n, bool is)
     Serial.printf("TElementsDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
 }
 
+bool TElementsDB::has_value(const String key)
+{
+    prefs.begin(name.c_str(), false);
+    bool is_key = prefs.isKey(key.c_str());
+    prefs.end();
+
+    return is_key;
+}
+
 bool TElementsDB::assign(const String key, const String val)
 {
     bool b_res = false;
@@ -315,6 +324,25 @@ String TElementsDB::list(void)
             }
         } // for(; n < 8; is_skip_zeroes = !is_skip_zeroes)
     } while(++i < bitmap_size);
+
+    return res;
+}
+
+bool TElementsDB::is_empty(void)
+{
+    bool res;
+    uint8_t i = 0;
+
+    do
+    {
+        String s_chunk_name = get_chunk_name(i);
+        prefs.begin(name_list.c_str(), false);
+        uint8_t chunk = prefs.getUChar(s_chunk_name.c_str());
+        prefs.end();
+
+        res = !chunk;
+
+    } while(++i < bitmap_size && res);
 
     return res;
 }

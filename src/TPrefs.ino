@@ -61,7 +61,6 @@ bool TPrefs::set_value(const string key, const string value)
   if(res)
   {
     prefs.begin(name.c_str(), false);
-    //if(value != prefs.getString(key.c_str()))
     if(value != pv.value)
     {
       prefs.putString(key.c_str(), value.c_str());
@@ -71,6 +70,11 @@ bool TPrefs::set_value(const string key, const string value)
   }
 
   return res;
+}
+
+bool TPrefs::reinit_value(const string key)
+{
+  return set_value(key, (*this)[key]);
 }
 
 string TPrefs::get_desc(void)
@@ -97,10 +101,6 @@ string TPrefs::get_values(void)
     string k =  iter->first;
     TPrefValue v = iter->second;
     string s = v.value;
-
-    //s = s.replace(s.find("("), 1, "\\(").replace(s.find(")"), 1, "\\)").replace(s.find("-"), 1, "\\-").replace(s.find("*"), 1, "\\*");
-    //Serial.println(s.c_str());
-    //Serial.flush();
 
     string line = "*" + k + "* \\= `" + s + "`\n";
     res += line;

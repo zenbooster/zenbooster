@@ -221,7 +221,9 @@ void TTgmBot::run(void)// *p)
                 String val = args.substring(pos + 1);
                 key.trim();
                 val.trim();
-                pbot->sendMessage(msg, String("Добавление ") + key + " = " + val);
+
+                bool is_has_value = p_fdb->has_value(key);
+                pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
 
                 TCalcFormula *pcf;
                 try
@@ -234,9 +236,17 @@ void TTgmBot::run(void)// *p)
                   e_desc = e.c_str();
                 }
 
-                if(is_ok)
+                if(is_ok) // Если формула не имеет ошибок
                 {
-                  is_ok = p_fdb->assign(key, val);
+                  is_ok = p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
+
+                  if(is_has_value) // Если изменили существующую формулу
+                  {
+                    if(String((*p_prefs)["f"].c_str()) == key) // и она выбрана как текущая
+                    {
+                      p_prefs->reinit_value(key.c_str()); // перекомпилируем её, чтобы изменения вступили в силу.
+                    }
+                  }
                 }
               }
               else
