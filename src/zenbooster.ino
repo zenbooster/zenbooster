@@ -377,7 +377,7 @@ TMyApplication::TMyApplication():
 
   if(p_fdb->list().isEmpty())
   {
-    p_fdb->assign("anapana", "10 * (gl + gm) / d");
+    p_fdb->assign("anapana", "100 * (gl + gm) / d");
   }
 
   p_prefs->init_key("f", "формула", "anapana", [this](string value) -> bool {
