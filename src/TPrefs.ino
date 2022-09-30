@@ -8,9 +8,8 @@ TPrefs::TPrefs(const String name):
   //
 }
 
-bool TPrefs::init_key(String key, String desc, String defval, TCbChangeFunction cb_change)
+void TPrefs::init_key(String key, String desc, String defval, TCbChangeFunction cb_change)
 {
-  bool res;
   TPrefValue &pv = data[key];
   pv.desc = desc;
   pv.cb_change = cb_change;
@@ -19,24 +18,18 @@ bool TPrefs::init_key(String key, String desc, String defval, TCbChangeFunction 
   if(prefs.isKey(key.c_str()))
   {
     String value = prefs.getString(key.c_str()).c_str();
-    res = cb_change(value);
-    if(res)
-    {
-      pv.value = value;
-    }
+    cb_change(value);
+
+    pv.value = value;
   }
   else
   {
-    res = cb_change(defval);
-    if(res)
-    {
-      prefs.putString(key.c_str(), defval.c_str());
-      pv.value = defval;
-    }
+    cb_change(defval);
+
+    prefs.putString(key.c_str(), defval.c_str());
+    pv.value = defval;
   }
   prefs.end();
-
-  return res;
 }
 
 bool TPrefs::contains(const String key) const
@@ -50,10 +43,8 @@ String TPrefs::operator [](String key)
   return data[key].value;
 }
 
-bool TPrefs::set_value(const String key, const String value)
+void TPrefs::set_value(const String key, const String value)
 {
-  bool res = false;
-
   TPrefValue &pv = data[key];
 
   do // fake loop
@@ -63,27 +54,22 @@ bool TPrefs::set_value(const String key, const String value)
       Serial.printf("bool TPrefs::set_value(\"%s\", \"%s\"): Ошибка! Не вызван метод init_key.\n", key.c_str(), value.c_str());
       break;
     }
-    res = pv.cb_change(value);
+    pv.cb_change(value);
 
-    if(res)
+    prefs.begin(name.c_str(), false);
+    if(value != pv.value)
     {
-      prefs.begin(name.c_str(), false);
-      if(value != pv.value)
-      {
-        prefs.putString(key.c_str(), value.c_str());
-        pv.value = value;
-      }
-      prefs.end();
+      prefs.putString(key.c_str(), value.c_str());
+      pv.value = value;
     }
+    prefs.end();
   } while(false);
-
-  return res;
 }
 
-bool TPrefs::reinit_value(const String key)
+/*void TPrefs::reinit_value(const String key)
 {
-  return set_value(key, (*this)[key]);
-}
+  set_value(key, (*this)[key]);
+}*/
 
 String TPrefs::get_desc(void)
 {

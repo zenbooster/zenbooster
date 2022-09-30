@@ -66,7 +66,7 @@ TCalcFormula::TCalcFormula(String ex)
 
   if(!p_ast)
   {
-    throw String("Не могу скомпилировать формулу!");
+    throw String("не могу скомпилировать формулу");
   }
 }
 

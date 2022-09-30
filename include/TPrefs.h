@@ -8,7 +8,7 @@ namespace Prefs
 {
   using namespace std;
 
-  typedef function<bool(String)> TCbChangeFunction;
+  typedef function<void(String)> TCbChangeFunction; // может бросать исключения
 
   struct TPrefValue
   {
@@ -27,11 +27,11 @@ namespace Prefs
     public:
       TPrefs(const String name);
 
-      bool init_key(String key, String desc, String defval, TCbChangeFunction cb_change);
+      void init_key(String key, String desc, String defval, TCbChangeFunction cb_change);
       bool contains(const String key) const;
       String operator [](String key);
-      bool set_value(const String key, const String value);
-      bool reinit_value(const String key);
+      void set_value(const String key, const String value);
+      //void reinit_value(const String key);
       String get_desc(void);
       String get_values(void);
   };

@@ -5,7 +5,7 @@
 #include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
 #include "TPrefs.h"
-#include "TElementsDB.h"
+#include "TFormulaDB.h"
 #include <sstream>
 #include <exception>
 #include "common.h"
@@ -24,7 +24,7 @@ using namespace Noise;
 using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
-using namespace ElementsDB;
+using namespace FormulaDB;
 #ifdef PIN_BTN
 using namespace SleepMode;
 #endif
@@ -77,7 +77,7 @@ class TMyApplication
     const char *WIFI_PASS = "zbdzbdzbd";
     
     TPrefs *p_prefs;
-    TElementsDB *p_fdb;
+    TFormulaDB *p_fdb;
 #ifdef PIN_BTN
     TSleepMode SleepMode;
 #endif
@@ -109,6 +109,7 @@ class TMyApplication
     int calc_formula_meditation();
     static int int_from_12bit(unsigned char *buf);
     static void callback(unsigned char code, unsigned char *data, void *arg);
+    void update_calc_formula(TCalcFormula *pcf);
 
   public:
     TMyApplication();
@@ -243,6 +244,14 @@ bool is_number(const String &s)
   return !s.isEmpty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
+void chk_value_is_number(String& v)
+{
+  if (!is_number(v))
+  {
+    throw String("значение должно быть целым числом");
+  }
+}
+
 bool is_numeric(const String &s)
 {
   double num;
@@ -250,9 +259,36 @@ bool is_numeric(const String &s)
   return res;
 }
 
-bool is_bool(const String &s)
+void chk_value_is_numeric(String& v)
+{
+  if (!is_numeric(v))
+  {
+    throw String("значение должно быть вещественным числом");
+  }
+}
+
+bool is_bool(const String& s)
 {
   return (s == "true") || (s == "false");
+}
+
+void chk_value_is_bool(String& v)
+{
+  if (!is_bool(v))
+  {
+    throw String("значение должно иметь тип bool");
+  }
+}
+
+void TMyApplication::update_calc_formula(TCalcFormula *pcf)
+{
+  xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
+  if (p_calc_formula)
+  {
+    delete p_calc_formula;
+  }
+  p_calc_formula = pcf;
+  xSemaphoreGive(xCFSemaphore);
 }
 
 TMyApplication::TMyApplication():
@@ -273,129 +309,84 @@ TMyApplication::TMyApplication():
   #else
     "false",
   #endif
-    [](String value) -> bool
+    [](String value) -> void
   {
-    bool res = is_bool(value);
+    chk_value_is_bool(value);
 
-    if(res)
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    Serial.printf("wakeup_reason=%d\n", wakeup_reason);
+    esp_reset_reason_t reset_reason = esp_reset_reason();
+    Serial.printf("reset_reason=%d\n", reset_reason);
+
+    if(reset_reason != ESP_RST_POWERON && reset_reason != ESP_RST_DEEPSLEEP)
     {
-      esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-      Serial.printf("wakeup_reason=%d\n", wakeup_reason);
-      esp_reset_reason_t reset_reason = esp_reset_reason();
-      Serial.printf("reset_reason=%d\n", reset_reason);
-
-      if(reset_reason != ESP_RST_POWERON && reset_reason != ESP_RST_DEEPSLEEP)
+      if(reset_reason == ESP_RST_SW)
       {
-        if(reset_reason == ESP_RST_SW)
-        {
-          Serial.println("Перезагрузились по требованию.");
-        }
-      }
-      else
-      {
-        if(value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED)
-        {
-          Serial.println("Согласно настройкам, засыпаем по возобновлении питания...");
-          pinMode(14, OUTPUT); // после загрузки, и после перехода в сон, именно на этом пине может остаться маленькое напряжение,
-          digitalWrite(14, LOW); // и оно там останется даже во сне! Поэтому сбрасываем.
-          esp_deep_sleep_start();
-        }
-        Serial.println("Проснулись по нажатию кнопки.");
+        Serial.println("Перезагрузились по требованию.");
       }
     }
-    
-    return res;
+    else
+    {
+      if(value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED)
+      {
+        Serial.println("Согласно настройкам, засыпаем по возобновлении питания...");
+        pinMode(14, OUTPUT); // после загрузки, и после перехода в сон, именно на этом пине может остаться маленькое напряжение,
+        digitalWrite(14, LOW); // и оно там останется даже во сне! Поэтому сбрасываем.
+        esp_deep_sleep_start();
+      }
+      Serial.println("Проснулись по нажатию кнопки.");
+    }
   });
 
-  p_prefs->init_key("tr", "установка порога", "95", [](String value) -> bool {
-    bool res = is_number(value);
+  p_prefs->init_key("tr", "установка порога", "95", [](String value) -> void
+  {
+    chk_value_is_number(value);
 
-    if(res)
-    {
-      MED_THRESHOLD = atoi(value.c_str());
-    }
-    
-    return res;
+    MED_THRESHOLD = atoi(value.c_str());
   });
 
-  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "10", [](String value) -> bool {
-    bool res = is_number(value);
+  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "10", [](String value) -> void
+  {
+    chk_value_is_number(value);
 
-    if(res)
-    {
-      MED_PRE_TRESHOLD_DELTA = atoi(value.c_str());
-    }
-    
-    return res;
+    MED_PRE_TRESHOLD_DELTA = atoi(value.c_str());
   });
 
 #ifdef SOUND
-  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](String value) -> bool {
-    bool res = is_numeric(value);
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](String value) -> void
+  {
+    chk_value_is_numeric(value);
 
-    if(res)
-    {
-      float old_lvl = TNoise::get_level();
-      float old_mnl = TNoise::MAX_NOISE_LEVEL;
-      TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
-      TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
-    }
-    
-    return res;
+    float old_lvl = TNoise::get_level();
+    float old_mnl = TNoise::MAX_NOISE_LEVEL;
+    TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
+    TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
   });
 #endif
-  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](String value) -> bool {
-    bool res = is_bool(value);
+  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](String value) -> void
+  {
+    chk_value_is_bool(value);
 
-    if(res)
-    {
-      is_blink_on_packets = (value == "true");
-    }
-    
-    return res;
+    is_blink_on_packets = (value == "true");
   });
 
   xCFSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(xCFSemaphore);
 
-  p_fdb = new TElementsDB("formula-db");
+  p_fdb = new TFormulaDB();
 
   if(p_fdb->is_empty())
   {
     Serial.println("Выполняем первичную инициализацию базы формул.");
-    p_fdb->assign("anapana", "100 * (gl + gm) / d");
+    p_fdb->assign("anapana", "150 * (gl + gm) / d");
   }
 
-  p_prefs->init_key("f", "формула", "anapana", [this](String value) -> bool {
+  p_prefs->init_key("f", "формула", "anapana", [this](String value) -> void
+  {
     value = this->p_fdb->get_value(value);
-    bool res = !value.isEmpty();
-
-    if(res)
-    {
-      xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
-      TCalcFormula *pcf = NULL;
-      try
-      {
-        pcf = new TCalcFormula(value);
-      }
-      catch(String e)
-      {
-        Serial.println(e.c_str());
-      }
-
-      if (pcf)
-      {
-        if (p_calc_formula)
-        {
-          delete p_calc_formula;
-        }
-        p_calc_formula = pcf;
-      }
-
-      res = pcf;
-      xSemaphoreGive(xCFSemaphore);
-    }
-    return res;
+    
+    TCalcFormula *pcf = this->p_fdb->compile(value);
+    update_calc_formula(pcf);
   });
 
 #ifdef PIN_BTN
@@ -415,9 +406,13 @@ TMyApplication::TMyApplication():
   // Временно запретим wifi, т.к. есть проблемы сосуществования wifi и bluetooth на одном радио.
   // Ждём модуль bluetooth HC-06 - он должен рещить все проблемы.
   wifiManager.setHostname(DEVICE_NAME);
+  //wifiManager.startConfigPortal(WIFI_SSID, WIFI_PASS);
   wifiManager.autoConnect(WIFI_SSID, WIFI_PASS);
 
-  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs, p_fdb);
+  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs, p_fdb, [this](TCalcFormula *pcf) -> void
+  {
+    update_calc_formula(pcf);
+  });
   p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, this, callback);
 #ifdef SOUND
   p_noise = new TNoise();

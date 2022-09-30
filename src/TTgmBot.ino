@@ -6,11 +6,9 @@
 #include "TTgmBot.h"
 #include ".\\tg_certificate.h"
 #include "TUtil.h"
-#include "TCalcFormula.h"
 
 namespace TgmBot
 {
-using namespace CalcFormula;
 using namespace Util;
 
 int TTgmBot::ref_cnt = 0;
@@ -179,6 +177,7 @@ void TTgmBot::run(void)// *p)
                 pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
                 break;
               }
+
               bool is_ok = false;
               String e_desc;
               String args = text.substring(strlen(s_cmd));
@@ -195,32 +194,33 @@ void TTgmBot::run(void)// *p)
                 pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
 
                 {
-                  TCalcFormula *pcf = NULL;
+                  TCalcFormula *pcf;
                   try
                   {
-                    pcf = new TCalcFormula(val);
-                    is_ok = true;
-                  }
-                  catch(String e)
-                  {
-                    e_desc = e;
-                  }
-                  if(pcf)
-                  {
+                    pcf = p_fdb->compile(val);
+
+                    is_ok = p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
+
+                    if(is_has_value) // Если изменили существующую формулу
+                    {
+                      if((*p_prefs)["f"] == key) // и она выбрана как текущая
+                      {
+                        try
+                        {
+                          cb_change_formula(pcf);
+                          //p_prefs->reinit_value("f"); // перекомпилируем её, чтобы изменения вступили в силу.
+                        }
+                        catch(String& e)
+                        {
+                          e_desc = "(при перекомпиляции текущей формулы) " + e;
+                        }
+                      }
+                    }
                     delete pcf;
                   }
-                }
-
-                if(is_ok) // Если формула не имеет ошибок
-                {
-                  is_ok = p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
-
-                  if(is_has_value) // Если изменили существующую формулу
+                  catch(String& e)
                   {
-                    if((*p_prefs)["f"] == key) // и она выбрана как текущая
-                    {
-                      p_prefs->reinit_value("f"); // перекомпилируем её, чтобы изменения вступили в силу.
-                    }
+                    e_desc = "(при добавлении / изменении в базе) " + e;
                   }
                 }
               }
@@ -229,7 +229,7 @@ void TTgmBot::run(void)// *p)
                 pbot->sendMessage(msg, String("Удаление ") + args);
                 is_ok = p_fdb->assign(args);
               }
-              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + String(e_desc.isEmpty() ? "!" : ": " + e_desc));
+              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + String(e_desc.isEmpty() ? "" : ": " + e_desc + "!"));
               break;
             }
             else
@@ -274,19 +274,28 @@ void TTgmBot::run(void)// *p)
         }
         else
         {
-          // Здесь можно завести колбэки OnSetValueBegin / OnSetValueEnd, чтобы вызывать функции таймера в них...
-        #ifdef SOUND_DAC
-          timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
-        #endif
-          //string value = text.substr(pos_set+1);
           String value = text.substring(pos_set + 1);
           {
             value.trim();
-            int res = p_prefs->set_value(opt, value);
+            try
+            {
+          // Здесь можно завести колбэки OnSetValueBegin / OnSetValueEnd, чтобы вызывать функции таймера в них...
+          #ifdef SOUND_DAC
+            timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
+          #endif
+              p_prefs->set_value(opt, value);
           #ifdef SOUND_DAC
             timer_start(TIMER_GROUP_0, TIMER_0);
           #endif
-            pbot->sendMessage(msg, String(res ? "Ok" : "Ошибка") + "!");
+              pbot->sendMessage(msg, "Ok!");
+            }
+            catch(String& e)
+            {
+          #ifdef SOUND_DAC
+            timer_start(TIMER_GROUP_0, TIMER_0);
+          #endif
+              pbot->sendMessage(msg, "Ошибка: " + e +  "!");
+            }
           }
         }
         break;
@@ -298,13 +307,14 @@ void TTgmBot::run(void)// *p)
   }
 }
 
-TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
+TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TCbChangeFunction cb_change_formula):
   dev_name(dev_name),
   p_prefs(p_prefs),
   p_fdb(p_fdb)
 #ifdef PIN_BATTARY
   , battery(PIN_BATTARY)
 #endif
+  , cb_change_formula(cb_change_formula)
 {
   if(ref_cnt)
   {

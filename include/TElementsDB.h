@@ -23,19 +23,19 @@ class TElementsDB
         TFirstZeroBitResult get_first_zero_bit();
 
         void write_bit(uint8_t n, bool is);
-        String get_value_id(const String key, uint8_t *id = NULL);
+        String get_value_id(const String& key, uint8_t *id = NULL);
 
         void init_chunks(void);
         void integrity_check(void);
 
     public:
-        TElementsDB(const String name);
+        TElementsDB(const String& name);
         ~TElementsDB();
 
-        bool has_value(const String key);
-        bool assign(const String key, const String val = "");
+        bool has_value(const String& key);
+        bool assign(const String& key, const String& val = "");
         String list(void);
         bool is_empty(void);
-        String get_value(const String key);
+        String get_value(const String& key);
 };
 }

@@ -101,7 +101,7 @@ void TElementsDB::integrity_check(void)
     //Serial.println("TElementsDB::integrity_check(..): проверяем целостность БД...");
 }
 
-TElementsDB::TElementsDB(const String name):
+TElementsDB::TElementsDB(const String& name):
     name(name),
     name_list(name + "-list")
 {
@@ -144,7 +144,7 @@ void TElementsDB::write_bit(uint8_t n, bool is)
     Serial.printf("TElementsDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2).c_str());
 }
 
-bool TElementsDB::has_value(const String key)
+bool TElementsDB::has_value(const String& key)
 {
     prefs.begin(name.c_str(), false);
     bool is_key = prefs.isKey(key.c_str());
@@ -153,7 +153,7 @@ bool TElementsDB::has_value(const String key)
     return is_key;
 }
 
-bool TElementsDB::assign(const String key, const String val)
+bool TElementsDB::assign(const String& key, const String& val)
 {
     bool b_res = false;
 
@@ -325,7 +325,7 @@ bool TElementsDB::is_empty(void)
     return res;
 }
 
-String TElementsDB::get_value_id(const String key, uint8_t *id)
+String TElementsDB::get_value_id(const String& key, uint8_t *id)
 {
     String res;
 
@@ -349,7 +349,7 @@ String TElementsDB::get_value_id(const String key, uint8_t *id)
     return res;
 }
 
-String TElementsDB::get_value(const String key)
+String TElementsDB::get_value(const String& key)
 {
     String res;
 
