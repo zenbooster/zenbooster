@@ -2,13 +2,13 @@
 
 namespace Prefs
 {
-TPrefs::TPrefs(const String name):
+TPrefs::TPrefs(const String& name):
   name(name)
 {
   //
 }
 
-void TPrefs::init_key(String key, String desc, String defval, TCbChangeFunction cb_change)
+void TPrefs::init_key(const String& key, const String& desc, const String& defval, TCbChangeFunction cb_change)
 {
   TPrefValue &pv = data[key];
   pv.desc = desc;
@@ -32,18 +32,18 @@ void TPrefs::init_key(String key, String desc, String defval, TCbChangeFunction 
   prefs.end();
 }
 
-bool TPrefs::contains(const String key) const
+bool TPrefs::contains(const String& key) const
 {
   //return data.contains(key);
   return data.count(key);
 }
 
-String TPrefs::operator [](String key)
+String TPrefs::operator [](const String& key)
 {
   return data[key].value;
 }
 
-void TPrefs::set_value(const String key, const String value)
+void TPrefs::set_value(const String& key, const String& value)
 {
   TPrefValue &pv = data[key];
 
@@ -66,7 +66,7 @@ void TPrefs::set_value(const String key, const String value)
   } while(false);
 }
 
-/*void TPrefs::reinit_value(const String key)
+/*void TPrefs::reinit_value(const String& key)
 {
   set_value(key, (*this)[key]);
 }*/

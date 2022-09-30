@@ -208,7 +208,6 @@ void TTgmBot::run(void)// *p)
                         try
                         {
                           cb_change_formula(pcf);
-                          //p_prefs->reinit_value("f"); // перекомпилируем её, чтобы изменения вступили в силу.
                         }
                         catch(String& e)
                         {

@@ -244,7 +244,7 @@ bool is_number(const String &s)
   return !s.isEmpty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
-void chk_value_is_number(String& v)
+void chk_value_is_number(const String& v)
 {
   if (!is_number(v))
   {
@@ -259,7 +259,7 @@ bool is_numeric(const String &s)
   return res;
 }
 
-void chk_value_is_numeric(String& v)
+void chk_value_is_numeric(const String& v)
 {
   if (!is_numeric(v))
   {
@@ -272,7 +272,7 @@ bool is_bool(const String& s)
   return (s == "true") || (s == "false");
 }
 
-void chk_value_is_bool(String& v)
+void chk_value_is_bool(const String& v)
 {
   if (!is_bool(v))
   {
@@ -309,7 +309,7 @@ TMyApplication::TMyApplication():
   #else
     "false",
   #endif
-    [](String value) -> void
+    [](const String& value) -> void
   {
     chk_value_is_bool(value);
 
@@ -338,14 +338,14 @@ TMyApplication::TMyApplication():
     }
   });
 
-  p_prefs->init_key("tr", "установка порога", "95", [](String value) -> void
+  p_prefs->init_key("tr", "установка порога", "95", [](const String& value) -> void
   {
     chk_value_is_number(value);
 
     MED_THRESHOLD = atoi(value.c_str());
   });
 
-  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "10", [](String value) -> void
+  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "10", [](const String& value) -> void
   {
     chk_value_is_number(value);
 
@@ -353,7 +353,7 @@ TMyApplication::TMyApplication():
   });
 
 #ifdef SOUND
-  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](String value) -> void
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](const String& value) -> void
   {
     chk_value_is_numeric(value);
 
@@ -363,7 +363,7 @@ TMyApplication::TMyApplication():
     TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
   });
 #endif
-  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](String value) -> void
+  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](const String& value) -> void
   {
     chk_value_is_bool(value);
 
@@ -381,11 +381,11 @@ TMyApplication::TMyApplication():
     p_fdb->assign("anapana", "150 * (gl + gm) / d");
   }
 
-  p_prefs->init_key("f", "формула", "anapana", [this](String value) -> void
+  p_prefs->init_key("f", "формула", "anapana", [this](const String& value) -> void
   {
-    value = this->p_fdb->get_value(value);
+    String val = this->p_fdb->get_value(value);
     
-    TCalcFormula *pcf = this->p_fdb->compile(value);
+    TCalcFormula *pcf = this->p_fdb->compile(val);
     update_calc_formula(pcf);
   });
 
