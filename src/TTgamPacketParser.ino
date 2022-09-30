@@ -30,8 +30,6 @@ uint8_t TTgamPacketParser::_read_byte(void)
 
 void TTgamPacketParser::run(void)
 {
-  int r;
-
   c = _read_byte();
   if( c != SYNC ) return;
   c = _read_byte();
@@ -67,7 +65,7 @@ int TTgamPacketParser::_parse_payload( unsigned char *payload, unsigned char pLe
   unsigned char code;
   unsigned char length;
   unsigned char extendedCodeLevel;
-  int i;
+
   // Loop until all bytes are parsed from the payload[] array...
   while( bytesParsed < pLength )
   {

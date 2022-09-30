@@ -127,7 +127,7 @@ void TElementsDB::write_bit(uint8_t n, bool is)
     
     prefs.begin(name_list.c_str(), false);
     uint8_t chunk = prefs.getUChar(s_chunk_name.c_str());
-    Serial.printf("TElementsDB::write_bit(..): прочитали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
+    Serial.printf("TElementsDB::write_bit(..): прочитали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2).c_str());
 
     if(is)
     {
@@ -141,7 +141,7 @@ void TElementsDB::write_bit(uint8_t n, bool is)
     prefs.putUChar(s_chunk_name.c_str(), chunk);
     prefs.end();
 
-    Serial.printf("TElementsDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2));
+    Serial.printf("TElementsDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2).c_str());
 }
 
 bool TElementsDB::has_value(const String key)

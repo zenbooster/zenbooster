@@ -60,7 +60,7 @@ bool TPrefs::set_value(const String key, const String value)
   {
     if(!pv.cb_change)
     {
-      Serial.printf("bool TPrefs::set_value(\"%s\", \"%s\"): Ошибка! Не вызван метод init_key.\n", key, value);
+      Serial.printf("bool TPrefs::set_value(\"%s\", \"%s\"): Ошибка! Не вызван метод init_key.\n", key.c_str(), value.c_str());
       break;
     }
     res = pv.cb_change(value);
@@ -82,10 +82,7 @@ bool TPrefs::set_value(const String key, const String value)
 
 bool TPrefs::reinit_value(const String key)
 {
-  String val = (*this)[key];
-  Serial.printf("HIT.1: key=%s; val=%s\n", key, val);
-  return set_value(key, val);
-  //return set_value(key, (*this)[key]);
+  return set_value(key, (*this)[key]);
 }
 
 String TPrefs::get_desc(void)

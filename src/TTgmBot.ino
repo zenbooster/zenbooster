@@ -169,7 +169,7 @@ void TTgmBot::run(void)// *p)
           }
           else
           {
-            char *s_cmd;
+            const char *s_cmd;
             bool is_no_args;
 
             if(s_cmd = "f_assign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
@@ -194,15 +194,21 @@ void TTgmBot::run(void)// *p)
                 bool is_has_value = p_fdb->has_value(key);
                 pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
 
-                TCalcFormula *pcf;
-                try
                 {
-                  pcf = new TCalcFormula(val);
-                  is_ok = true;
-                }
-                catch(String e)
-                {
-                  e_desc = e;
+                  TCalcFormula *pcf = NULL;
+                  try
+                  {
+                    pcf = new TCalcFormula(val);
+                    is_ok = true;
+                  }
+                  catch(String e)
+                  {
+                    e_desc = e;
+                  }
+                  if(pcf)
+                  {
+                    delete pcf;
+                  }
                 }
 
                 if(is_ok) // Если формула не имеет ошибок

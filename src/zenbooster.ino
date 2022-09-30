@@ -373,7 +373,7 @@ TMyApplication::TMyApplication():
     if(res)
     {
       xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
-      TCalcFormula *pcf;
+      TCalcFormula *pcf = NULL;
       try
       {
         pcf = new TCalcFormula(value);
