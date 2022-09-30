@@ -52,29 +52,40 @@ String TPrefs::operator [](String key)
 
 bool TPrefs::set_value(const String key, const String value)
 {
-  bool res = true;
+  bool res = false;
 
   TPrefValue &pv = data[key];
 
-  res = pv.cb_change(value);
-
-  if(res)
+  do // fake loop
   {
-    prefs.begin(name.c_str(), false);
-    if(value != pv.value)
+    if(!pv.cb_change)
     {
-      prefs.putString(key.c_str(), value.c_str());
-      pv.value = value;
+      Serial.printf("bool TPrefs::set_value(\"%s\", \"%s\"): Ошибка! Не вызван метод init_key.\n", key, value);
+      break;
     }
-    prefs.end();
-  }
+    res = pv.cb_change(value);
+
+    if(res)
+    {
+      prefs.begin(name.c_str(), false);
+      if(value != pv.value)
+      {
+        prefs.putString(key.c_str(), value.c_str());
+        pv.value = value;
+      }
+      prefs.end();
+    }
+  } while(false);
 
   return res;
 }
 
 bool TPrefs::reinit_value(const String key)
 {
-  return set_value(key, (*this)[key]);
+  String val = (*this)[key];
+  Serial.printf("HIT.1: key=%s; val=%s\n", key, val);
+  return set_value(key, val);
+  //return set_value(key, (*this)[key]);
 }
 
 String TPrefs::get_desc(void)

@@ -32,6 +32,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TPrefs *p_prefs, TElementsDB *p_fdb):
   pTgmBot = new TTgmBot(dev_name, p_prefs, p_fdb);
   
   xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,
+  //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,
     (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 
