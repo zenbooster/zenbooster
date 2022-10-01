@@ -33,7 +33,7 @@ class TElementsDB
         ~TElementsDB();
 
         bool has_value(const String& key);
-        bool assign(const String& key, const String& val = "");
+        void assign(const String& key, const String& val = ""); // может бросить исключение
         String list(void);
         bool is_empty(void);
         String get_value(const String& key);

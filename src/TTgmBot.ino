@@ -178,7 +178,6 @@ void TTgmBot::run(void)// *p)
                 break;
               }
 
-              bool is_ok = false;
               String e_desc;
               String args = text.substring(strlen(s_cmd));
               args.trim();
@@ -199,23 +198,16 @@ void TTgmBot::run(void)// *p)
                   {
                     pcf = p_fdb->compile(val);
 
-                    is_ok = p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
+                    p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
 
-                    if(is_has_value) // Если изменили существующую формулу
+                    if(is_has_value && ((*p_prefs)["f"] == key)) // Если изменили существующую формулу и она выбрана как текущая
                     {
-                      if((*p_prefs)["f"] == key) // и она выбрана как текущая
-                      {
-                        try
-                        {
-                          cb_change_formula(pcf);
-                        }
-                        catch(String& e)
-                        {
-                          e_desc = "(при перекомпиляции текущей формулы) " + e;
-                        }
-                      }
+                      cb_change_formula(pcf);
                     }
-                    delete pcf;
+                    else
+                    {
+                      delete pcf;
+                    }
                   }
                   catch(String& e)
                   {
@@ -226,9 +218,9 @@ void TTgmBot::run(void)// *p)
               else
               {
                 pbot->sendMessage(msg, String("Удаление ") + args);
-                is_ok = p_fdb->assign(args);
+                p_fdb->assign(args);
               }
-              pbot->sendMessage(msg, String(is_ok ? "Ok" : "Ошибка") + String(e_desc.isEmpty() ? "" : ": " + e_desc + "!"));
+              pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
               break;
             }
             else

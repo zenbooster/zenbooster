@@ -129,21 +129,19 @@ int TMyApplication::calc_formula_meditation()
 {
   double res = 0;
 
+  xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
   for(int i = 0; i < ring_buffer_in_size; i++)
   {
     TRingBufferInItem *p_item = ring_buffer_in + ((ring_buffer_in_index - i) & 3);
-    xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
     if (!p_calc_formula)
     {
-      xSemaphoreGive(xCFSemaphore);
       throw String("Объект формулы (TCalcFormula) равен NULL!");
     }
-
     TRingBufferInItem *pcf = p_calc_formula;
     *pcf = *p_item; // копируем уровни ритмов
     res += p_calc_formula->run();
-    xSemaphoreGive(xCFSemaphore);
   }
+  xSemaphoreGive(xCFSemaphore);
   return res / ring_buffer_in_size;
 }
 

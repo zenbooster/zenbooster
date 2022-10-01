@@ -153,10 +153,8 @@ bool TElementsDB::has_value(const String& key)
     return is_key;
 }
 
-bool TElementsDB::assign(const String& key, const String& val)
+void TElementsDB::assign(const String& key, const String& val)
 {
-    bool b_res = false;
-
     do // fake loop
     {
         prefs.begin(name.c_str(), false);
@@ -174,7 +172,6 @@ bool TElementsDB::assign(const String& key, const String& val)
             if(value == val)
             {
                 Serial.println("TElementsDB::assign(..): Новое значение совпадает со старым.");
-                b_res = true;
                 break;
             }
         }
@@ -192,8 +189,7 @@ bool TElementsDB::assign(const String& key, const String& val)
 
                 if(!fzb.check())
                 {
-                    Serial.println("TElementsDB::assign(..): в битовой карте не осталось места!");
-                    break; // не осталось места
+                    throw String("TElementsDB::assign(..): в битовой карте не осталось места!");
                 }
 
                 id = fzb;
@@ -224,8 +220,7 @@ bool TElementsDB::assign(const String& key, const String& val)
             Serial.printf("TElementsDB::assign(..): удаление ключа \"%s\".\n", key.c_str());
             if(!is_key) // новый элемент
             {
-                Serial.println("TElementsDB::assign(..): попытка удалить несуществующий ключ!");
-                break;
+                throw String("TElementsDB::assign(..): попытка удалить несуществующий ключ!");
             }
 
             // Сбросить соответствующий бит в битовой карте:
@@ -236,10 +231,7 @@ bool TElementsDB::assign(const String& key, const String& val)
             prefs.remove(key.c_str());
             prefs.end();
         }
-        b_res = true;
     } while (false);
-
-    return b_res;
 }
 
 String TElementsDB::list(void)
