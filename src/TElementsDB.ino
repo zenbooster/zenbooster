@@ -234,7 +234,7 @@ void TElementsDB::assign(const String& key, const String& val)
     } while (false);
 }
 
-String TElementsDB::list(void)
+String TElementsDB::list(const String *p_current_key)
 {
     String res;
     uint8_t i = 0;
@@ -281,13 +281,15 @@ String TElementsDB::list(void)
                     key = prefs.getString(String(j++, 0x10).c_str());
                     prefs.end();
 
-                    res += "*" + TUtil::screen_mark_down(key) + "* \\= `";
+                    String s = "`" + String((key == *p_current_key) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
 
                     prefs.begin(name.c_str(), false);
-                    res += TUtil::screen_mark_down(get_value_id(key));
+                    s += TUtil::screen_mark_down(get_value_id(key));
                     prefs.end();
+                    s += "`";
 
-                    res += "`\n";
+                    res += s;
+                    res += "\n";
                 }
                 chunk >>= n;
                 t += n;

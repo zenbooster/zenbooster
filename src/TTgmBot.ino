@@ -181,15 +181,19 @@ void TTgmBot::run(void)// *p)
               String e_desc;
               String args = text.substring(strlen(s_cmd));
               args.trim();
+
               int pos = args.indexOf(' ');
-              if(pos != -1)
+              bool is_add_or_ed = pos != -1;
+
+              String key = is_add_or_ed ? args.substring(0, pos) : args.substring(0);
+              key.trim();
+              bool is_has_value = p_fdb->has_value(key);
+
+              if(is_add_or_ed)
               {
-                String key = args.substring(0, pos);
                 String val = args.substring(pos + 1);
-                key.trim();
                 val.trim();
 
-                bool is_has_value = p_fdb->has_value(key);
                 pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
 
                 {
@@ -218,7 +222,14 @@ void TTgmBot::run(void)// *p)
               else
               {
                 pbot->sendMessage(msg, String("Удаление ") + args);
-                p_fdb->assign(args);
+                if(is_has_value && ((*p_prefs)["f"] == key)) // Если удаляем существующую формулу и она выбрана как текущая
+                {
+                  e_desc = "нельзя удалить формулу, которая выбрана как текущая";
+                }
+                else
+                {
+                  p_fdb->assign(args);
+                }
               }
               pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
               break;
@@ -227,7 +238,8 @@ void TTgmBot::run(void)// *p)
             if(text == "f_list")
             {
               msg.isMarkdownEnabled = true;
-              String s_list = p_fdb->list();
+              String sck = (*p_prefs)["f"]; // ключ - имя текущей формулы
+              String s_list = p_fdb->list(&sck);
               pbot->sendMessage(msg, String("*Список формул*:\n") + (s_list.length() ? s_list : "\\(пусто\\)"));
               break;
             }

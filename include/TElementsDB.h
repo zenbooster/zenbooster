@@ -34,7 +34,7 @@ class TElementsDB
 
         bool has_value(const String& key);
         void assign(const String& key, const String& val = ""); // может бросить исключение
-        String list(void);
+        String list(const String *p_current_key = NULL);
         bool is_empty(void);
         String get_value(const String& key);
 };
