@@ -105,6 +105,7 @@ class TMyApplication
     
     static bool is_blink_on_packets; // мигнуть при поступлении нового пакета от гарнитуры?
     static bool is_blue_pulse;
+    static bool is_log_data_to_bot;
 
     int calc_formula_meditation();
     static int int_from_12bit(unsigned char *buf);
@@ -124,6 +125,7 @@ TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xCFSemaphore;
 bool TMyApplication::is_blink_on_packets = false;
 bool TMyApplication::is_blue_pulse = true;
+bool TMyApplication::is_log_data_to_bot = false;
 
 int TMyApplication::calc_formula_meditation()
 {
@@ -197,6 +199,25 @@ void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg
     */
 
     SerialPrintf("delta=%d, theta=%d, alpha_lo=%d, alpha_hi=%d, beta_lo=%d, beta_hi=%d, gamma_lo=%d, gamma_md=%d; --> f_med=%d\n", delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md, med);
+
+    if(p_this->is_log_data_to_bot)
+    {
+      //static int i = 0;
+      String m;
+
+      //if(!i)
+      {
+        p_this->p_wifi_stuff->tgb_send(
+          "`d="+String(delta)+", t="+String(theta)+
+          ", al="+String(alpha_lo)+", ah="+String(alpha_hi)+
+          ", bl="+String(beta_lo)+", bh="+String(beta_hi)+
+          ", gl="+String(gamma_lo)+", gm="+String(gamma_md)+
+          ", f="+String(med)+"`"
+        );
+      }
+      //p_this->p_wifi_stuff->tgb_send(m);
+      //i = (i + 1) & 7;
+    }
 
     if(med > TMyApplication::MED_THRESHOLD)
     {
@@ -385,6 +406,13 @@ TMyApplication::TMyApplication():
     
     TCalcFormula *pcf = this->p_fdb->compile(val);
     update_calc_formula(pcf);
+  });
+
+  p_prefs->init_key("ld", "log data \\- отправлять уровни ритмов, приходящих от гарнитуры \\(bool\\)", "false", [](const String& value) -> void
+  {
+    chk_value_is_bool(value);
+
+    is_log_data_to_bot = (value == "true");
   });
 
 #ifdef PIN_BTN

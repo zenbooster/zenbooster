@@ -81,6 +81,20 @@ void TTgmBot::run(void)// *p)
   // a variable to store telegram message data
   TBMessage msg;
 
+  {
+    String *p_m = NULL;
+    if(pdTRUE == xQueueReceive(queue, &p_m, 10))//portMAX_DELAY))
+    //xQueueReceive(queue, &p_m, 10);
+    {
+      //Serial.printf("HIT.1: %p\n", p_m);
+      msg.chatId = CHAT_ID;
+      msg.isMarkdownEnabled = true;
+      pbot->sendMessage(msg, *p_m);
+      delete p_m;
+      msg.isMarkdownEnabled = false;
+    }
+  }
+
   // if there is an incoming message...
   if (pbot->getNewMessage(msg))
   {
@@ -351,18 +365,43 @@ TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TCbChangeF
   Serial.print("\nTest Telegram connection... ");
   pbot->begin() ? Serial.println("Ok!") : Serial.println("Ошибка!");
 
+  queue = xQueueCreate(16, sizeof(String *));
+  if (queue == NULL) {
+    Serial.println("Error creating the queue");
+  }
+
   char welcome_msg[128];
   snprintf(welcome_msg, 128, "BOT @%s в сети!\nНабери \"help\" для справки.", pbot->getBotName());
-  int32_t chat_id = CHAT_ID; // You can discover your own chat id, with "Json Dump Bot"
 
-  pbot->sendTo(chat_id, welcome_msg);
+  pbot->sendTo(CHAT_ID, welcome_msg);
 }
 
 TTgmBot::~TTgmBot()
 {
   // сделать удаление задачи.
-  delete pbot;
-  delete pcli;
+  if(pbot)
+  {
+    delete pbot;
+  }
+  if(pcli)
+  {
+    delete pcli;
+  }
   --ref_cnt;
+}
+
+void TTgmBot::send(const String& m, bool isMarkdownEnabled)
+{
+  if(pbot)
+  {
+    //pbot->sendTo(CHAT_ID, m);
+    /*TBMessage msg;
+    msg.chatId = CHAT_ID;
+    msg.isMarkdownEnabled = isMarkdownEnabled;
+    pbot->sendMessage(msg, m);
+    */
+    String *p = new String(m);
+    xQueueSend(queue, &p, 0);
+  }
 }
 }

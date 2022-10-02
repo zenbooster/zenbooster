@@ -35,6 +35,7 @@ class TTgmBot
   #endif
     static int ref_cnt;
     TCbChangeFunction cb_change_formula;
+    QueueHandle_t queue;
 
     void show_help(TBMessage& msg);
     void show_info(TBMessage& msg);
@@ -44,5 +45,6 @@ class TTgmBot
     ~TTgmBot();
 
     void run(void);
+    void send(const String& m, bool isMarkdownEnabled = true);
 };
 }

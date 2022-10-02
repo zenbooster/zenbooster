@@ -39,9 +39,23 @@ TWiFiStuff::TWiFiStuff(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TgmB
 TWiFiStuff::~TWiFiStuff()
 {
   if(h_task)
+  {
     vTaskDelete(h_task);
-  --ref_cnt;
+  }
+  
   if(pTgmBot)
+  {
     delete pTgmBot;
+  }
+
+  --ref_cnt;
+}
+
+void TWiFiStuff::tgb_send(const String& m, bool isMarkdownEnabled)
+{
+  if(pTgmBot)
+  {
+    pTgmBot->send(m, isMarkdownEnabled);
+  }
 }
 }

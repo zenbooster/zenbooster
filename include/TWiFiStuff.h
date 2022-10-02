@@ -23,5 +23,7 @@ class TWiFiStuff
   public:
     TWiFiStuff(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TgmBot::TCbChangeFunction cb_change_formula);
     ~TWiFiStuff();
+
+    void tgb_send(const String& m, bool isMarkdownEnabled = true);
 };
 }
