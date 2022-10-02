@@ -98,8 +98,7 @@ void TTgmBot::run(void)// *p)
         text.trim();
         transform(text.begin(), text.end(), text.begin(), ::tolower);
 
-        Serial.print("\nText message received: ");
-        Serial.println(text.c_str());
+        Serial.printf("Text message received: %s\n", text.c_str());
 
         int opt_len;
         bool is_get = (text[text.length()-1] == '?');
@@ -187,7 +186,17 @@ void TTgmBot::run(void)// *p)
 
               String key = is_add_or_ed ? args.substring(0, pos) : args.substring(0);
               key.trim();
-              bool is_has_value = p_fdb->has_value(key);
+              bool is_has_value;
+              try
+              {
+                is_has_value = p_fdb->has_value(key);
+              }
+              catch(const String& e)
+              {
+                String m = "Ошибка: " + e + "!";
+                pbot->sendMessage(msg, m);
+                break;
+              }
 
               if(is_add_or_ed)
               {
@@ -215,7 +224,7 @@ void TTgmBot::run(void)// *p)
                   }
                   catch(String& e)
                   {
-                    e_desc = "(при добавлении / изменении в базе) " + e;
+                    e_desc = e;
                   }
                 }
               }
@@ -228,7 +237,14 @@ void TTgmBot::run(void)// *p)
                 }
                 else
                 {
-                  p_fdb->assign(args);
+                  try
+                  {
+                    p_fdb->assign(args);
+                  }
+                  catch(const String& e)
+                  {
+                    e_desc = e;
+                  }
                 }
               }
               pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");

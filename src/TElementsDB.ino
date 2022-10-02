@@ -101,6 +101,14 @@ void TElementsDB::integrity_check(void)
     //Serial.println("TElementsDB::integrity_check(..): проверяем целостность БД...");
 }
 
+void TElementsDB::chk_key(const String& key)
+{
+    if(key.length() > 15)
+    {
+        throw String("void TElementsDB::chk_key(..): длина ключа должна быть меньше либо равна 15 символам");
+    }
+}
+
 TElementsDB::TElementsDB(const String& name):
     name(name),
     name_list(name + "-list")
@@ -146,6 +154,7 @@ void TElementsDB::write_bit(uint8_t n, bool is)
 
 bool TElementsDB::has_value(const String& key)
 {
+    chk_key(key);
     prefs.begin(name.c_str(), false);
     bool is_key = prefs.isKey(key.c_str());
     prefs.end();
@@ -155,6 +164,7 @@ bool TElementsDB::has_value(const String& key)
 
 void TElementsDB::assign(const String& key, const String& val)
 {
+    chk_key(key);
     do // fake loop
     {
         prefs.begin(name.c_str(), false);
@@ -189,7 +199,7 @@ void TElementsDB::assign(const String& key, const String& val)
 
                 if(!fzb.check())
                 {
-                    throw String("TElementsDB::assign(..): в битовой карте не осталось места!");
+                    throw String("TElementsDB::assign(..): в битовой карте не осталось места");
                 }
 
                 id = fzb;
@@ -220,7 +230,7 @@ void TElementsDB::assign(const String& key, const String& val)
             Serial.printf("TElementsDB::assign(..): удаление ключа \"%s\".\n", key.c_str());
             if(!is_key) // новый элемент
             {
-                throw String("TElementsDB::assign(..): попытка удалить несуществующий ключ!");
+                throw String("TElementsDB::assign(..): попытка удалить несуществующий ключ");
             }
 
             // Сбросить соответствующий бит в битовой карте:
@@ -281,7 +291,7 @@ String TElementsDB::list(const String *p_current_key)
                     key = prefs.getString(String(j++, 0x10).c_str());
                     prefs.end();
 
-                    String s = "`" + String((key == *p_current_key) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
+                    String s = "`" + String((p_current_key && (key == *p_current_key)) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
 
                     prefs.begin(name.c_str(), false);
                     s += TUtil::screen_mark_down(get_value_id(key));
@@ -345,6 +355,8 @@ String TElementsDB::get_value_id(const String& key, uint8_t *id)
 
 String TElementsDB::get_value(const String& key)
 {
+    chk_key(key);
+
     String res;
 
     prefs.begin(name.c_str(), false);

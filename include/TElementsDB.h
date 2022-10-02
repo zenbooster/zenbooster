@@ -28,14 +28,16 @@ class TElementsDB
         void init_chunks(void);
         void integrity_check(void);
 
+        void chk_key(const String& key); // может бросить исключение
+
     public:
         TElementsDB(const String& name);
         ~TElementsDB();
 
-        bool has_value(const String& key);
+        bool has_value(const String& key); // может бросить исключение
         void assign(const String& key, const String& val = ""); // может бросить исключение
         String list(const String *p_current_key = NULL);
         bool is_empty(void);
-        String get_value(const String& key);
+        String get_value(const String& key); // может бросить исключение
 };
 }
