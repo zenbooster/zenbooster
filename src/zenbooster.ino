@@ -376,10 +376,10 @@ TMyApplication::TMyApplication():
   if(p_fdb->is_empty())
   {
     Serial.println("Выполняем первичную инициализацию базы формул.");
-    p_fdb->assign("anapana", "150 * (gl + gm) / d");
+    p_fdb->assign("diss", "150 * (gl + gm) / d");
   }
 
-  p_prefs->init_key("f", "формула", "anapana", [this](const String& value) -> void
+  p_prefs->init_key("f", "формула", "diss", [this](const String& value) -> void
   {
     String val = this->p_fdb->get_value(value);
     
