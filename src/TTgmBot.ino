@@ -365,7 +365,7 @@ TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TCbChangeF
   Serial.print("\nTest Telegram connection... ");
   pbot->begin() ? Serial.println("Ok!") : Serial.println("Ошибка!");
 
-  queue = xQueueCreate(16, sizeof(String *));
+  queue = xQueueCreate(4, sizeof(String *));
   if (queue == NULL) {
     Serial.println("Error creating the queue");
   }
@@ -394,12 +394,6 @@ void TTgmBot::send(const String& m, bool isMarkdownEnabled)
 {
   if(pbot)
   {
-    //pbot->sendTo(CHAT_ID, m);
-    /*TBMessage msg;
-    msg.chatId = CHAT_ID;
-    msg.isMarkdownEnabled = isMarkdownEnabled;
-    pbot->sendMessage(msg, m);
-    */
     String *p = new String(m);
     xQueueSend(queue, &p, 0);
   }
