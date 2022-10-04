@@ -64,6 +64,9 @@ TCalcFormula::TCalcFormula(String ex)
   reg_var("gm", &gamma_md);
   p_ast = getAST(ex.c_str());
 
+  dict_name_id.clear();
+  dict_id_ptr.clear();
+
   if(!p_ast)
   {
     throw String("не могу скомпилировать формулу");
@@ -73,13 +76,36 @@ TCalcFormula::TCalcFormula(String ex)
 TCalcFormula::~TCalcFormula()
 {
     deleteExpression(p_ast);
-    dict_name_id.clear();
-    dict_id_ptr.clear();
+}
+
+TCalcFormula *TCalcFormula::compile(const String& val)
+{
+    TCalcFormula *res = NULL;
+
+    if(val.isEmpty())
+    {
+      throw String("текст формулы не может быть пустым");
+    }
+
+    try
+    {
+      res = new TCalcFormula(val);
+    }
+    catch(String& e)
+    {
+      delete res;
+      throw e;
+    }
+    catch(std::bad_alloc)
+    {
+      throw String("ошибка выделения памяти для TCalcFormula");
+    }
+
+    return res;
 }
 
 float TCalcFormula::run(void)
 {
     return evaluate(p_ast);
 }
-
 }

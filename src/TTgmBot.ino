@@ -223,7 +223,7 @@ void TTgmBot::run(void)// *p)
                   TCalcFormula *pcf;
                   try
                   {
-                    pcf = p_fdb->compile(val);
+                    pcf = TCalcFormula::compile(val);
 
                     p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
 

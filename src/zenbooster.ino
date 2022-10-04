@@ -404,7 +404,7 @@ TMyApplication::TMyApplication():
   {
     String val = this->p_fdb->get_value(value);
     
-    TCalcFormula *pcf = this->p_fdb->compile(val);
+    TCalcFormula *pcf = TCalcFormula::compile(val);
     update_calc_formula(pcf);
   });
 

@@ -18,6 +18,8 @@ class TCalcFormula: public TRingBufferInItem
     TCalcFormula(String ex);
     ~TCalcFormula();
 
+    static TCalcFormula *compile(const String& val);
+
     float run(void);
 };
 }

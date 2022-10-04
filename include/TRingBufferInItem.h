@@ -14,5 +14,15 @@ struct TRingBufferInItem
   int beta_hi;
   int gamma_lo;
   int gamma_md;
+
+  /*String serialize(void)
+  {
+    String res = "time="+String(time)+
+          ", d="+String(delta)+", t="+String(theta)+
+          ", al="+String(alpha_lo)+", ah="+String(alpha_hi)+
+          ", bl="+String(beta_lo)+", bh="+String(beta_hi)+
+          ", gl="+String(gamma_lo)+", gm="+String(gamma_md);
+    return res;
+  }*/
 };
 }

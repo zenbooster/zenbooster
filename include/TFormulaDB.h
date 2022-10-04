@@ -11,7 +11,5 @@ namespace FormulaDB
     {
         public:
             TFormulaDB();
-
-            TCalcFormula *compile(const String& val);
     };
 }

@@ -22,7 +22,8 @@ typedef function<void(TCalcFormula *)> TCbChangeFunction;
 class TTgmBot
 {
   private:
-    const unsigned long mtbs = 250; // mean time between scan messages
+    //const unsigned long mtbs = 250; // mean time between scan messages
+    const unsigned long mtbs = 500; // mean time between scan messages
     String dev_name;
     TPrefs *p_prefs;
     TFormulaDB *p_fdb;
