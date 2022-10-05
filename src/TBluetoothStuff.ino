@@ -89,7 +89,8 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_ca
   SerialBT.begin(dev_name, true);
   Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
 
-  xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
+  //xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
+  xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2000, this,
       (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
 }
 
