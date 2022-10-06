@@ -6,6 +6,7 @@
 
 namespace BluetoothStuff
 {
+using namespace common;
 using namespace Util;
 using namespace Noise;
 
@@ -90,7 +91,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_ca
   Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
 
   //xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
-  xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2000, this,
+  xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2200, this,
       (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
 }
 

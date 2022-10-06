@@ -454,7 +454,7 @@ static const flex_int16_t yy_chk[41] =
 #include "Parser.h"
 
 //#include <stdio.h>
-//#include <HardwareSerial.h>
+#include <HardwareSerial.h>
 extern const size_t SerialPrintf (const char *szFormat, ...);
 
 #line 460 "src/lexer.cpp"
@@ -2038,6 +2038,6 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 
 int yyerror(SExpression **expression, yyscan_t scanner, const char *msg) {
-    SerialPrintf("yyerror: %s\n", msg);
+    Serial.printf("yyerror: %s\n", msg);
     return 0;
 }

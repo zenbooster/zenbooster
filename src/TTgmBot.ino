@@ -6,10 +6,13 @@
 #include "TTgmBot.h"
 #include ".\\tg_certificate.h"
 #include "TUtil.h"
+#include "TMyApplication.h"
+//#include "esp_arduino_version.h"
 
 namespace TgmBot
 {
 using namespace Util;
+using namespace MyApplication;
 
 int TTgmBot::ref_cnt = 0;
 
@@ -56,7 +59,11 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
   String s_idf_ver = esp_get_idf_version();
   s_idf_ver.replace(".", "\\.");
   s_idf_ver.replace("-", "\\-");
-
+  /*String s_ard_ver = 
+    String(ESP_ARDUINO_VERSION_MAJOR, 10) + "\\." + 
+    String(ESP_ARDUINO_VERSION_MINOR, 10) + "\\." +
+    String(ESP_ARDUINO_VERSION_PATCH, 10);
+  */
   tcpip_adapter_ip_info_t ipInfo;
   tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipInfo);
   String s_adapter_ip = TgmBot::ip2str(ipInfo.ip);
@@ -65,8 +72,10 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
   s_adapter_gw.replace(".", "\\.");
 
   pbot->sendMessage(msg, (
-    String("*Система*:\n")+
+    String("*Система*:\n") +
     "*версия IDF*: " + s_idf_ver + "\n"
+    //"*версия Arduino*: " + s_ard_ver + "\n"
+    "*прошивка*: " + TUtil::screen_mark_down(TMyApplication::get_version_string()) + "\n"
     "*MAC адрес адаптера*: " + WiFi.macAddress() + "\n"
     "*IP адрес адаптера*: " + s_adapter_ip + "\n"
     "*IP адрес шлюза*: " + s_adapter_gw + "\n"
