@@ -1,3 +1,4 @@
+#include "Version.h"
 #include <Arduino.h>
 #include <esp_coexist.h>
 #include "TCalcFormula.h"
@@ -72,6 +73,7 @@ const size_t SerialPrintf (const char *szFormat, ...)
 class TMyApplication
 {
   private:
+    const char *DEVICE_NAME_FULL = "zenbooster device";
     const char *DEVICE_NAME = "zenbooster-dev";
     const char *WIFI_SSID = DEVICE_NAME;
     const char *WIFI_PASS = "zbdzbdzbd";
@@ -322,6 +324,7 @@ TMyApplication::TMyApplication():
   , p_noise(NULL)
 #endif
 {
+  Serial.printf("%s, версия %s, собран %s\n", DEVICE_NAME_FULL, VERSION, BUILD_TIMESTAMP);
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2
     "true",
@@ -475,9 +478,6 @@ void setup()
 {
   esp_coex_preference_set(ESP_COEX_PREFER_BALANCE);
   Serial.begin(115200);
-  Serial.print("Setup: priority = ");
-  Serial.println(uxTaskPriorityGet(NULL));
-
   p_app = new TMyApplication();
 }
 
