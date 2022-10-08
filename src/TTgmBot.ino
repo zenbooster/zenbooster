@@ -59,11 +59,12 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
   String s_idf_ver = esp_get_idf_version();
   s_idf_ver.replace(".", "\\.");
   s_idf_ver.replace("-", "\\-");
-  /*String s_ard_ver = 
+#ifdef ESP_ARDUINO_VERSION_MAJOR
+  String s_ard_ver = 
     String(ESP_ARDUINO_VERSION_MAJOR, 10) + "\\." + 
     String(ESP_ARDUINO_VERSION_MINOR, 10) + "\\." +
     String(ESP_ARDUINO_VERSION_PATCH, 10);
-  */
+#endif
   tcpip_adapter_ip_info_t ipInfo;
   tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipInfo);
   String s_adapter_ip = TgmBot::ip2str(ipInfo.ip);
@@ -74,7 +75,9 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
   pbot->sendMessage(msg, (
     String("*Система*:\n") +
     "*версия IDF*: " + s_idf_ver + "\n"
-    //"*версия Arduino*: " + s_ard_ver + "\n"
+  #ifdef ESP_ARDUINO_VERSION_MAJOR
+    "*версия Arduino*: " + s_ard_ver + "\n"
+  #endif
     "*прошивка*: " + TUtil::screen_mark_down(TMyApplication::get_version_string()) + "\n"
     "*MAC адрес адаптера*: " + WiFi.macAddress() + "\n"
     "*IP адрес адаптера*: " + s_adapter_ip + "\n"
