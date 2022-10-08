@@ -73,8 +73,8 @@ class TMyApplication
     static bool is_log_data_to_bot;
 
     int calc_formula_meditation();
-    static int int_from_12bit(unsigned char *buf);
-    static void callback(unsigned char code, unsigned char *data, void *arg);
+    static int int_from_12bit(const uint8_t *buf);
+    static void callback(const uint8_t *data, void *arg);
     void update_calc_formula(TCalcFormula *pcf);
 
   public:

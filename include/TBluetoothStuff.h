@@ -13,13 +13,15 @@ using namespace MyApplication;
 
 //typedef void (*tpfn_callback)(unsigned char code, unsigned char *data, void *arg);
 
+class TBluetoothDataProcessor;
+
 class TBluetoothStuff
 {
   private:
     static int ref_cnt;
     String dev_name;
-    TMyApplication *p_app;
-    tpfn_callback pfn_callback;
+    static TMyApplication *p_app;
+    static tpfn_callback pfn_callback;
 
     BluetoothSerial SerialBT;
 
@@ -27,11 +29,16 @@ class TBluetoothStuff
     uint8_t address[6];
     String name;
     String pin;
-    bool connected;
+    static bool connected;
 
-    TTgamPacketParser *p_tpp;
+    static TTgamPacketParser *p_tpp;
+    static TBluetoothDataProcessor *dp;
 
+    static void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
+    static void on_data(const uint8_t *buffer, size_t size);
     static void task(void *p);
+
+    friend class TBluetoothDataProcessor;
 
   public:
     TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_callback pfn_callback);

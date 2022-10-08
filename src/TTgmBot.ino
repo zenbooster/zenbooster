@@ -376,7 +376,7 @@ TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TCbChangeF
 
   queue = xQueueCreate(4, sizeof(String *));
   if (queue == NULL) {
-    Serial.println("Error creating the queue");
+    throw String("Error creating the queue");
   }
 
   char welcome_msg[128];

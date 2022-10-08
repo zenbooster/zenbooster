@@ -3,32 +3,48 @@
 
 namespace TgamPacketParser
 {
-typedef void (*tpfn_callback)(unsigned char code, unsigned char *data, void *arg);
+enum TEnumState
+{
+  e_sync,
+  e_sync_check,
+  e_payload_length,
+  e_payload,
+  e_chksum,
+  e_wait_hi,
+  e_wait_lo
+};
+
+typedef void (*tpfn_data_callback)(const uint8_t *data, size_t size);
+typedef void (*tpfn_callback)(const uint8_t *data, void *arg);
 
 class TTgamPacketParser
 {
   private:
-    //typedef void (*tpfn_callback)(unsigned char code, unsigned char *data, void *arg);
+    //typedef void (*tpfn_callback)(uint8_t code, uint8_t *data, void *arg);
   
     static const char SYNC = 0xAA;
     static const char EXCODE = 0x55;
 
     BluetoothSerial *p_serial;
 
+    TEnumState state;
     int checksum;
-    unsigned char payload[256];
-    unsigned char pLength;
-    unsigned char c;
-    unsigned char i;
+    int payload_length;
+    int payload_bytes_received;
 
+    uint8_t payload[256];
+    uint8_t pLength;
+    uint8_t c;
+    uint8_t i;
+
+    tpfn_data_callback data_callback;
     tpfn_callback callback;
     void *cb_arg;
 
-    uint8_t _read_byte(void);
-    int _parse_payload( unsigned char *payload, unsigned char pLength );
-
   public:
-    TTgamPacketParser(BluetoothSerial *p, tpfn_callback callback, void *cb_arg = NULL);
-    void run(void);
+    TTgamPacketParser(BluetoothSerial *p, tpfn_data_callback data_callback, tpfn_callback callback, void *cb_arg = NULL);
+    void run(uint8_t b);
+    void parse_payload(void);
+    //int parse_data(const uint8_t *payload, size_t pLength);
 };
 }

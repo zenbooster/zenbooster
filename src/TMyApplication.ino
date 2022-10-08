@@ -90,116 +90,113 @@ int TMyApplication::calc_formula_meditation()
   return res / ring_buffer_in_size;
 }
 
-int TMyApplication::int_from_12bit(unsigned char *buf)
+int TMyApplication::int_from_12bit(const uint8_t *buf)
 {
   return (*buf << 16) + (buf[1] << 8) + buf[2];
 }
 
-void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg)
+void TMyApplication::callback(const uint8_t *data, void *arg)
 {
   TMyApplication *p_this = (TMyApplication *)arg;
 
-  if (code == 0x83)
+  #ifdef PIN_BTN
+    if(is_blink_on_packets)
+    {
+      ledcWrite(2, is_blue_pulse ? 255: 128);
+      is_blue_pulse = !is_blue_pulse;
+    }
+    else
+    {
+      ledcWrite(2, 255);
+    }
+  #endif
+
+  int delta = int_from_12bit(data);
+  int theta = int_from_12bit(data + 3);
+  int alpha_lo = int_from_12bit(data + 6);
+  int alpha_hi = int_from_12bit(data + 9);
+  int beta_lo = int_from_12bit(data + 12);
+  int beta_hi = int_from_12bit(data + 15);
+  //
+  int gamma_lo = int_from_12bit(data + 18);
+  int gamma_md = int_from_12bit(data + 21);
+
+  time_t now;
+  time(&now);
   {
-    #ifdef PIN_BTN
-      if(is_blink_on_packets)
-      {
-        ledcWrite(2, is_blue_pulse ? 255: 128);
-        is_blue_pulse = !is_blue_pulse;
-      }
-      else
-      {
-        ledcWrite(2, 255);
-      }
-    #endif
+    TRingBufferInItem item = {now, delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md};
+    p_this->ring_buffer_in[p_this->ring_buffer_in_index] = item;
 
-    int delta = int_from_12bit(data);
-    int theta = int_from_12bit(data + 3);
-    int alpha_lo = int_from_12bit(data + 6);
-    int alpha_hi = int_from_12bit(data + 9);
-    int beta_lo = int_from_12bit(data + 12);
-    int beta_hi = int_from_12bit(data + 15);
-    //
-    int gamma_lo = int_from_12bit(data + 18);
-    int gamma_md = int_from_12bit(data + 21);
+    if(p_this->ring_buffer_in_size < 4)
+      p_this->ring_buffer_in_size++;
+  }
 
-    time_t now;
-    time(&now);
+  int med = p_this->calc_formula_meditation();
+  p_this->ring_buffer_in_index = (p_this->ring_buffer_in_index + 1) & 3;
+  
+  /*TRingBufferOutItem item = {now, med};
+  p_this->ring_buffer_out[p_this->ring_buffer_out_index] = item;
+  p_this->ring_buffer_out_index = (p_this->ring_buffer_out_index + 1) & 3;
+  */
+
+  Serial.printf("delta=%d, theta=%d, alpha_lo=%d, alpha_hi=%d, beta_lo=%d, beta_hi=%d, gamma_lo=%d, gamma_md=%d; --> f_med=%d\n", delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md, med);
+
+  if(p_this->is_log_data_to_bot)
+  {
+    //static int i = 0;
+    String m;
+
+    //if(!i)
     {
-      TRingBufferInItem item = {now, delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md};
-      p_this->ring_buffer_in[p_this->ring_buffer_in_index] = item;
-
-      if(p_this->ring_buffer_in_size < 4)
-        p_this->ring_buffer_in_size++;
+      p_this->p_wifi_stuff->tgb_send(
+        "`d="+String(delta)+", t="+String(theta)+
+        ", al="+String(alpha_lo)+", ah="+String(alpha_hi)+
+        ", bl="+String(beta_lo)+", bh="+String(beta_hi)+
+        ", gl="+String(gamma_lo)+", gm="+String(gamma_md)+
+        ", f="+String(med)+"`"
+      );
     }
+    //p_this->p_wifi_stuff->tgb_send(m);
+    //i = (i + 1) & 7;
+  }
 
-    int med = p_this->calc_formula_meditation();
-    p_this->ring_buffer_in_index = (p_this->ring_buffer_in_index + 1) & 3;
-    
-    /*TRingBufferOutItem item = {now, med};
-    p_this->ring_buffer_out[p_this->ring_buffer_out_index] = item;
-    p_this->ring_buffer_out_index = (p_this->ring_buffer_out_index + 1) & 3;
-    */
+  if(med > TMyApplication::MED_THRESHOLD)
+  {
+  #ifdef SOUND
+    TNoise::set_level(0);
+  #endif
+  #ifdef PIN_BTN
+    ledcWrite(0, 255);
+    ledcWrite(1, 255);
+  #endif
+  }
+  else
+  {
+    int d = TMyApplication::MED_THRESHOLD - med;
 
-    Serial.printf("delta=%d, theta=%d, alpha_lo=%d, alpha_hi=%d, beta_lo=%d, beta_hi=%d, gamma_lo=%d, gamma_md=%d; --> f_med=%d\n", delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md, med);
-
-    if(p_this->is_log_data_to_bot)
-    {
-      //static int i = 0;
-      String m;
-
-      //if(!i)
-      {
-        p_this->p_wifi_stuff->tgb_send(
-          "`d="+String(delta)+", t="+String(theta)+
-          ", al="+String(alpha_lo)+", ah="+String(alpha_hi)+
-          ", bl="+String(beta_lo)+", bh="+String(beta_hi)+
-          ", gl="+String(gamma_lo)+", gm="+String(gamma_md)+
-          ", f="+String(med)+"`"
-        );
-      }
-      //p_this->p_wifi_stuff->tgb_send(m);
-      //i = (i + 1) & 7;
-    }
-
-    if(med > TMyApplication::MED_THRESHOLD)
+    if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
     {
     #ifdef SOUND
-      TNoise::set_level(0);
+      TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
     #endif
     #ifdef PIN_BTN
-      ledcWrite(0, 255);
-      ledcWrite(1, 255);
+      int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
+      ledcWrite(0, led_lvl);
+      ledcWrite(1, led_lvl);
     #endif
     }
     else
     {
-      int d = TMyApplication::MED_THRESHOLD - med;
-
-      if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
-      {
-      #ifdef SOUND
-        TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
-      #endif
-      #ifdef PIN_BTN
-        int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
-        ledcWrite(0, led_lvl);
-        ledcWrite(1, led_lvl);
-      #endif
-      }
-      else
-      {
-      #ifdef SOUND
-        TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
-      #endif
-      #ifdef PIN_BTN
-        ledcWrite(0, 0);
-        ledcWrite(1, 0);
-      #endif
-      }
+    #ifdef SOUND
+      TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
+    #endif
+    #ifdef PIN_BTN
+      ledcWrite(0, 0);
+      ledcWrite(1, 0);
+    #endif
     }
-  } // if (code == 0x83)
-} // void TMyApplication::callback(unsigned char code, unsigned char *data, void *arg)
+  }
+} // void TMyApplication::callback(uint8_t code, uint8_t *data, void *arg)
 
 void TMyApplication::update_calc_formula(TCalcFormula *pcf)
 {

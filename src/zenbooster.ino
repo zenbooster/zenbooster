@@ -5,10 +5,6 @@
 #error Serial Bluetooth not available or not enabled. It is only available for the ESP32 chip.
 #endif
 
-/*#ifndef LED_BUILTIN
-#define LED_BUILTIN 2 // DevKit v1
-#endif*/
-
 using namespace MyApplication;
 
 TMyApplication *p_app = NULL;
