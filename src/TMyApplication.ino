@@ -124,13 +124,14 @@ void TMyApplication::callback(const TRingBufferInItem rbi, void *arg)
   p_this->ring_buffer_out_index = (p_this->ring_buffer_out_index + 1) & 3;
   */
 
-  Serial.printf("d=%d, t=%d, al=%d, ah=%d, bl=%d, bh=%d, gl=%d, gm=%d; em=%d; ea=%d; --> f_med=%d\n",
-    rbi.delta, rbi.theta, rbi.alpha_lo, rbi.alpha_hi, rbi.beta_lo, rbi.beta_hi, rbi.gamma_lo, rbi.gamma_md, rbi.esense_med, rbi.esense_att, med);
+  Serial.printf("poor=%d, d=%d, t=%d, al=%d, ah=%d, bl=%d, bh=%d, gl=%d, gm=%d; em=%d; ea=%d; --> f_med=%d\n",
+    rbi.poor_signal, rbi.delta, rbi.theta, rbi.alpha_lo, rbi.alpha_hi, rbi.beta_lo, rbi.beta_hi, rbi.gamma_lo, rbi.gamma_md, rbi.esense_med, rbi.esense_att, med);
 
   if(p_this->is_log_data_to_bot)
   {
     p_this->p_wifi_stuff->tgb_send(
-      "`d="+String(rbi.delta)+", t="+String(rbi.theta)+
+      "`poor_signal="+String(rbi.poor_signal)+
+      ", d="+String(rbi.delta)+", t="+String(rbi.theta)+
       ", al="+String(rbi.alpha_lo)+", ah="+String(rbi.alpha_hi)+
       ", bl="+String(rbi.beta_lo)+", bh="+String(rbi.beta_hi)+
       ", gl="+String(rbi.gamma_lo)+", gm="+String(rbi.gamma_md)+

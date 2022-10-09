@@ -116,6 +116,11 @@ void TTgamPacketParser::parse_payload(void)
       numBytes = 1;
     }
 
+    if(code == 2)
+    {
+      rbi.poor_signal = payload[i];
+    }
+    else
     if(code == 0x83)
     {
       is_has_83 = true;

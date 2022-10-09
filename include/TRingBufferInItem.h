@@ -6,6 +6,7 @@ namespace RingBufferInItem
 struct TRingBufferInItem
 {
   time_t time;
+  uint8_t poor_signal;
   int delta;
   int theta;
   int alpha_lo;
