@@ -59,7 +59,8 @@ void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
 
 ////////
 int TBluetoothStuff::ref_cnt = 0;
-bool TBluetoothStuff::connected = false;
+SemaphoreHandle_t TBluetoothStuff::xConnSemaphore;
+bool TBluetoothStuff::is_connected = false;
 TMyApplication *TBluetoothStuff::p_app;
 tpfn_callback TBluetoothStuff::pfn_callback = NULL;
 TTgamPacketParser *TBluetoothStuff::p_tpp = NULL;
@@ -73,7 +74,10 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     Serial.printf("callback: ESP_SPP_OPEN_EVT, handle=%u\n", handle);
 
     dp = new TBluetoothDataProcessor();
-
+    xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
+    TBluetoothStuff::is_connected = true;
+    xSemaphoreGive(xConnSemaphore);
+    Serial.println("Connected Succesfully!");
   }
   else
   if (event == ESP_SPP_CLOSE_EVT)
@@ -83,7 +87,8 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
 
     TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
 
-    if(TBluetoothStuff::connected) // были подключены, а теперь отключились
+    xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
+    if(TBluetoothStuff::is_connected) // были подключены, а теперь отключились
     {
     #ifdef PIN_BTN
       ledcWrite(0, 0x40);
@@ -95,67 +100,55 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
 
     delete dp;
     dp = NULL;
-  }
-}
-
-void TBluetoothStuff::on_data(const uint8_t *buffer, size_t size)
-{
-  if (dp)
-  {
-    const uint8_t *data = buffer;
-    const uint8_t *p_end = data + size;
-    for(const uint8_t *p = data; p < p_end; p++)
-    {
-      uint8_t b = *p;
-      if(p_tpp)
-      {
-        p_tpp->run(b);
-      }
-    }
+    TBluetoothStuff::is_connected = false;
+    xSemaphoreGive(xConnSemaphore);
   }
 }
 
 void TBluetoothStuff::task(void *p)
 {
   TBluetoothStuff *pthis = static_cast<TBluetoothStuff *>(p);
+  bool is_conn;
 
   for(;;)
   {
-    if(!pthis->SerialBT.connected())
+    xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
+    is_conn = is_connected;
+    xSemaphoreGive(xConnSemaphore);
+
+    if(!is_conn)
     {
-      connected = pthis->SerialBT.connect(pthis->address);
+      bool is_was_connected = pthis->SerialBT.connect(pthis->address);
       
-      if(connected)
-      {
-        Serial.println("Connected Succesfully!");
-      }
-      else
+      if(!is_was_connected)
       {
         Serial.println(F("Failed to connect. Make sure remote device is available and in range."));
       }
     }
-    //yield();
+    vTaskDelay(100);
   }
 }
 
 TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_callback pfn_callback):
   dev_name(dev_name)
 {
-  TBluetoothStuff::pfn_callback = pfn_callback;
-  TBluetoothStuff::p_app = p_app;
-  p_tpp = NULL;
-
   if(ref_cnt)
   {
     throw "Only one instance of TBluetoothStuff allowed!";
   }
   ref_cnt++;
 
-  connected = false;
+  TBluetoothStuff::pfn_callback = pfn_callback;
+  TBluetoothStuff::p_app = p_app;
+  p_tpp = NULL;
+
   pin = "0000";
   name = "MindWave";
   MACadd = "20:21:04:08:39:93";
   TUtil::mac_2_array(MACadd, address);
+
+  xConnSemaphore = xSemaphoreCreateBinary();
+  xSemaphoreGive(xConnSemaphore);
 
   p_tpp = new TTgamPacketParser(
     &SerialBT, 
@@ -167,7 +160,24 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_ca
 
   SerialBT.setPin(pin.c_str());
   SerialBT.register_callback(callback);
-  SerialBT.onData(on_data);
+  SerialBT.onData(
+    [](const uint8_t *buffer, size_t size) -> void
+    {
+      if (dp)
+      {
+        const uint8_t *data = buffer;
+        const uint8_t *p_end = data + size;
+        for(const uint8_t *p = data; p < p_end; p++)
+        {
+          uint8_t b = *p;
+          if(p_tpp)
+          {
+            p_tpp->run(b);
+          }
+        }
+      }
+    }
+  );
   SerialBT.begin(dev_name, true);
   Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
 

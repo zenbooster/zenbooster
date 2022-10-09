@@ -98,7 +98,26 @@ void TElementsDB::init_chunks(void)
 void TElementsDB::integrity_check(void)
 {
     // Under construction...
-    //Serial.println("TElementsDB::integrity_check(..): проверяем целостность БД...");
+    Serial.println("TElementsDB::integrity_check(..): проверяем целостность БД...");
+    traverse(
+        [this](const uint8_t id) -> void
+        {
+            /*String key;
+            prefs.begin(name_list.c_str(), false);
+            key = prefs.getString(String(id, 0x10).c_str());
+            prefs.end();
+
+            String s = "`" + String((p_current_key && (key == *p_current_key)) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
+
+            prefs.begin(name.c_str(), false);
+            s += TUtil::screen_mark_down(get_value_id(key));
+            prefs.end();
+            s += "`";
+
+            res += s;
+            res += "\n";*/
+        }
+    );
 }
 
 void TElementsDB::chk_key(const String& key)
