@@ -119,11 +119,6 @@ void TMyApplication::callback(const TRingBufferInItem rbi, void *arg)
   int med = p_this->calc_formula_meditation();
   p_this->ring_buffer_in_index = (p_this->ring_buffer_in_index + 1) & 3;
   
-  /*TRingBufferOutItem item = {now, med};
-  p_this->ring_buffer_out[p_this->ring_buffer_out_index] = item;
-  p_this->ring_buffer_out_index = (p_this->ring_buffer_out_index + 1) & 3;
-  */
-
   Serial.printf("poor=%d, d=%d, t=%d, al=%d, ah=%d, bl=%d, bh=%d, gl=%d, gm=%d; em=%d; ea=%d; --> f_med=%d\n",
     rbi.poor_signal, rbi.delta, rbi.theta, rbi.alpha_lo, rbi.alpha_hi, rbi.beta_lo, rbi.beta_hi, rbi.gamma_lo, rbi.gamma_md, rbi.esense_med, rbi.esense_att, med);
 
@@ -237,14 +232,14 @@ TMyApplication::TMyApplication():
     }
   });
 
-  p_prefs->init_key("tr", "установка порога", "95", [](const String& value) -> void
+  p_prefs->init_key("tr", "установка порога", "100", [](const String& value) -> void
   {
     TUtil::chk_value_is_number(value);
 
     MED_THRESHOLD = atoi(value.c_str());
   });
 
-  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "10", [](const String& value) -> void
+  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "60", [](const String& value) -> void
   {
     TUtil::chk_value_is_number(value);
 
@@ -252,7 +247,7 @@ TMyApplication::TMyApplication():
   });
 
 #ifdef SOUND
-  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.1", [](const String& value) -> void
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.6", [](const String& value) -> void
   {
     TUtil::chk_value_is_numeric(value);
 
@@ -277,7 +272,7 @@ TMyApplication::TMyApplication():
   if(p_fdb->is_empty())
   {
     Serial.println("Выполняем первичную инициализацию базы формул.");
-    p_fdb->assign("diss", "150 * (gl + gm) / d");
+    p_fdb->assign("gamma", "75 * 3 * gl / (gm + bh + bl)");
   }
 
   p_prefs->init_key("f", "формула", "diss", [this](const String& value) -> void
