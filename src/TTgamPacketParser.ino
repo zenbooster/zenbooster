@@ -55,16 +55,25 @@ void TTgamPacketParser::run(uint8_t b)
       else
       {
         payload_bytes_received = 0;
+        checksum = 0;
         state = e_payload;
       }
       break;
     
     case e_payload:
       payload[payload_bytes_received++] = b;
+      checksum = (uint8_t)(checksum + b);
       if(payload_bytes_received >= payload_length)
       {
+        state = e_chksum;
+      }
+      break;
+
+    case e_chksum:
+      state = e_sync;
+      if(b == ((~checksum) & 0xff))
+      {
         parse_payload();
-        state = e_sync;
       }
       break;
   }

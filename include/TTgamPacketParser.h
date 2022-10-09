@@ -29,7 +29,7 @@ class TTgamPacketParser
     BluetoothSerial *p_serial;
 
     TEnumState state;
-    int checksum;
+    uint8_t checksum;
     int payload_length;
     int payload_bytes_received;
 
