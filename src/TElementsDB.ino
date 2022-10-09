@@ -244,9 +244,8 @@ void TElementsDB::assign(const String& key, const String& val)
     } while (false);
 }
 
-String TElementsDB::list(const String *p_current_key)
+void TElementsDB::traverse(TCbTraverseFunction cb)
 {
-    String res;
     uint8_t i = 0;
     uint8_t j = 0;
 
@@ -286,27 +285,37 @@ String TElementsDB::list(const String *p_current_key)
 
                 for(uint8_t k = 0; k < n; k++)
                 {
-                    String key;
-                    prefs.begin(name_list.c_str(), false);
-                    key = prefs.getString(String(j++, 0x10).c_str());
-                    prefs.end();
-
-                    String s = "`" + String((p_current_key && (key == *p_current_key)) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
-
-                    prefs.begin(name.c_str(), false);
-                    s += TUtil::screen_mark_down(get_value_id(key));
-                    prefs.end();
-                    s += "`";
-
-                    res += s;
-                    res += "\n";
+                    cb(j++);
                 }
                 chunk >>= n;
                 t += n;
             }
         } // for(; n < 8; is_skip_zeroes = !is_skip_zeroes)
     } while(++i < bitmap_size);
+}
 
+String TElementsDB::list(const String *p_current_key)
+{
+    String res;
+    traverse(
+        [this, &res, p_current_key](const uint8_t id) -> void
+        {
+            String key;
+            prefs.begin(name_list.c_str(), false);
+            key = prefs.getString(String(id, 0x10).c_str());
+            prefs.end();
+
+            String s = "`" + String((p_current_key && (key == *p_current_key)) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
+
+            prefs.begin(name.c_str(), false);
+            s += TUtil::screen_mark_down(get_value_id(key));
+            prefs.end();
+            s += "`";
+
+            res += s;
+            res += "\n";
+        }
+    );
     return res;
 }
 

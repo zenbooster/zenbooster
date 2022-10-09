@@ -6,6 +6,8 @@ namespace ElementsDB
 {
 using namespace std;
 
+typedef function<void(const uint8_t id)> TCbTraverseFunction;
+
 class TFirstZeroBitResult;
 
 class TElementsDB
@@ -29,6 +31,8 @@ class TElementsDB
         void integrity_check(void);
 
         void chk_key(const String& key); // может бросить исключение
+
+        void traverse(TCbTraverseFunction cb); // обойти все элементы
 
     public:
         TElementsDB(const String& name);
