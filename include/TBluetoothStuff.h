@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <BluetoothSerial.h> // работает в 1.0.6; в 2.0.0 ... 2.0.4 не работает из-за багов в BluetoothSerial ((
 #include "TTgamPacketParser.h"
+//#include "TRingBufferInItem.h"
 
 namespace MyApplication {class TMyApplication;}
 
@@ -9,6 +10,7 @@ namespace BluetoothStuff
 {
 using namespace std;
 using namespace TgamPacketParser;
+//using namespace RingBufferInItem;
 using namespace MyApplication;
 
 //typedef void (*tpfn_callback)(unsigned char code, unsigned char *data, void *arg);

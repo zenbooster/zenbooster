@@ -14,6 +14,8 @@ struct TRingBufferInItem
   int beta_hi;
   int gamma_lo;
   int gamma_md;
+  int esense_att;
+  int esense_med;
 
   /*String serialize(void)
   {

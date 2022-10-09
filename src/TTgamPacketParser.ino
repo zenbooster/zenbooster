@@ -1,18 +1,18 @@
 #include <exception>
+#include <time.h>
 #include "TTgamPacketParser.h"
+#include "TUtil.h"
 
 namespace TgamPacketParser
 {
 using namespace std;
 
-TTgamPacketParser::TTgamPacketParser(BluetoothSerial *p, tpfn_data_callback data_callback, tpfn_callback callback, void *cb_arg):
+TTgamPacketParser::TTgamPacketParser(BluetoothSerial *p, tpfn_data_callback data_callback):
   p_serial(p),
   state(e_sync),
   payload_length(0),
   payload_bytes_received(0),
-  data_callback(data_callback),
-  callback(callback),
-  cb_arg(cb_arg)
+  data_callback(data_callback)
 {
   //
 }
@@ -70,18 +70,25 @@ void TTgamPacketParser::run(uint8_t b)
   }
 }
 
+int TTgamPacketParser::int_from_12bit(const uint8_t *buf)
+{
+  return (*buf << 16) + (buf[1] << 8) + buf[2];
+}
+
 void TTgamPacketParser::parse_payload(void)
 {
   uint8_t i = 0;
   uint8_t extendedCodeLevel = 0;
   uint8_t code = 0;
   uint8_t numBytes = 0;
-
+  TRingBufferInItem rbi = {};
+  bool is_has_83 = false;
+  
   /* Parse all bytes from the payload[] */
   while( i < payload_length )
   {
     /* Parse possible EXtended CODE bytes */
-    while( payload[i] == 0x55 )
+    while( payload[i] == EXCODE )
     {
         extendedCodeLevel++;
         i++;
@@ -91,78 +98,50 @@ void TTgamPacketParser::parse_payload(void)
     code = payload[i++];
 
     /* Parse value length */
-    if( code >= 0x80 ) numBytes = payload[i++];
-    else               numBytes = 1;
-
-    /* Call the callback function to handle the DataRow value */
-    /*if( parser->handleDataValue ) {
-        parser->handleDataValue( extendedCodeLevel, code, numBytes,
-                                parser->payload+i, parser->customData );
-    }*/
-    if(code == 0x83)
+    if( code >= 0x80 )
     {
-      if(data_callback)
-      {
-        //Serial.printf("HIT.2\n");
-        data_callback(payload+i, numBytes);
-      }
-    }
-    i = (uint8_t)(i + numBytes);
-  }
-}
-
-/*int TTgamPacketParser::parse_data(const uint8_t *payload, size_t pLength)
-{
-  uint8_t bytesParsed = 0;
-  uint8_t code;
-  uint8_t length;
-  uint8_t extendedCodeLevel;
-
-  // Loop until all bytes are parsed from the payload[] array...
-  while( bytesParsed < pLength )
-  {
-    // Parse the extendedCodeLevel, code, and length
-    extendedCodeLevel = 0;
-
-    while( payload[bytesParsed] == EXCODE )
-    {
-        extendedCodeLevel++;
-        bytesParsed++;
-    }
-
-    code = payload[bytesParsed++];
-
-    if( code & 0x80 )
-    {
-      length = payload[bytesParsed++];
+      numBytes = payload[i++];
     }
     else
     {
-      length = 1;
+      numBytes = 1;
     }
-    // TODO: Based on the extendedCodeLevel, code, length,
-    // and the [CODE] Definitions Table, handle the next
-    // "length" bytes of data from the payload as
-    // appropriate for your application.
 
-    //if(code != 0x80)
-    //{
-    //  SerialPrintf( "EXCODE level: %d CODE: 0x%02X length: %d\n", extendedCodeLevel, code, length );
-    //  SerialPrintf( "Data value(s):" );
-    //  for( i=0; i<length; i++ )
-    //  {
-    //    SerialPrintf( " %02X", payload[bytesParsed+i] & 0xFF );
-    //  }
-    //  SerialPrintf( "\n" );
-    //}
-    if(callback)
+    if(code == 0x83)
     {
-      callback(payload + bytesParsed, cb_arg);
+      is_has_83 = true;
+
+      uint8_t *data = payload + i;
+      time_t now;
+      time(&now);
+
+      rbi.time = now;
+      rbi.delta = int_from_12bit(data);
+      rbi.theta = int_from_12bit(data + 3);
+      rbi.alpha_lo = int_from_12bit(data + 6);
+      rbi.alpha_hi = int_from_12bit(data + 9);
+      rbi.beta_lo = int_from_12bit(data + 12);
+      rbi.beta_hi = int_from_12bit(data + 15);
+      rbi.gamma_lo = int_from_12bit(data + 18);
+      rbi.gamma_md = int_from_12bit(data + 21);
     }
-    
-    // Increment the bytesParsed by the length of the Data Value
-    bytesParsed += length;
+    else
+    if(code == 4)
+    {
+      rbi.esense_att = payload[i];
+    }
+    else
+    if(code == 5)
+    {
+      rbi.esense_med = payload[i];
+    }
+
+    i = (uint8_t)(i + numBytes);
   }
-  return( 0 );
-}*/
+
+  if(data_callback && is_has_83)
+  {
+    data_callback(rbi);
+  }
+}
 }

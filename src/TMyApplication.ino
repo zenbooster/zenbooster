@@ -95,7 +95,7 @@ int TMyApplication::int_from_12bit(const uint8_t *buf)
   return (*buf << 16) + (buf[1] << 8) + buf[2];
 }
 
-void TMyApplication::callback(const uint8_t *data, void *arg)
+void TMyApplication::callback(const TRingBufferInItem rbi, void *arg)
 {
   TMyApplication *p_this = (TMyApplication *)arg;
 
@@ -110,26 +110,11 @@ void TMyApplication::callback(const uint8_t *data, void *arg)
       ledcWrite(2, 255);
     }
   #endif
+  
+  p_this->ring_buffer_in[p_this->ring_buffer_in_index] = rbi;
 
-  int delta = int_from_12bit(data);
-  int theta = int_from_12bit(data + 3);
-  int alpha_lo = int_from_12bit(data + 6);
-  int alpha_hi = int_from_12bit(data + 9);
-  int beta_lo = int_from_12bit(data + 12);
-  int beta_hi = int_from_12bit(data + 15);
-  //
-  int gamma_lo = int_from_12bit(data + 18);
-  int gamma_md = int_from_12bit(data + 21);
-
-  time_t now;
-  time(&now);
-  {
-    TRingBufferInItem item = {now, delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md};
-    p_this->ring_buffer_in[p_this->ring_buffer_in_index] = item;
-
-    if(p_this->ring_buffer_in_size < 4)
-      p_this->ring_buffer_in_size++;
-  }
+  if(p_this->ring_buffer_in_size < 4)
+    p_this->ring_buffer_in_size++;
 
   int med = p_this->calc_formula_meditation();
   p_this->ring_buffer_in_index = (p_this->ring_buffer_in_index + 1) & 3;
@@ -139,25 +124,19 @@ void TMyApplication::callback(const uint8_t *data, void *arg)
   p_this->ring_buffer_out_index = (p_this->ring_buffer_out_index + 1) & 3;
   */
 
-  Serial.printf("delta=%d, theta=%d, alpha_lo=%d, alpha_hi=%d, beta_lo=%d, beta_hi=%d, gamma_lo=%d, gamma_md=%d; --> f_med=%d\n", delta, theta, alpha_lo, alpha_hi, beta_lo, beta_hi, gamma_lo, gamma_md, med);
+  Serial.printf("d=%d, t=%d, al=%d, ah=%d, bl=%d, bh=%d, gl=%d, gm=%d; em=%d; ea=%d; --> f_med=%d\n",
+    rbi.delta, rbi.theta, rbi.alpha_lo, rbi.alpha_hi, rbi.beta_lo, rbi.beta_hi, rbi.gamma_lo, rbi.gamma_md, rbi.esense_med, rbi.esense_att, med);
 
   if(p_this->is_log_data_to_bot)
   {
-    //static int i = 0;
-    String m;
-
-    //if(!i)
-    {
-      p_this->p_wifi_stuff->tgb_send(
-        "`d="+String(delta)+", t="+String(theta)+
-        ", al="+String(alpha_lo)+", ah="+String(alpha_hi)+
-        ", bl="+String(beta_lo)+", bh="+String(beta_hi)+
-        ", gl="+String(gamma_lo)+", gm="+String(gamma_md)+
-        ", f="+String(med)+"`"
-      );
-    }
-    //p_this->p_wifi_stuff->tgb_send(m);
-    //i = (i + 1) & 7;
+    p_this->p_wifi_stuff->tgb_send(
+      "`d="+String(rbi.delta)+", t="+String(rbi.theta)+
+      ", al="+String(rbi.alpha_lo)+", ah="+String(rbi.alpha_hi)+
+      ", bl="+String(rbi.beta_lo)+", bh="+String(rbi.beta_hi)+
+      ", gl="+String(rbi.gamma_lo)+", gm="+String(rbi.gamma_md)+
+      ", em="+String(rbi.esense_med)+", ea="+String(rbi.esense_att)+
+      ", f="+String(med)+"`"
+    );
   }
 
   if(med > TMyApplication::MED_THRESHOLD)

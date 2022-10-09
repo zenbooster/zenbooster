@@ -62,6 +62,8 @@ TCalcFormula::TCalcFormula(String ex)
   reg_var("bh", &beta_hi);
   reg_var("gl", &gamma_lo);
   reg_var("gm", &gamma_md);
+  reg_var("ea", &esense_att);
+  reg_var("em", &esense_med);
   p_ast = getAST(ex.c_str());
 
   dict_name_id.clear();

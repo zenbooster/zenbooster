@@ -11,33 +11,6 @@ using namespace common;
 using namespace Util;
 using namespace Noise;
 
-struct TBluetoothDataMessage
-{
-  const uint8_t *data;
-  size_t size;
-
-  TBluetoothDataMessage(const uint8_t *data, size_t size);
-  ~TBluetoothDataMessage();
-};
-
-TBluetoothDataMessage::TBluetoothDataMessage(const uint8_t *data, size_t size):
-  data(new uint8_t[size]),
-  size(size)
-{
-  if(data)
-  {
-    memcpy((void *)this->data, data, size);
-  }
-}
-
-TBluetoothDataMessage::~TBluetoothDataMessage()
-{
-  if(data)
-  {
-    delete [] data;
-  }
-}
-
 class TBluetoothDataProcessor
 {
   private:
@@ -48,7 +21,7 @@ class TBluetoothDataProcessor
   public:
     TBluetoothDataProcessor();
 
-    void send(const uint8_t *data, size_t size);
+    void send(const TRingBufferInItem& rbi);
 };
 
 void TBluetoothDataProcessor::task(void *p)
@@ -57,10 +30,10 @@ void TBluetoothDataProcessor::task(void *p)
 
   for(;;)
   {
-    TBluetoothDataMessage *p;
+    TRingBufferInItem *p;
     if(pdTRUE == xQueueReceive(p_this->queue, &p, portMAX_DELAY))
     {
-      TBluetoothStuff::pfn_callback(p->data, TBluetoothStuff::p_app);
+      TBluetoothStuff::pfn_callback(*p, TBluetoothStuff::p_app);
       delete p;
     }
   }
@@ -68,7 +41,7 @@ void TBluetoothDataProcessor::task(void *p)
 
 TBluetoothDataProcessor::TBluetoothDataProcessor()
 {
-  queue = xQueueCreate(64, sizeof(TBluetoothDataMessage*));
+  queue = xQueueCreate(64, sizeof(TRingBufferInItem*));
 
   if (queue == NULL) {
     throw String("Error creating the queue");
@@ -78,9 +51,9 @@ TBluetoothDataProcessor::TBluetoothDataProcessor()
       (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
 }
 
-void TBluetoothDataProcessor::send(const uint8_t *data, size_t size)
+void TBluetoothDataProcessor::send(const TRingBufferInItem& rbi)
 {
-    TBluetoothDataMessage *p = new TBluetoothDataMessage(data, size);
+    TRingBufferInItem *p = new TRingBufferInItem(rbi);
     xQueueSend(queue, &p, 0);
 }
 
@@ -186,12 +159,10 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_ca
 
   p_tpp = new TTgamPacketParser(
     &SerialBT, 
-    [](const uint8_t *data, size_t size) -> void
+    [](const TRingBufferInItem& rbi) -> void
     {
-      dp->send(data, size);
-    },
-    pfn_callback,
-    p_app
+      dp->send(rbi);
+    }
   );
 
   SerialBT.setPin(pin.c_str());

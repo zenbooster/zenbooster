@@ -3,7 +3,6 @@
 
 namespace Util
 {
-
 class TUtil
 {
     private:

@@ -74,7 +74,7 @@ class TMyApplication
 
     int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);
-    static void callback(const uint8_t *data, void *arg);
+    static void callback(const TRingBufferInItem rbi, void *arg);
     void update_calc_formula(TCalcFormula *pcf);
 
   public:
