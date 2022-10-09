@@ -95,7 +95,7 @@ int TMyApplication::int_from_12bit(const uint8_t *buf)
   return (*buf << 16) + (buf[1] << 8) + buf[2];
 }
 
-void TMyApplication::callback(const TRingBufferInItem rbi, void *arg)
+void TMyApplication::callback(const TTgamParsedValues tpv, void *arg)
 {
   TMyApplication *p_this = (TMyApplication *)arg;
 
@@ -111,7 +111,7 @@ void TMyApplication::callback(const TRingBufferInItem rbi, void *arg)
     }
   #endif
   
-  p_this->ring_buffer_in[p_this->ring_buffer_in_index] = rbi;
+  p_this->ring_buffer_in[p_this->ring_buffer_in_index] = tpv;
 
   if(p_this->ring_buffer_in_size < 4)
     p_this->ring_buffer_in_size++;
@@ -119,20 +119,12 @@ void TMyApplication::callback(const TRingBufferInItem rbi, void *arg)
   int med = p_this->calc_formula_meditation();
   p_this->ring_buffer_in_index = (p_this->ring_buffer_in_index + 1) & 3;
   
-  Serial.printf("poor=%d, d=%d, t=%d, al=%d, ah=%d, bl=%d, bh=%d, gl=%d, gm=%d; em=%d; ea=%d; --> f_med=%d\n",
-    rbi.poor_signal, rbi.delta, rbi.theta, rbi.alpha_lo, rbi.alpha_hi, rbi.beta_lo, rbi.beta_hi, rbi.gamma_lo, rbi.gamma_md, rbi.esense_med, rbi.esense_att, med);
+  String s = tpv.serialize() + "; --> f=" + med;
+  Serial.println(s);
 
   if(p_this->is_log_data_to_bot)
   {
-    p_this->p_wifi_stuff->tgb_send(
-      "`poor_signal="+String(rbi.poor_signal)+
-      ", d="+String(rbi.delta)+", t="+String(rbi.theta)+
-      ", al="+String(rbi.alpha_lo)+", ah="+String(rbi.alpha_hi)+
-      ", bl="+String(rbi.beta_lo)+", bh="+String(rbi.beta_hi)+
-      ", gl="+String(rbi.gamma_lo)+", gm="+String(rbi.gamma_md)+
-      ", em="+String(rbi.esense_med)+", ea="+String(rbi.esense_att)+
-      ", f="+String(med)+"`"
-    );
+    p_this->p_wifi_stuff->tgb_send("`" + s + "`");
   }
 
   if(med > TMyApplication::MED_THRESHOLD)

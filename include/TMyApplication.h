@@ -4,6 +4,7 @@
 #ifdef PIN_BTN
 # include "TSleepMode.h"
 #endif
+#include "TTgamParsedValues.h"
 #include "TRingBufferInItem.h"
 
 namespace Prefs {class TPrefs;}
@@ -25,6 +26,7 @@ using namespace CalcFormula;
 #ifdef PIN_BTN
 using namespace SleepMode;
 #endif
+using namespace TgamParsedValues;
 using namespace RingBufferInItem;
 
 /*struct TRingBufferOutItem
@@ -74,7 +76,7 @@ class TMyApplication
 
     int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);
-    static void callback(const TRingBufferInItem rbi, void *arg);
+    static void callback(const TTgamParsedValues tpv, void *arg);
     void update_calc_formula(TCalcFormula *pcf);
 
   public:

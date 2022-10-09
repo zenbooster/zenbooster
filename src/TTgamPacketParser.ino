@@ -19,7 +19,6 @@ TTgamPacketParser::TTgamPacketParser(BluetoothSerial *p, tpfn_data_callback data
 
 void TTgamPacketParser::run(uint8_t b)
 {
-  //Serial.printf("HIT.0: b=%x, state=%d\n", b, state);
   switch(state)
   {
     case e_sync:
@@ -90,8 +89,7 @@ void TTgamPacketParser::parse_payload(void)
   uint8_t extendedCodeLevel = 0;
   uint8_t code = 0;
   uint8_t numBytes = 0;
-  TRingBufferInItem rbi = {};
-  bool is_has_83 = false;
+  TTgamParsedValues tpv = {};
   
   /* Parse all bytes from the payload[] */
   while( i < payload_length )
@@ -116,46 +114,53 @@ void TTgamPacketParser::parse_payload(void)
       numBytes = 1;
     }
 
+    if(code == 1)
+    {
+      tpv.batt = payload[i];
+      tpv.is_has_batt = true;
+    }
+    else
     if(code == 2)
     {
-      rbi.poor_signal = payload[i];
+      tpv.poor = payload[i];
+      tpv.is_has_poor = true;
     }
     else
     if(code == 0x83)
     {
-      is_has_83 = true;
-
       uint8_t *data = payload + i;
       time_t now;
       time(&now);
 
-      rbi.time = now;
-      rbi.delta = int_from_12bit(data);
-      rbi.theta = int_from_12bit(data + 3);
-      rbi.alpha_lo = int_from_12bit(data + 6);
-      rbi.alpha_hi = int_from_12bit(data + 9);
-      rbi.beta_lo = int_from_12bit(data + 12);
-      rbi.beta_hi = int_from_12bit(data + 15);
-      rbi.gamma_lo = int_from_12bit(data + 18);
-      rbi.gamma_md = int_from_12bit(data + 21);
+      tpv.time = now;
+      tpv.delta = int_from_12bit(data);
+      tpv.theta = int_from_12bit(data + 3);
+      tpv.alpha_lo = int_from_12bit(data + 6);
+      tpv.alpha_hi = int_from_12bit(data + 9);
+      tpv.beta_lo = int_from_12bit(data + 12);
+      tpv.beta_hi = int_from_12bit(data + 15);
+      tpv.gamma_lo = int_from_12bit(data + 18);
+      tpv.gamma_md = int_from_12bit(data + 21);
+
+      tpv.is_has_eeg_power = true;
     }
     else
     if(code == 4)
     {
-      rbi.esense_att = payload[i];
+      tpv.esense_att = payload[i];
     }
     else
     if(code == 5)
     {
-      rbi.esense_med = payload[i];
+      tpv.esense_med = payload[i];
     }
 
     i = (uint8_t)(i + numBytes);
   }
 
-  if(data_callback && is_has_83)
+  if(data_callback && tpv.is_has_eeg_power)
   {
-    data_callback(rbi);
+    data_callback(tpv);
   }
 }
 }

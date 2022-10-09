@@ -1,9 +1,10 @@
 #pragma once
 #include <BluetoothSerial.h>
-#include "TRingBufferInItem.h"
+#include "TTgamParsedValues.h"
 namespace TgamPacketParser
 {
-using namespace RingBufferInItem;
+using namespace TgamParsedValues;
+
 enum TEnumState
 {
   e_sync,
@@ -15,8 +16,8 @@ enum TEnumState
   e_wait_lo
 };
 
-typedef void (*tpfn_data_callback)(const TRingBufferInItem& rbi);
-typedef void (*tpfn_callback)(const TRingBufferInItem rbi, void *arg);
+typedef void (*tpfn_data_callback)(const TTgamParsedValues& tpv);
+typedef void (*tpfn_callback)(const TTgamParsedValues tpv, void *arg);
 
 class TTgamPacketParser
 {
@@ -47,6 +48,5 @@ class TTgamPacketParser
     TTgamPacketParser(BluetoothSerial *p, tpfn_data_callback data_callback);
     void run(uint8_t b);
     void parse_payload(void);
-    int parse_data(const uint8_t *payload, size_t pLength);
 };
 }

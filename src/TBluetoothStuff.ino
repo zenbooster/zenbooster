@@ -21,7 +21,7 @@ class TBluetoothDataProcessor
   public:
     TBluetoothDataProcessor();
 
-    void send(const TRingBufferInItem& rbi);
+    void send(const TTgamParsedValues& tpv);
 };
 
 void TBluetoothDataProcessor::task(void *p)
@@ -30,7 +30,7 @@ void TBluetoothDataProcessor::task(void *p)
 
   for(;;)
   {
-    TRingBufferInItem *p;
+    TTgamParsedValues *p;
     if(pdTRUE == xQueueReceive(p_this->queue, &p, portMAX_DELAY))
     {
       TBluetoothStuff::pfn_callback(*p, TBluetoothStuff::p_app);
@@ -41,7 +41,7 @@ void TBluetoothDataProcessor::task(void *p)
 
 TBluetoothDataProcessor::TBluetoothDataProcessor()
 {
-  queue = xQueueCreate(64, sizeof(TRingBufferInItem*));
+  queue = xQueueCreate(64, sizeof(TTgamParsedValues*));
 
   if (queue == NULL) {
     throw String("Error creating the queue");
@@ -51,9 +51,9 @@ TBluetoothDataProcessor::TBluetoothDataProcessor()
       (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
 }
 
-void TBluetoothDataProcessor::send(const TRingBufferInItem& rbi)
+void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
 {
-    TRingBufferInItem *p = new TRingBufferInItem(rbi);
+    TTgamParsedValues *p = new TTgamParsedValues(tpv);
     xQueueSend(queue, &p, 0);
 }
 
@@ -159,9 +159,9 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_ca
 
   p_tpp = new TTgamPacketParser(
     &SerialBT, 
-    [](const TRingBufferInItem& rbi) -> void
+    [](const TTgamParsedValues& tpv) -> void
     {
-      dp->send(rbi);
+      dp->send(tpv);
     }
   );
 

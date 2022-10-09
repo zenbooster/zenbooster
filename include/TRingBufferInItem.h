@@ -1,12 +1,14 @@
 #pragma once
 #include <time.h>
 
+namespace TgamParsedValues {class TTgamParsedValues;}
+
 namespace RingBufferInItem
 {
+using namespace TgamParsedValues;
+
 struct TRingBufferInItem
 {
-  time_t time;
-  uint8_t poor_signal;
   int delta;
   int theta;
   int alpha_lo;
@@ -18,14 +20,6 @@ struct TRingBufferInItem
   int esense_att;
   int esense_med;
 
-  /*String serialize(void)
-  {
-    String res = "time="+String(time)+
-          ", d="+String(delta)+", t="+String(theta)+
-          ", al="+String(alpha_lo)+", ah="+String(alpha_hi)+
-          ", bl="+String(beta_lo)+", bh="+String(beta_hi)+
-          ", gl="+String(gamma_lo)+", gm="+String(gamma_md);
-    return res;
-  }*/
+  TRingBufferInItem& operator=(const TTgamParsedValues& other);
 };
 }
