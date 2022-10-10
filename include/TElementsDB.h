@@ -28,9 +28,10 @@ class TElementsDB
         String get_value_id(const String& key, uint8_t *id = NULL);
 
         void init_chunks(void);
-        void integrity_check(void);
+        bool integrity_check(void);
 
         void chk_key(const String& key); // может бросить исключение
+        String get_key_by_id(const uint8_t id);
 
         void traverse(TCbTraverseFunction cb); // обойти все элементы
 

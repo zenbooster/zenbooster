@@ -95,29 +95,44 @@ void TElementsDB::init_chunks(void)
     }
 }
 
-void TElementsDB::integrity_check(void)
+bool TElementsDB::integrity_check(void)
 {
+    bool res = true;
     // Under construction...
-    Serial.println("TElementsDB::integrity_check(..): проверяем целостность БД...");
+    Serial.print("TElementsDB::integrity_check(..): проверяем целостность БД...");
     traverse(
-        [this](const uint8_t id) -> void
+        [this, &res](const uint8_t id) -> void
         {
-            /*String key;
-            prefs.begin(name_list.c_str(), false);
-            key = prefs.getString(String(id, 0x10).c_str());
-            prefs.end();
-
-            String s = "`" + String((p_current_key && (key == *p_current_key)) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
-
-            prefs.begin(name.c_str(), false);
-            s += TUtil::screen_mark_down(get_value_id(key));
-            prefs.end();
-            s += "`";
-
-            res += s;
-            res += "\n";*/
+            String key = get_key_by_id(id);
+            if(key.isEmpty())
+            {
+                Serial.printf(
+                    "\nTElementsDB::integrity_check(..): name_list не содержит ключа для id=%d!"
+                    " Сбрасываем соответствующий бит в битовой карте.\n", id
+                );
+                write_bit(id, false);
+                res = false;
+            }
+            else
+            {
+                if(get_value_id(key).isEmpty())
+                {
+                    Serial.printf(
+                        "\nTElementsDB::integrity_check(..): name не содержит ключа \"%s\" для id=%d!\n"
+                        " Сбрасываем соответствующий бит в битовой карте.\n", key, id
+                    );
+                    // При этом не трогаем пару id: key в name_list, т.к. в будущем её можно будет повторно использовать.
+                    // Заодно сбережём ресурс флешки.
+                    write_bit(id, false);
+                    res = false;
+                }
+            }
         }
     );
+    if(res)
+    {
+        Serial.println("Ok!");
+    }
 }
 
 void TElementsDB::chk_key(const String& key)
@@ -126,6 +141,14 @@ void TElementsDB::chk_key(const String& key)
     {
         throw String("void TElementsDB::chk_key(..): длина ключа должна быть меньше либо равна 15 символам");
     }
+}
+
+String TElementsDB::get_key_by_id(const uint8_t id)
+{
+    prefs.begin(name_list.c_str(), false);
+    String key = prefs.getString(String(id, 0x10).c_str());
+    prefs.end();
+    return key;
 }
 
 TElementsDB::TElementsDB(const String& name):
@@ -194,9 +217,7 @@ void TElementsDB::assign(const String& key, const String& val)
         if(is_key)
         {
             Serial.printf("TElementsDB::assign(..): ключ \"%s\" существует.\n", key.c_str());
-            prefs.begin(name.c_str(), false);
             String value = get_value_id(key, (uint8_t*)&id);
-            prefs.end();
 
             if(value == val)
             {
@@ -319,16 +340,11 @@ String TElementsDB::list(const String *p_current_key)
     traverse(
         [this, &res, p_current_key](const uint8_t id) -> void
         {
-            String key;
-            prefs.begin(name_list.c_str(), false);
-            key = prefs.getString(String(id, 0x10).c_str());
-            prefs.end();
+            String key = get_key_by_id(id);
 
             String s = "`" + String((p_current_key && (key == *p_current_key)) ? "\\-\\>" : "  ") + "`*" + TUtil::screen_mark_down(key) + "* \\= `";
 
-            prefs.begin(name.c_str(), false);
             s += TUtil::screen_mark_down(get_value_id(key));
-            prefs.end();
             s += "`";
 
             res += s;
@@ -360,10 +376,11 @@ bool TElementsDB::is_empty(void)
 String TElementsDB::get_value_id(const String& key, uint8_t *id)
 {
     String res;
-
+    prefs.begin(name.c_str(), false);
     size_t sz_data = prefs.getBytesLength(key.c_str());
     uint8_t *p_data = new uint8_t[sz_data];
     prefs.getBytes(key.c_str(), p_data, sz_data);
+    prefs.end();
 
     if(id)
     {
@@ -389,12 +406,12 @@ String TElementsDB::get_value(const String& key)
 
     prefs.begin(name.c_str(), false);
     bool is_key = prefs.isKey(key.c_str());
+    prefs.end();
 
     if(is_key)
     {
         res = get_value_id(key);
     }
-    prefs.end();
 
     return res;
 }
