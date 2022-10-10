@@ -74,9 +74,8 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     Serial.printf("callback: ESP_SPP_OPEN_EVT, handle=%u\n", handle);
 
     dp = new TBluetoothDataProcessor();
-    xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
+    // Тут семафор не нужен, т.к. событие происходит до выхода из функции connect.
     TBluetoothStuff::is_connected = true;
-    xSemaphoreGive(xConnSemaphore);
     Serial.println("Connected Succesfully!");
   }
   else
@@ -87,7 +86,7 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
 
     TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
 
-    xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
+    // В данный момент никто не может изменять is_connected, по этому и семафор не нужен.
     if(TBluetoothStuff::is_connected) // были подключены, а теперь отключились
     {
     #ifdef PIN_BTN
@@ -100,6 +99,8 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
 
     delete dp;
     dp = NULL;
+    // А вот тут кое-кто может проверять состояние xConnSemaphore, по этому используем семафор.
+    xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
     TBluetoothStuff::is_connected = false;
     xSemaphoreGive(xConnSemaphore);
   }
@@ -112,6 +113,7 @@ void TBluetoothStuff::task(void *p)
 
   for(;;)
   {
+    // В этот момент, обработчик ESP_SPP_CLOSE_EVT может изменять is_connected.
     xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
     is_conn = is_connected;
     xSemaphoreGive(xConnSemaphore);
