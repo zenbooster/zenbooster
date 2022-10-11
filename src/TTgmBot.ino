@@ -7,6 +7,8 @@
 #include ".\\tg_certificate.h"
 #include "TUtil.h"
 #include "TMyApplication.h"
+#include <StreamString.h>
+#include "ArduinoJson.h"
 //#include "esp_arduino_version.h"
 
 namespace TgmBot
@@ -19,21 +21,24 @@ int TTgmBot::ref_cnt = 0;
 void TTgmBot::show_help(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, 
+  pbot->sendMessage(msg,
     "*Команды общего назначения*:\n"
     "*help* \\- помощь\n"
     "*info* \\- информация о состоянии\n"
     "*sysinfo* \\- системная информация\n"
     "*reset* \\- перезагрузка\n"
-    "*shutdown* \\- выключение\n\n"
+    "*shutdown* \\- выключение\n"
+    "*getconf* \\- отправить файл с настройками\n"
+  #ifdef PIN_BATTARY
+    "*charge* \\- уровень заряда\n"
+  #endif
+  );
+  pbot->sendMessage(msg,
     "*Команды для работы с базой формул*:\n"
     "*f\\_assign \\<имя\\> \\<текст\\>* \\- присвоить формуле с именем *\\<имя\\>* текст *\\<текст\\>*\n"
     "*f\\_assign \\<имя\\>* \\- удалить формулу с именем *\\<имя\\>*\n"
     "\\(*\\<имя\\>* должно иметь длину не больше 15 символов\\)\n"
     "*f\\_list* \\- показать список всех формул\n"
-  #ifdef PIN_BATTARY
-    "*charge* \\- уровень заряда\n"
-  #endif  
   );
   pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_desc()).c_str());
   pbot->sendMessage(msg, "\nУстановить значение: *option\\=value*\nЗапросить значение: *option?*");
@@ -86,6 +91,25 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
     "*размер свободной кучи*: " + heap_caps_get_free_size(MALLOC_CAP_8BIT) + "\n"
     "*максимальный размер свободного блока в куче*: " + heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) + "\n"
     ).c_str());
+}
+
+void TTgmBot::send_config(TBMessage& msg)
+{
+  DynamicJsonDocument doc(1024);
+  doc["options"] = p_prefs->get_json();
+  doc["formulas"] = p_fdb->get_json();
+  StreamString ss;
+  serializeJson(doc, ss);
+  pbot->sendMessage(msg, ss);
+  //pbot->sendDocument(msg, ss, ss.length(), AsyncTelegram2::DocumentType::ZIP, "config");
+}
+
+void TTgmBot::flush_message(void)
+{
+    while (!pbot->noNewMessage())
+    {
+      delay(50);
+    }
 }
 
 void TTgmBot::run(void)// *p)
@@ -169,12 +193,7 @@ void TTgmBot::run(void)// *p)
           {
             pbot->sendMessage(msg, (dev_name + " будет перезагружен...").c_str());
             // Wait until bot synced with telegram to prevent cyclic reboot
-            while (!pbot->noNewMessage())
-            {
-              Serial.print(".");
-              Serial.flush();
-              delay(50);
-            }
+            flush_message();
             esp_restart();
           }
           else
@@ -182,13 +201,23 @@ void TTgmBot::run(void)// *p)
           {
             pbot->sendMessage(msg, (dev_name + " будет выключен...").c_str());
             // Wait until bot synced with telegram to prevent cyclic reboot
-            while (!pbot->noNewMessage())
-            {
-              Serial.print(".");
-              Serial.flush();
-              delay(50);
-            }
+            flush_message();
             esp_deep_sleep_start();
+          }
+          else
+          if(text == "getconf")
+          {
+            String e_desc;
+            try
+            {
+              send_config(msg);
+            }
+            catch(const String& e)
+            {
+              e_desc = e;
+            }
+            pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
+            break;
           }
           else
           {
@@ -349,6 +378,7 @@ void TTgmBot::run(void)// *p)
       default:
         break;
     }
+    flush_message();
   }
 }
 

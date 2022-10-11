@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <Preferences.h>
+#include <ArduinoJson.h>
 
 namespace ElementsDB
 {
@@ -42,6 +43,7 @@ class TElementsDB
         bool has_value(const String& key); // может бросить исключение
         void assign(const String& key, const String& val = ""); // может бросить исключение
         String list(const String *p_current_key = NULL);
+        DynamicJsonDocument get_json(void);
         bool is_empty(void);
         String get_value(const String& key); // может бросить исключение
 };

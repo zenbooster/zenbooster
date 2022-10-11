@@ -101,4 +101,19 @@ String TPrefs::get_values(void)
   }
   return res;
 }
+
+DynamicJsonDocument TPrefs::get_json(void)
+{
+  DynamicJsonDocument res(1024);
+
+  for(std::map<String, TPrefValue>::iterator iter = data.begin(); iter != data.end(); ++iter)
+  {
+    String k =  iter->first;
+    TPrefValue v = iter->second;
+    String s = v.value;
+
+    res[k] = s;
+  }
+  return res;
+}
 }

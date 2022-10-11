@@ -11,9 +11,9 @@ enum TEnumState
   e_sync_check,
   e_payload_length,
   e_payload,
-  e_chksum,
+  e_chksum/*,
   e_wait_hi,
-  e_wait_lo
+  e_wait_lo*/
 };
 
 typedef void (*tpfn_data_callback)(const TTgamParsedValues& tpv);

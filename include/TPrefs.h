@@ -3,6 +3,7 @@
 #include <Preferences.h>
 #include <map>
 #include <functional>
+#include <ArduinoJson.h>
 
 namespace Prefs
 {
@@ -34,5 +35,6 @@ namespace Prefs
       //void reinit_value(const String& key);
       String get_desc(void);
       String get_values(void);
+      DynamicJsonDocument get_json(void);
   };
 }

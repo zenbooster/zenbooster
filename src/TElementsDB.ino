@@ -355,6 +355,20 @@ String TElementsDB::list(const String *p_current_key)
     return res;
 }
 
+DynamicJsonDocument TElementsDB::get_json(void)
+{
+    DynamicJsonDocument res(1024);
+    traverse(
+        [this, &res](const uint8_t id) -> void
+        {
+            String key = get_key_by_id(id);
+
+            res[key] = get_value_id(key);
+        }
+    );
+    return res;
+}
+
 bool TElementsDB::is_empty(void)
 {
     bool res;
