@@ -122,7 +122,7 @@ bool TElementsDB::integrity_check(void)
                 {
                     Serial.printf(
                         "\nTElementsDB::integrity_check(..): name не содержит ключа \"%s\" для id=%d!\n"
-                        " Сбрасываем соответствующий бит в битовой карте.\n", key, id
+                        " Сбрасываем соответствующий бит в битовой карте.\n", key.c_str(), id
                     );
                     // При этом не трогаем пару id: key в name_list, т.к. в будущем её можно будет повторно использовать.
                     // Заодно сбережём ресурс флешки.
@@ -136,6 +136,7 @@ bool TElementsDB::integrity_check(void)
     {
         Serial.println("Ok!");
     }
+    return res;
 }
 
 void TElementsDB::chk_key(const String& key)

@@ -41,6 +41,10 @@ class TTgmBot
     void show_help(TBMessage& msg);
     void show_info(TBMessage& msg);
     void show_sysinfo(TBMessage& msg);
+    void send_config(TBMessage& msg);
+
+    void flush_message(void);
+
   public:
     TTgmBot(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TCbChangeFunction cb_change_formula);
     ~TTgmBot();

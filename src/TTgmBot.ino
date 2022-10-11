@@ -100,7 +100,8 @@ void TTgmBot::send_config(TBMessage& msg)
   doc["formulas"] = p_fdb->get_json();
   StreamString ss;
   serializeJson(doc, ss);
-  pbot->sendMessage(msg, ss);
+  msg.isMarkdownEnabled = true;
+  pbot->sendMessage(msg, "`" + TUtil::screen_mark_down(ss) + "`");
   //pbot->sendDocument(msg, ss, ss.length(), AsyncTelegram2::DocumentType::ZIP, "config");
 }
 
@@ -207,16 +208,7 @@ void TTgmBot::run(void)// *p)
           else
           if(text == "getconf")
           {
-            String e_desc;
-            try
-            {
-              send_config(msg);
-            }
-            catch(const String& e)
-            {
-              e_desc = e;
-            }
-            pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
+            send_config(msg);
             break;
           }
           else
