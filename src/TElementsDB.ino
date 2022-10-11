@@ -81,7 +81,8 @@ String TElementsDB::get_chunk_name(uint8_t i)
 
 void TElementsDB::init_chunks(void)
 {
-    Serial.println("TElementsDB::init_chunks(..): проверяем существование всех чанков, т.к. в процессе первичной инициализации могло отключиться питание...");
+    Serial.print("TElementsDB::init_chunks(..): проверяем существование всех чанков, т.к. в процессе первичной инициализации могло отключиться питание...");
+    prefs.begin(name_list.c_str(), false);
     for(int i = 0; i < bitmap_size; i++)
     {
         String s_chunk_name = get_chunk_name(i);
@@ -93,6 +94,8 @@ void TElementsDB::init_chunks(void)
             prefs.putUChar(chunk_name, 0);
         }
     }
+    prefs.end();
+    Serial.println("Ok!");
 }
 
 bool TElementsDB::integrity_check(void)
@@ -155,10 +158,8 @@ TElementsDB::TElementsDB(const String& name):
     name(name),
     name_list(name + "-list")
 {
-    prefs.begin(name_list.c_str(), false);
     init_chunks();
     integrity_check();
-    prefs.end();
 }
 
 TElementsDB::~TElementsDB()
