@@ -356,6 +356,18 @@ String TElementsDB::list(const String *p_current_key)
     return res;
 }
 
+void TElementsDB::clear(void)
+{
+    // удаляем всё:
+    traverse(
+        [this](const uint8_t id) -> void
+        {
+            String key = get_key_by_id(id);
+            assign(key); // удаляем элемент
+        }
+    );
+}
+
 DynamicJsonDocument TElementsDB::get_json(void)
 {
     DynamicJsonDocument res(1024);
@@ -368,6 +380,52 @@ DynamicJsonDocument TElementsDB::get_json(void)
         }
     );
     return res;
+}
+
+void TElementsDB::validate_json_iteration(JsonPair& kv)
+{
+    String key = kv.key().c_str();
+    chk_key(key);
+
+    String val = kv.value().as<const char *>();
+    if(val.isEmpty())
+    {
+        throw "значение для \"" + key + "\" не должно быть пустым";
+    }
+}
+
+void TElementsDB::validate_json(DynamicJsonDocument& doc)
+{
+    JsonObject root = doc.as<JsonObject>();
+    for (JsonPair kv : root)
+    {
+        validate_json_iteration(kv);
+    }
+}
+
+void TElementsDB::set_json(DynamicJsonDocument& doc)
+{
+    validate_json(doc);
+    clear();
+    _add_json(doc);
+}
+
+void TElementsDB::_add_json(DynamicJsonDocument& doc)
+{
+    JsonObject root = doc.as<JsonObject>();
+    for (JsonPair kv : root)
+    {
+        assign(
+            kv.key().c_str(),
+            kv.value().as<const char *>()
+        );
+    }
+}
+
+void TElementsDB::add_json(DynamicJsonDocument& doc)
+{
+    validate_json(doc);
+    _add_json(doc);
 }
 
 bool TElementsDB::is_empty(void)

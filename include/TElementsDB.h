@@ -31,19 +31,27 @@ class TElementsDB
         void init_chunks(void);
         bool integrity_check(void);
 
-        void chk_key(const String& key); // может бросить исключение
         String get_key_by_id(const uint8_t id);
 
         void traverse(TCbTraverseFunction cb); // обойти все элементы
+        void clear(void);
+
+    protected:
+        void chk_key(const String& key); // может бросить исключение
+        virtual void validate_json_iteration(JsonPair& kv); // может бросить исключение
+        void validate_json(DynamicJsonDocument& doc); // может бросить исключение
+        void _add_json(DynamicJsonDocument& doc); // без валидации
 
     public:
         TElementsDB(const String& name);
-        ~TElementsDB();
+        virtual ~TElementsDB();
 
         bool has_value(const String& key); // может бросить исключение
         void assign(const String& key, const String& val = ""); // может бросить исключение
         String list(const String *p_current_key = NULL);
         DynamicJsonDocument get_json(void);
+        void set_json(DynamicJsonDocument& doc);
+        void add_json(DynamicJsonDocument& doc);
         bool is_empty(void);
         String get_value(const String& key); // может бросить исключение
 };

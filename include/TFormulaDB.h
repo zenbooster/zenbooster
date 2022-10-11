@@ -5,10 +5,12 @@
 namespace FormulaDB
 {
     using namespace ElementsDB;
-    using namespace CalcFormula;
 
     class TFormulaDB: public TElementsDB
     {
+        private:
+            void validate_json_iteration(JsonPair& kv); // может бросить исключение
+
         public:
             TFormulaDB();
     };
