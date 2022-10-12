@@ -1,6 +1,5 @@
 #pragma once
 #include "TElementsDB.h"
-#include "TCalcFormula.h"
 
 namespace FormulaDB
 {

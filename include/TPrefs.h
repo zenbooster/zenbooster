@@ -9,7 +9,7 @@ namespace Prefs
 {
   using namespace std;
 
-  typedef function<void(const String&)> TCbChangeFunction; // может бросать исключения
+  typedef function<void(const String&, bool is_validate_only)> TCbChangeFunction; // может бросать исключения
 
   struct TPrefValue
   {
@@ -25,6 +25,8 @@ namespace Prefs
       Preferences prefs;
       std::map<String, TPrefValue> data;
 
+      void validate_json(DynamicJsonDocument& doc); // может бросить исключение
+
     public:
       TPrefs(const String& name);
 
@@ -36,5 +38,6 @@ namespace Prefs
       String get_desc(void);
       String get_values(void);
       DynamicJsonDocument get_json(void);
+      void set_json(DynamicJsonDocument& doc);
   };
 }

@@ -139,14 +139,6 @@ bool TElementsDB::integrity_check(void)
     return res;
 }
 
-void TElementsDB::chk_key(const String& key)
-{
-    if(key.length() > 15)
-    {
-        throw String("void TElementsDB::chk_key(..): длина ключа должна быть меньше либо равна 15 символам");
-    }
-}
-
 String TElementsDB::get_key_by_id(const uint8_t id)
 {
     prefs.begin(name_list.c_str(), false);
@@ -198,7 +190,7 @@ void TElementsDB::write_bit(uint8_t n, bool is)
 
 bool TElementsDB::has_value(const String& key)
 {
-    chk_key(key);
+    TUtil::chk_nvs_key(key);
     prefs.begin(name.c_str(), false);
     bool is_key = prefs.isKey(key.c_str());
     prefs.end();
@@ -208,7 +200,7 @@ bool TElementsDB::has_value(const String& key)
 
 void TElementsDB::assign(const String& key, const String& val)
 {
-    chk_key(key);
+    TUtil::chk_nvs_key(key);
     do // fake loop
     {
         prefs.begin(name.c_str(), false);
@@ -385,7 +377,7 @@ DynamicJsonDocument TElementsDB::get_json(void)
 void TElementsDB::validate_json_iteration(JsonPair& kv)
 {
     String key = kv.key().c_str();
-    chk_key(key);
+    TUtil::chk_nvs_key(key);
 
     String val = kv.value().as<const char *>();
     if(val.isEmpty())
@@ -474,7 +466,7 @@ String TElementsDB::get_value_id(const String& key, uint8_t *id)
 
 String TElementsDB::get_value(const String& key)
 {
-    chk_key(key);
+    TUtil::chk_nvs_key(key);
 
     String res;
 

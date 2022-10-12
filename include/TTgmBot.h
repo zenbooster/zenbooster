@@ -2,6 +2,7 @@
 #include "common.h"
 #include "TPrefs.h"
 #include "TFormulaDB.h"
+#include "TCalcFormula.h"
 #include <SSLClient.h>
 //#include <WiFiClientSecure.h>
 #include ".\\AsyncTelegram2.h"
@@ -9,13 +10,14 @@
 # include <Battery18650Stats.h>
 #endif
 
-#define BOT_TOKEN "" // zenbooster_device
-#define CHAT_ID 0
+#define BOT_TOKEN "5684634931:AAHZYKsOHjR29Jxi71B4SDvOaZFwoiCVMTw" // zenbooster_device
+#define CHAT_ID 443232875
 
 namespace TgmBot
 {
 using namespace Prefs;
 using namespace FormulaDB;
+using namespace CalcFormula;
 
 typedef function<void(TCalcFormula *)> TCbChangeFunction;
 

@@ -1,7 +1,10 @@
 #include "TPrefs.h"
+#include "TUtil.h"
 
 namespace Prefs
 {
+using namespace Util;
+
 TPrefs::TPrefs(const String& name):
   name(name)
 {
@@ -18,13 +21,13 @@ void TPrefs::init_key(const String& key, const String& desc, const String& defva
   if(prefs.isKey(key.c_str()))
   {
     String value = prefs.getString(key.c_str()).c_str();
-    cb_change(value);
+    cb_change(value, false);
 
     pv.value = value;
   }
   else
   {
-    cb_change(defval);
+    cb_change(defval, false);
 
     prefs.putString(key.c_str(), defval.c_str());
     pv.value = defval;
@@ -54,7 +57,7 @@ void TPrefs::set_value(const String& key, const String& value)
       Serial.printf("bool TPrefs::set_value(\"%s\", \"%s\"): Ошибка! Не вызван метод init_key.\n", key.c_str(), value.c_str());
       break;
     }
-    pv.cb_change(value);
+    pv.cb_change(value, false);
 
     prefs.begin(name.c_str(), false);
     if(value != pv.value)
@@ -115,5 +118,54 @@ DynamicJsonDocument TPrefs::get_json(void)
     res[k] = s;
   }
   return res;
+}
+
+void TPrefs::validate_json(DynamicJsonDocument& doc)
+{
+  if(doc.size() != data.size())
+  {
+    throw String("не совпадает количество ключей");
+  }
+
+  JsonObject root = doc.as<JsonObject>();
+  for (JsonPair kv : root)
+  {
+    String key = kv.key().c_str();
+    TUtil::chk_nvs_key(key);
+
+    if(!data.count(key))
+    {
+      throw String("не существует опции с именем \"" + key + "\"");
+    }
+
+    String val = kv.value().as<const char *>();
+    if(val.isEmpty())
+    {
+        throw "значение для \"" + key + "\" не должно быть пустым";
+    }
+    
+    try
+    {
+      data[key].cb_change(val, true);
+    }
+    catch(String& e)
+    {
+      throw key + ": " + e;
+    }
+  }
+}
+
+void TPrefs::set_json(DynamicJsonDocument& doc)
+{
+  validate_json(doc);
+
+  JsonObject root = doc.as<JsonObject>();
+  for (JsonPair kv : root)
+  {
+      set_value(
+          kv.key().c_str(),
+          kv.value().as<const char *>()
+      );
+  }
 }
 }

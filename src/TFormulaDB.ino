@@ -1,4 +1,5 @@
 #include "TFormulaDB.h"
+#include "TCalcFormula.h"
 
 namespace FormulaDB
 {

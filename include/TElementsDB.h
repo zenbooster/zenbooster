@@ -37,7 +37,6 @@ class TElementsDB
         void clear(void);
 
     protected:
-        void chk_key(const String& key); // может бросить исключение
         virtual void validate_json_iteration(JsonPair& kv); // может бросить исключение
         void validate_json(DynamicJsonDocument& doc); // может бросить исключение
         void _add_json(DynamicJsonDocument& doc); // без валидации

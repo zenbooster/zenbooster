@@ -86,4 +86,12 @@ bool TUtil::mac_2_array(String mac, uint8_t *buf)
     parse_bytes(mac.c_str(), ':', buf, 6, 0x10);
     return true;    
 }
+
+void TUtil::chk_nvs_key(const String& key)
+{
+    if(key.length() > 15)
+    {
+        throw String("void TUtil::chk_nvs_key(..): длина ключа должна быть меньше либо равна 15 символам");
+    }
+}
 }

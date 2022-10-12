@@ -1,10 +1,10 @@
 #include "Version.h"
 #include <Arduino.h>
-#include "TCalcFormula.h"
 #include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
 #include "TPrefs.h"
 #include "TFormulaDB.h"
+#include "TCalcFormula.h"
 #include <sstream>
 #include <exception>
 #include "common.h"
@@ -17,7 +17,6 @@
 namespace MyApplication
 {
 using namespace std;
-using namespace CalcFormula;
 #ifdef SOUND
 using namespace Noise;
 #endif
@@ -25,6 +24,7 @@ using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace Prefs;
 using namespace FormulaDB;
+using namespace CalcFormula;
 using namespace common;
 using namespace Util;
 
@@ -170,9 +170,14 @@ TMyApplication::TMyApplication():
   #else
     "false",
   #endif
-    [](const String& value) -> void
+    [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_bool(value);
+
+    if(is_validate_only)
+    {
+      return;
+    }
 
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
     Serial.printf("wakeup_reason=%d\n", wakeup_reason);
@@ -199,36 +204,48 @@ TMyApplication::TMyApplication():
     }
   });
 
-  p_prefs->init_key("tr", "установка порога", "100", [](const String& value) -> void
+  p_prefs->init_key("tr", "установка порога", "100", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_number(value);
 
-    MED_THRESHOLD = atoi(value.c_str());
+    if(!is_validate_only)
+    {
+      MED_THRESHOLD = atoi(value.c_str());
+    }
   });
 
-  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "60", [](const String& value) -> void
+  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "60", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_number(value);
 
-    MED_PRE_TRESHOLD_DELTA = atoi(value.c_str());
+    if(!is_validate_only)
+    {
+      MED_PRE_TRESHOLD_DELTA = atoi(value.c_str());
+    }
   });
 
 #ifdef SOUND
-  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.6", [](const String& value) -> void
+  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.6", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_numeric(value);
 
-    float old_lvl = TNoise::get_level();
-    float old_mnl = TNoise::MAX_NOISE_LEVEL;
-    TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
-    TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
+    if(!is_validate_only)
+    {
+      float old_lvl = TNoise::get_level();
+      float old_mnl = TNoise::MAX_NOISE_LEVEL;
+      TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
+      TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
+    }
   });
 #endif
-  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](const String& value) -> void
+  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_bool(value);
 
-    is_blink_on_packets = (value == "true");
+    if(is_validate_only)
+    {
+      is_blink_on_packets = (value == "true");
+    }
   });
 
   xCFSemaphore = xSemaphoreCreateBinary();
@@ -242,19 +259,26 @@ TMyApplication::TMyApplication():
     p_fdb->assign("gamma", "75 * 3 * gl / (gm + bh + bl)");
   }
 
-  p_prefs->init_key("f", "формула", "diss", [this](const String& value) -> void
+  p_prefs->init_key("f", "формула", "diss", [this](const String& value, bool is_validate_only) -> void
   {
     String val = this->p_fdb->get_value(value);
     
     TCalcFormula *pcf = TCalcFormula::compile(val);
-    update_calc_formula(pcf);
+
+    if(!is_validate_only)
+    {
+      update_calc_formula(pcf);
+    }
   });
 
-  p_prefs->init_key("ld", "log data \\- отправлять уровни ритмов, приходящих от гарнитуры \\(bool\\)", "false", [](const String& value) -> void
+  p_prefs->init_key("ld", "log data \\- отправлять уровни ритмов, приходящих от гарнитуры \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_bool(value);
 
-    is_log_data_to_bot = (value == "true");
+    if(!is_validate_only)
+    {
+      is_log_data_to_bot = (value == "true");
+    }
   });
 
 #ifdef PIN_BTN
