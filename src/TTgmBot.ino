@@ -48,6 +48,7 @@ void TTgmBot::show_help(TBMessage& msg)
     "*f\\_list* \\- показать список всех формул\n"
   );
   pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_desc()).c_str());
+  flush_message();
   pbot->sendMessage(msg, "\nУстановить значение: *option\\=value*\nЗапросить значение: *option?*");
 }
 
