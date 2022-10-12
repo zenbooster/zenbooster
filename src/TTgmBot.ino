@@ -28,11 +28,18 @@ void TTgmBot::show_help(TBMessage& msg)
     "*sysinfo* \\- системная информация\n"
     "*reset* \\- перезагрузка\n"
     "*shutdown* \\- выключение\n"
-    "*getconf* \\- отправить файл с настройками\n"
   #ifdef PIN_BATTARY
     "*charge* \\- уровень заряда\n"
   #endif
   );
+  pbot->sendMessage(msg,
+    "*Команды для работы с конфигурационным JSON*:\n"
+    "*getconf* \\- отправить JSON с настройками\n"
+    "*vdtconf \\<JSON\\>* \\- проверить JSON с настройками\n"
+    "*addconf \\<JSON\\>* \\- применить JSON с настройками, не очищать базу формул\n"
+    "*setconf \\<JSON\\>* \\- применить JSON с настройками, предварительно очистить базу формул\n"
+  );
+  flush_message();
   pbot->sendMessage(msg,
     "*Команды для работы с базой формул*:\n"
     "*f\\_assign \\<имя\\> \\<текст\\>* \\- присвоить формуле с именем *\\<имя\\>* текст *\\<текст\\>*\n"
@@ -156,8 +163,11 @@ void TTgmBot::run(void)// *p)
         int pos_set = text.indexOf('=');
         bool is_set = pos_set != -1;
 
+        const char *s_cmd;
+        bool is_no_args;
+
         if(!(is_get ^ is_set)) // если не опция:
-        {
+        { // команды общего назначения:
           if(text == "help" || text == "/start")
           {
             show_help(msg);
@@ -205,113 +215,156 @@ void TTgmBot::run(void)// *p)
             flush_message();
             esp_deep_sleep_start();
           }
-          else
+          else // команды для работы с конфигурационным JSON:
           if(text == "getconf")
           {
             send_config(msg);
             break;
           }
           else
+          if(s_cmd = "vdtconf", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
           {
-            const char *s_cmd;
-            bool is_no_args;
-
-            if(s_cmd = "f_assign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+            if(is_no_args)
             {
-              if(is_no_args)
+              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
+              break;
+            }
+
+            String e_desc;
+            String args = text.substring(strlen(s_cmd));
+            args.trim();
+            
+            pbot->sendMessage(msg, "На стадии разработки!");
+            break;
+          }
+          else
+          if(s_cmd = "addconf", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+          {
+            if(is_no_args)
+            {
+              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
+              break;
+            }
+
+            String e_desc;
+            String args = text.substring(strlen(s_cmd));
+            args.trim();
+            
+            pbot->sendMessage(msg, "На стадии разработки!");
+            break;
+          }
+          else
+          if(s_cmd = "setconf", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+          {
+            if(is_no_args)
+            {
+              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
+              break;
+            }
+
+            String e_desc;
+            String args = text.substring(strlen(s_cmd));
+            args.trim();
+            
+            pbot->sendMessage(msg, "На стадии разработки!");
+            break;
+          }
+          else // команды для работы с базой формул:
+          if(s_cmd = "f_assign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+          {
+            if(is_no_args)
+            {
+              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
+              break;
+            }
+
+            String e_desc;
+            String args = text.substring(strlen(s_cmd));
+            args.trim();
+
+            int pos = args.indexOf(' ');
+            bool is_add_or_ed = pos != -1;
+
+            String key = is_add_or_ed ? args.substring(0, pos) : args;
+            key.trim();
+            bool is_has_value;
+            try
+            {
+              is_has_value = p_fdb->has_value(key);
+            }
+            catch(const String& e)
+            {
+              String m = "Ошибка: " + e + "!";
+              pbot->sendMessage(msg, m);
+              break;
+            }
+
+            if(is_add_or_ed)
+            {
+              String val = args.substring(pos + 1);
+              val.trim();
+
+              pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
+
               {
-                pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
-                break;
-              }
-
-              String e_desc;
-              String args = text.substring(strlen(s_cmd));
-              args.trim();
-
-              int pos = args.indexOf(' ');
-              bool is_add_or_ed = pos != -1;
-
-              String key = is_add_or_ed ? args.substring(0, pos) : args.substring(0);
-              key.trim();
-              bool is_has_value;
-              try
-              {
-                is_has_value = p_fdb->has_value(key);
-              }
-              catch(const String& e)
-              {
-                String m = "Ошибка: " + e + "!";
-                pbot->sendMessage(msg, m);
-                break;
-              }
-
-              if(is_add_or_ed)
-              {
-                String val = args.substring(pos + 1);
-                val.trim();
-
-                pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
-
+                TCalcFormula *pcf;
+                try
                 {
-                  TCalcFormula *pcf;
-                  try
+                  pcf = TCalcFormula::compile(val);
+
+                  p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
+
+                  if(is_has_value && ((*p_prefs)["f"] == key)) // Если изменили существующую формулу и она выбрана как текущая
                   {
-                    pcf = TCalcFormula::compile(val);
-
-                    p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
-
-                    if(is_has_value && ((*p_prefs)["f"] == key)) // Если изменили существующую формулу и она выбрана как текущая
-                    {
-                      cb_change_formula(pcf);
-                    }
-                    else
-                    {
-                      delete pcf;
-                    }
+                    cb_change_formula(pcf);
                   }
-                  catch(String& e)
+                  else
                   {
-                    e_desc = e;
+                    delete pcf;
                   }
                 }
+                catch(String& e)
+                {
+                  e_desc = e;
+                }
+              }
+            }
+            else
+            {
+              pbot->sendMessage(msg, String("Удаление ") + args);
+              if(is_has_value && ((*p_prefs)["f"] == key)) // Если удаляем существующую формулу и она выбрана как текущая
+              {
+                e_desc = "нельзя удалить формулу, которая выбрана как текущая";
               }
               else
               {
-                pbot->sendMessage(msg, String("Удаление ") + args);
-                if(is_has_value && ((*p_prefs)["f"] == key)) // Если удаляем существующую формулу и она выбрана как текущая
+                try
                 {
-                  e_desc = "нельзя удалить формулу, которая выбрана как текущая";
+                  p_fdb->assign(args);
                 }
-                else
+                catch(const String& e)
                 {
-                  try
-                  {
-                    p_fdb->assign(args);
-                  }
-                  catch(const String& e)
-                  {
-                    e_desc = e;
-                  }
+                  e_desc = e;
                 }
               }
-              pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
-              break;
             }
-            else
-            if(text == "f_list")
-            {
-              msg.isMarkdownEnabled = true;
-              String sck = (*p_prefs)["f"]; // ключ - имя текущей формулы
-              String s_list = p_fdb->list(&sck);
-              pbot->sendMessage(msg, String("*Список формул*:\n") + (s_list.length() ? s_list : "\\(пусто\\)"));
-              break;
-            }
-            else
-            {
-              pbot->sendMessage(msg, "Ошибка синтаксиса!");
-              show_help(msg);
-              break;
-            }
+            pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
+            break;
+          } // f_assign
+          else
+          if(text == "f_list")
+          {
+            msg.isMarkdownEnabled = true;
+            String sck = (*p_prefs)["f"]; // ключ - имя текущей формулы
+            String s_list = p_fdb->list(&sck);
+            pbot->sendMessage(msg, String("*Список формул*:\n") + (s_list.length() ? s_list : "\\(пусто\\)"));
+            break;
+          }
+          else
+          {
+            pbot->sendMessage(msg, "Ошибка синтаксиса!");
+            show_help(msg);
+            break;
           }
         }
 
