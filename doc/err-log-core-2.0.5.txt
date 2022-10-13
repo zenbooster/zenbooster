@@ -1,0 +1,7 @@
+Failed to connect. Make sure remote device is available and in range.
+Failed to connect. Make sure remote device is available and in range.
+Failed to connect. Make sure remote device is available and in range.
+Failed to connect. Make sure remote device is available and in range.
+ASSERT_PARAM(1024 0), in rwbt.c at line 381
+Guru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled.
+Memory dump at 0x400905f8: 00f01d00 00004136 f01d0000

@@ -119,6 +119,43 @@ void TTgmBot::flush_message(void)
     }
 }
 
+bool TTgmBot::cmd_conf_1_arg(const String& s_cmd, const String& text, void (TConf::*p_mtd)(const DynamicJsonDocument& ), TBMessage& msg)
+{
+  bool is_no_args = (text == s_cmd);
+  bool res = (is_no_args || text.startsWith(s_cmd + " "));
+
+  do // fake loop
+  {
+    if(res)
+    {
+      if(is_no_args)
+      {
+        pbot->sendMessage(msg, "Ошибка: требуется указать параметр!");
+        break;
+      }
+
+      String e_desc;
+      String args = text.substring(s_cmd.length());
+      args.trim();
+      
+      try
+      {
+        DynamicJsonDocument doc(1024);
+        deserializeJson(doc, args.c_str());
+        (p_conf->*p_mtd)(doc);
+      }
+      catch(String& e)
+      {
+        e_desc = e;
+      }
+      pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
+      break;
+    }
+  } while(false);
+
+  return res;
+}
+
 void TTgmBot::run(void)// *p)
 {
   // a variable to store telegram message data
@@ -223,62 +260,18 @@ void TTgmBot::run(void)// *p)
             break;
           }
           else
-          if(s_cmd = "vdtconf", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+          if(cmd_conf_1_arg("vdtconf", text, &TConf::validate_json, msg))
           {
-            if(is_no_args)
-            {
-              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
-              break;
-            }
-
-            String e_desc;
-            String args = text.substring(strlen(s_cmd));
-            args.trim();
-            
-            //pbot->sendMessage(msg, "На стадии разработки!");
-            try
-            {
-              DynamicJsonDocument doc(1024);
-              deserializeJson(doc, args.c_str());
-              p_conf->validate_json(doc);
-            }
-            catch(String& e)
-            {
-              e_desc = e;
-            }
-            pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
             break;
           }
           else
-          if(s_cmd = "addconf", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+          if(cmd_conf_1_arg("addconf", text, &TConf::add_json, msg))
           {
-            if(is_no_args)
-            {
-              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
-              break;
-            }
-
-            String e_desc;
-            String args = text.substring(strlen(s_cmd));
-            args.trim();
-            
-            pbot->sendMessage(msg, "На стадии разработки!");
             break;
           }
           else
-          if(s_cmd = "setconf", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+          if(cmd_conf_1_arg("setconf", text, &TConf::set_json, msg))
           {
-            if(is_no_args)
-            {
-              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
-              break;
-            }
-
-            String e_desc;
-            String args = text.substring(strlen(s_cmd));
-            args.trim();
-            
-            pbot->sendMessage(msg, "На стадии разработки!");
             break;
           }
           else // команды для работы с базой формул:

@@ -398,8 +398,8 @@ void TElementsDB::validate_json(const DynamicJsonDocument& doc)
 void TElementsDB::set_json(const DynamicJsonDocument& doc)
 {
     validate_json(doc);
-    Serial.printf("TElementsDB::set_json(..): clear()\n");
-    //clear();
+    //Serial.printf("TElementsDB::set_json(..): clear()\n");
+    clear();
     _add_json(doc);
 }
 
@@ -408,11 +408,11 @@ void TElementsDB::_add_json(const DynamicJsonDocument& doc)
     JsonObjectConst root = doc.as<JsonObjectConst>();
     for (JsonPairConst kv : root)
     {
-        Serial.printf("TElementsDB::_add_json(..): assign(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
-        /*assign(
+        //Serial.printf("TElementsDB::_add_json(..): assign(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
+        assign(
             kv.key().c_str(),
             kv.value().as<const char *>()
-        );*/
+        );
     }
 }
 

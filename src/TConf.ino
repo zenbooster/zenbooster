@@ -156,13 +156,13 @@ DynamicJsonDocument TConf::get_json(void)
 {
   DynamicJsonDocument doc(1024);
 
-  doc["options"] = p_prefs->get_json();
-  doc["formulas"] = p_fdb->get_json();
+  doc[key_options] = p_prefs->get_json();
+  doc[key_formulas] = p_fdb->get_json();
 
   return doc;
 }
 
-void TConf::validate_json(DynamicJsonDocument& doc)
+void TConf::validate_json(const DynamicJsonDocument& doc)
 {
   if(doc.size() != 2)
   {
@@ -176,13 +176,26 @@ void TConf::validate_json(DynamicJsonDocument& doc)
       throw String("корень JSON не содержит ключа \"") + key + "\"";
     }
   };
-  const char *key_o = "options";
+  const char *key_o = key_options;
   fn(key_o);
-  const char *key_f = "formulas";
+  const char *key_f = key_formulas;
   fn(key_f);
 
-  //const DynamicJsonDocument& dc = doc[key_o];
   p_prefs->validate_json(doc[key_o]);
   p_fdb->validate_json(doc[key_f]);
+}
+
+void TConf::add_json(const DynamicJsonDocument& doc)
+{
+  validate_json(doc);
+  p_prefs->set_json(doc[key_options]);
+  p_fdb->add_json(doc[key_formulas]);
+}
+
+void TConf::set_json(const DynamicJsonDocument& doc)
+{
+  validate_json(doc);
+  p_prefs->set_json(doc[key_options]);
+  p_fdb->set_json(doc[key_formulas]);
 }
 }

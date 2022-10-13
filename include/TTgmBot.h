@@ -44,6 +44,8 @@ class TTgmBot
 
     void flush_message(void);
 
+    bool cmd_conf_1_arg(const String& s_cmd, const String& text, void (TConf::*p_mtd)(const DynamicJsonDocument& ), TBMessage& msg);
+
   public:
     TTgmBot(String dev_name, TConf *p_conf, TCbChangeFunction cb_change_formula);
     ~TTgmBot();

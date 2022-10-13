@@ -162,11 +162,11 @@ void TPrefs::set_json(const DynamicJsonDocument& doc)
   JsonObjectConst root = doc.as<JsonObjectConst>();
   for (JsonPairConst kv : root)
   {
-    Serial.printf("TPrefs::set_json(..): set_value(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
-    /*set_value(
+    //Serial.printf("TPrefs::set_json(..): set_value(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
+    set_value(
         kv.key().c_str(),
         kv.value().as<const char *>()
-    );*/
+    );
   }
 }
 }

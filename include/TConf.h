@@ -16,6 +16,9 @@ class TConf
         TPrefs *p_prefs;
         TFormulaDB *p_fdb;
 
+        const char *key_options = "options";
+        const char *key_formulas = "formulas";
+
     public:
         TConf(TMyApplication *p_app);
         ~TConf();
@@ -24,6 +27,8 @@ class TConf
         TFormulaDB *get_fdb();
 
         DynamicJsonDocument get_json(void);
-        void validate_json(DynamicJsonDocument& doc);
+        void validate_json(const DynamicJsonDocument& doc);
+        void add_json(const DynamicJsonDocument& doc);
+        void set_json(const DynamicJsonDocument& doc);
 };
 }
