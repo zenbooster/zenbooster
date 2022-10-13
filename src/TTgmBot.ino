@@ -42,10 +42,10 @@ void TTgmBot::show_help(TBMessage& msg)
   flush_message();
   pbot->sendMessage(msg,
     "*Команды для работы с базой формул*:\n"
-    "*f\\_assign \\<имя\\> \\<текст\\>* \\- присвоить формуле с именем *\\<имя\\>* текст *\\<текст\\>*\n"
-    "*f\\_assign \\<имя\\>* \\- удалить формулу с именем *\\<имя\\>*\n"
+    "*fassign \\<имя\\> \\<текст\\>* \\- присвоить формуле с именем *\\<имя\\>* текст *\\<текст\\>*\n"
+    "*fassign \\<имя\\>* \\- удалить формулу с именем *\\<имя\\>*\n"
     "\\(*\\<имя\\>* должно иметь длину не больше 15 символов\\)\n"
-    "*f\\_list* \\- показать список всех формул\n"
+    "*flist* \\- показать список всех формул\n"
   );
   pbot->sendMessage(msg, ("*Опции*:\n" + p_conf->get_prefs()->get_desc()).c_str());
   flush_message();
@@ -275,7 +275,7 @@ void TTgmBot::run(void)// *p)
             break;
           }
           else // команды для работы с базой формул:
-          if(s_cmd = "f_assign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+          if(s_cmd = "fassign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
           {
             if(is_no_args)
             {
@@ -357,7 +357,7 @@ void TTgmBot::run(void)// *p)
             break;
           } // f_assign
           else
-          if(text == "f_list")
+          if(text == "flist")
           {
             msg.isMarkdownEnabled = true;
             String sck = (*p_prefs)["f"]; // ключ - имя текущей формулы
