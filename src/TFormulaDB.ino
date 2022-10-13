@@ -5,7 +5,7 @@ namespace FormulaDB
 {
 using namespace CalcFormula;
 
-void TFormulaDB::validate_json_iteration(JsonPair& kv)
+void TFormulaDB::validate_json_iteration(JsonPairConst& kv)
 {
     TElementsDB::validate_json_iteration(kv);
 

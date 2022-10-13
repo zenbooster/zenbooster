@@ -2,8 +2,7 @@
 #include <Arduino.h>
 #include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
-#include "TPrefs.h"
-#include "TFormulaDB.h"
+#include "TConf.h"
 #include "TCalcFormula.h"
 #include <sstream>
 #include <exception>
@@ -17,14 +16,13 @@
 namespace MyApplication
 {
 using namespace std;
-#ifdef SOUND
-using namespace Noise;
-#endif
-using namespace BluetoothStuff;
-using namespace WiFiStuff;
-using namespace Prefs;
-using namespace FormulaDB;
-using namespace CalcFormula;
+//#ifdef SOUND
+//using namespace Noise;
+//#endif
+//using namespace BluetoothStuff;
+//using namespace WiFiStuff;
+//using namespace Conf;
+//using namespace CalcFormula;
 using namespace common;
 using namespace Util;
 
@@ -152,8 +150,7 @@ void TMyApplication::update_calc_formula(TCalcFormula *pcf)
 }
 
 TMyApplication::TMyApplication():
-  p_prefs(new TPrefs(DEVICE_NAME)),
-  p_fdb(NULL),
+  p_conf(NULL),
   ring_buffer_in({}),
   ring_buffer_in_index(0),
   ring_buffer_in_size(0)
@@ -164,122 +161,7 @@ TMyApplication::TMyApplication():
 #endif
 {
   Serial.println(get_version_string());
-  p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
-  #ifdef LILYGO_WATCH_2020_V2
-    "true",
-  #else
-    "false",
-  #endif
-    [](const String& value, bool is_validate_only) -> void
-  {
-    TUtil::chk_value_is_bool(value);
-
-    if(is_validate_only)
-    {
-      return;
-    }
-
-    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-    Serial.printf("wakeup_reason=%d\n", wakeup_reason);
-    esp_reset_reason_t reset_reason = esp_reset_reason();
-    Serial.printf("reset_reason=%d\n", reset_reason);
-
-    if(reset_reason != ESP_RST_POWERON && reset_reason != ESP_RST_DEEPSLEEP)
-    {
-      if(reset_reason == ESP_RST_SW)
-      {
-        Serial.println("Перезагрузились по требованию.");
-      }
-    }
-    else
-    {
-      if(value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED)
-      {
-        Serial.println("Согласно настройкам, засыпаем по возобновлении питания...");
-        pinMode(14, OUTPUT); // после загрузки, и после перехода в сон, именно на этом пине может остаться маленькое напряжение,
-        digitalWrite(14, LOW); // и оно там останется даже во сне! Поэтому сбрасываем.
-        esp_deep_sleep_start();
-      }
-      Serial.println("Проснулись по нажатию кнопки.");
-    }
-  });
-
-  p_prefs->init_key("tr", "установка порога", "100", [](const String& value, bool is_validate_only) -> void
-  {
-    TUtil::chk_value_is_number(value);
-
-    if(!is_validate_only)
-    {
-      MED_THRESHOLD = atoi(value.c_str());
-    }
-  });
-
-  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "60", [](const String& value, bool is_validate_only) -> void
-  {
-    TUtil::chk_value_is_number(value);
-
-    if(!is_validate_only)
-    {
-      MED_PRE_TRESHOLD_DELTA = atoi(value.c_str());
-    }
-  });
-
-#ifdef SOUND
-  p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.6", [](const String& value, bool is_validate_only) -> void
-  {
-    TUtil::chk_value_is_numeric(value);
-
-    if(!is_validate_only)
-    {
-      float old_lvl = TNoise::get_level();
-      float old_mnl = TNoise::MAX_NOISE_LEVEL;
-      TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
-      TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
-    }
-  });
-#endif
-  p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
-  {
-    TUtil::chk_value_is_bool(value);
-
-    if(is_validate_only)
-    {
-      is_blink_on_packets = (value == "true");
-    }
-  });
-
-  xCFSemaphore = xSemaphoreCreateBinary();
-  xSemaphoreGive(xCFSemaphore);
-
-  p_fdb = new TFormulaDB();
-
-  if(p_fdb->is_empty())
-  {
-    Serial.println("Выполняем первичную инициализацию базы формул.");
-    p_fdb->assign("gamma", "75 * 3 * gl / (gm + bh + bl)");
-  }
-
-  p_prefs->init_key("f", "формула", "diss", [this](const String& value, bool is_validate_only) -> void
-  {
-    String val = this->p_fdb->get_value(value);
-    
-    TCalcFormula *pcf = TCalcFormula::compile(val);
-
-    if(!is_validate_only)
-    {
-      update_calc_formula(pcf);
-    }
-  });
-
-  p_prefs->init_key("ld", "log data \\- отправлять уровни ритмов, приходящих от гарнитуры \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
-  {
-    TUtil::chk_value_is_bool(value);
-
-    if(!is_validate_only)
-    {
-      is_log_data_to_bot = (value == "true");
-    }
-  });
+  p_conf = new TConf(this);
 
 #ifdef PIN_BTN
   ledcSetup(0, 40, 8);
@@ -301,7 +183,7 @@ TMyApplication::TMyApplication():
   //wifiManager.startConfigPortal(WIFI_SSID, WIFI_PASS);
   wifiManager.autoConnect(WIFI_SSID, WIFI_PASS);
 
-  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_prefs, p_fdb, [this](TCalcFormula *pcf) -> void
+  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_conf, [](TCalcFormula *pcf) -> void
   {
     update_calc_formula(pcf);
   });
@@ -316,10 +198,8 @@ TMyApplication::TMyApplication():
 
 TMyApplication::~TMyApplication()
 {
-  if(p_fdb)
-    delete p_fdb;
-  if(p_prefs)
-    delete p_prefs;
+  if(p_conf)
+    delete p_conf;
   if(p_bluetooth_stuff)
     delete p_bluetooth_stuff;
   if(p_wifi_stuff)

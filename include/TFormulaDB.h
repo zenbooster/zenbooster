@@ -8,7 +8,7 @@ namespace FormulaDB
     class TFormulaDB: public TElementsDB
     {
         private:
-            void validate_json_iteration(JsonPair& kv); // может бросить исключение
+            void validate_json_iteration(JsonPairConst& kv); // может бросить исключение
 
         public:
             TFormulaDB();

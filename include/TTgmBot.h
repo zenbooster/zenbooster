@@ -1,7 +1,6 @@
 #pragma once
 #include "common.h"
-#include "TPrefs.h"
-#include "TFormulaDB.h"
+#include "TConf.h"
 #include "TCalcFormula.h"
 #include <SSLClient.h>
 //#include <WiFiClientSecure.h>
@@ -15,8 +14,7 @@
 
 namespace TgmBot
 {
-using namespace Prefs;
-using namespace FormulaDB;
+using namespace Conf;
 using namespace CalcFormula;
 
 typedef function<void(TCalcFormula *)> TCbChangeFunction;
@@ -27,8 +25,7 @@ class TTgmBot
     //const unsigned long mtbs = 250; // mean time between scan messages
     const unsigned long mtbs = 500; // mean time between scan messages
     String dev_name;
-    TPrefs *p_prefs;
-    TFormulaDB *p_fdb;
+    TConf *p_conf;
     WiFiClient wfcli;
     SSLClient *pcli;
     //WiFiClientSecure *pcli;
@@ -48,7 +45,7 @@ class TTgmBot
     void flush_message(void);
 
   public:
-    TTgmBot(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TCbChangeFunction cb_change_formula);
+    TTgmBot(String dev_name, TConf *p_conf, TCbChangeFunction cb_change_formula);
     ~TTgmBot();
 
     void run(void);

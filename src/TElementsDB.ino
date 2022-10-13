@@ -374,7 +374,7 @@ DynamicJsonDocument TElementsDB::get_json(void)
     return res;
 }
 
-void TElementsDB::validate_json_iteration(JsonPair& kv)
+void TElementsDB::validate_json_iteration(JsonPairConst& kv)
 {
     String key = kv.key().c_str();
     TUtil::chk_nvs_key(key);
@@ -386,16 +386,16 @@ void TElementsDB::validate_json_iteration(JsonPair& kv)
     }
 }
 
-void TElementsDB::validate_json(DynamicJsonDocument& doc)
+void TElementsDB::validate_json(const DynamicJsonDocument& doc)
 {
-    JsonObject root = doc.as<JsonObject>();
-    for (JsonPair kv : root)
+    JsonObjectConst root = doc.as<JsonObjectConst>();
+    for (JsonPairConst kv : root)
     {
         validate_json_iteration(kv);
     }
 }
 
-void TElementsDB::set_json(DynamicJsonDocument& doc)
+void TElementsDB::set_json(const DynamicJsonDocument& doc)
 {
     validate_json(doc);
     Serial.printf("TElementsDB::set_json(..): clear()\n");
@@ -403,10 +403,10 @@ void TElementsDB::set_json(DynamicJsonDocument& doc)
     _add_json(doc);
 }
 
-void TElementsDB::_add_json(DynamicJsonDocument& doc)
+void TElementsDB::_add_json(const DynamicJsonDocument& doc)
 {
-    JsonObject root = doc.as<JsonObject>();
-    for (JsonPair kv : root)
+    JsonObjectConst root = doc.as<JsonObjectConst>();
+    for (JsonPairConst kv : root)
     {
         Serial.printf("TElementsDB::_add_json(..): assign(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
         /*assign(
@@ -416,7 +416,7 @@ void TElementsDB::_add_json(DynamicJsonDocument& doc)
     }
 }
 
-void TElementsDB::add_json(DynamicJsonDocument& doc)
+void TElementsDB::add_json(const DynamicJsonDocument& doc)
 {
     validate_json(doc);
     _add_json(doc);

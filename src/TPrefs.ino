@@ -120,15 +120,15 @@ DynamicJsonDocument TPrefs::get_json(void)
   return res;
 }
 
-void TPrefs::validate_json(DynamicJsonDocument& doc)
+void TPrefs::validate_json(const DynamicJsonDocument& doc)
 {
   if(doc.size() != data.size())
   {
     throw String("не совпадает количество ключей");
   }
 
-  JsonObject root = doc.as<JsonObject>();
-  for (JsonPair kv : root)
+  JsonObjectConst root = doc.as<JsonObjectConst>();
+  for (JsonPairConst kv : root)
   {
     String key = kv.key().c_str();
     TUtil::chk_nvs_key(key);
@@ -155,12 +155,12 @@ void TPrefs::validate_json(DynamicJsonDocument& doc)
   }
 }
 
-void TPrefs::set_json(DynamicJsonDocument& doc)
+void TPrefs::set_json(const DynamicJsonDocument& doc)
 {
   validate_json(doc);
 
-  JsonObject root = doc.as<JsonObject>();
-  for (JsonPair kv : root)
+  JsonObjectConst root = doc.as<JsonObjectConst>();
+  for (JsonPairConst kv : root)
   {
     Serial.printf("TPrefs::set_json(..): set_value(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
     /*set_value(

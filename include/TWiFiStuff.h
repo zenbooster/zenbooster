@@ -1,13 +1,11 @@
 #pragma once
 #include <Arduino.h>
-#include "TPrefs.h"
-#include "TFormulaDB.h"
+#include "TConf.h"
 #include "TTgmBot.h"
 
 namespace WiFiStuff
 {
-using namespace Prefs;
-using namespace FormulaDB;
+using namespace Conf;
 using namespace TgmBot;
 
 class TWiFiStuff
@@ -21,7 +19,7 @@ class TWiFiStuff
     static void task(void *p);
 
   public:
-    TWiFiStuff(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TgmBot::TCbChangeFunction cb_change_formula);
+    TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction cb_change_formula);
     ~TWiFiStuff();
 
     void tgb_send(const String& m, bool isMarkdownEnabled = true);

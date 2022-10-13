@@ -37,9 +37,8 @@ class TElementsDB
         void clear(void);
 
     protected:
-        virtual void validate_json_iteration(JsonPair& kv); // может бросить исключение
-        void validate_json(DynamicJsonDocument& doc); // может бросить исключение
-        void _add_json(DynamicJsonDocument& doc); // без валидации
+        virtual void validate_json_iteration(JsonPairConst& kv); // может бросить исключение
+        void _add_json(const DynamicJsonDocument& doc); // без валидации
 
     public:
         TElementsDB(const String& name);
@@ -49,8 +48,9 @@ class TElementsDB
         void assign(const String& key, const String& val = ""); // может бросить исключение
         String list(const String *p_current_key = NULL);
         DynamicJsonDocument get_json(void);
-        void set_json(DynamicJsonDocument& doc);
-        void add_json(DynamicJsonDocument& doc);
+        void validate_json(const DynamicJsonDocument& doc); // может бросить исключение
+        void set_json(const DynamicJsonDocument& doc);
+        void add_json(const DynamicJsonDocument& doc);
         bool is_empty(void);
         String get_value(const String& key); // может бросить исключение
 };

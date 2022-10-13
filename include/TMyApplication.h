@@ -7,18 +7,18 @@
 #include "TTgamParsedValues.h"
 #include "TRingBufferInItem.h"
 
-namespace Prefs {class TPrefs;}
+namespace Conf {class TConf;}
 namespace Noise {class TNoise;}
-namespace FormulaDB {class TFormulaDB;}
 namespace BluetoothStuff {class TBluetoothStuff;}
 namespace WiFiStuff {class TWiFiStuff;}
 namespace CalcFormula {class TCalcFormula;}
 
 namespace MyApplication
 {
-using namespace Prefs;
+using namespace Conf;
+#ifdef SOUND
 using namespace Noise;
-using namespace FormulaDB;
+#endif
 using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace CalcFormula;
@@ -43,8 +43,7 @@ class TMyApplication
     static const char *WIFI_SSID;
     static const char *WIFI_PASS;
     
-    TPrefs *p_prefs;
-    TFormulaDB *p_fdb;
+    TConf *p_conf;
 #ifdef PIN_BTN
     TSleepMode SleepMode;
 #endif
@@ -77,7 +76,9 @@ class TMyApplication
     int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);
     static void callback(const TTgamParsedValues tpv, void *arg);
-    void update_calc_formula(TCalcFormula *pcf);
+    static void update_calc_formula(TCalcFormula *pcf);
+
+    friend class Conf::TConf;
 
   public:
     TMyApplication();

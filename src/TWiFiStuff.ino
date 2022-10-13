@@ -18,7 +18,7 @@ void TWiFiStuff::task(void *p)
   }
 }
 
-TWiFiStuff::TWiFiStuff(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TgmBot::TCbChangeFunction cb_change_formula):
+TWiFiStuff::TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction cb_change_formula):
   dev_name(dev_name),
   h_task(NULL),
   pTgmBot(NULL)
@@ -29,7 +29,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TgmB
   }
   ref_cnt++;
 
-  pTgmBot = new TTgmBot(dev_name, p_prefs, p_fdb, cb_change_formula);
+  pTgmBot = new TTgmBot(dev_name, p_conf, cb_change_formula);
   
   //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,
   xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,

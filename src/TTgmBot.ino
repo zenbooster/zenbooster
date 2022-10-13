@@ -47,7 +47,7 @@ void TTgmBot::show_help(TBMessage& msg)
     "\\(*\\<имя\\>* должно иметь длину не больше 15 символов\\)\n"
     "*f\\_list* \\- показать список всех формул\n"
   );
-  pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_desc()).c_str());
+  pbot->sendMessage(msg, ("*Опции*:\n" + p_conf->get_prefs()->get_desc()).c_str());
   flush_message();
   pbot->sendMessage(msg, "\nУстановить значение: *option\\=value*\nЗапросить значение: *option?*");
 }
@@ -55,7 +55,7 @@ void TTgmBot::show_help(TBMessage& msg)
 void TTgmBot::show_info(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, ("*Опции*:\n" + p_prefs->get_values()).c_str());
+  pbot->sendMessage(msg, ("*Опции*:\n" + p_conf->get_prefs()->get_values()).c_str());
 }
 
 String ip2str(ip4_addr_t& ip)
@@ -103,9 +103,7 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
 
 void TTgmBot::send_config(TBMessage& msg)
 {
-  DynamicJsonDocument doc(1024);
-  doc["options"] = p_prefs->get_json();
-  doc["formulas"] = p_fdb->get_json();
+  DynamicJsonDocument doc = p_conf->get_json();
   StreamString ss;
   serializeJson(doc, ss);
   msg.isMarkdownEnabled = true;
@@ -124,6 +122,8 @@ void TTgmBot::flush_message(void)
 void TTgmBot::run(void)// *p)
 {
   // a variable to store telegram message data
+  TPrefs *p_prefs = p_conf->get_prefs();
+  TFormulaDB *p_fdb = p_conf->get_fdb();
   TBMessage msg;
 
   {
@@ -235,7 +235,18 @@ void TTgmBot::run(void)// *p)
             String args = text.substring(strlen(s_cmd));
             args.trim();
             
-            pbot->sendMessage(msg, "На стадии разработки!");
+            //pbot->sendMessage(msg, "На стадии разработки!");
+            try
+            {
+              DynamicJsonDocument doc(1024);
+              deserializeJson(doc, args.c_str());
+              p_conf->validate_json(doc);
+            }
+            catch(String& e)
+            {
+              e_desc = e;
+            }
+            pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
             break;
           }
           else
@@ -428,10 +439,9 @@ void TTgmBot::run(void)// *p)
   }
 }
 
-TTgmBot::TTgmBot(String dev_name, TPrefs *p_prefs, TFormulaDB *p_fdb, TCbChangeFunction cb_change_formula):
+TTgmBot::TTgmBot(String dev_name, TConf *p_conf, TCbChangeFunction cb_change_formula):
   dev_name(dev_name),
-  p_prefs(p_prefs),
-  p_fdb(p_fdb)
+  p_conf(p_conf)
 #ifdef PIN_BATTARY
   , battery(PIN_BATTARY)
 #endif
