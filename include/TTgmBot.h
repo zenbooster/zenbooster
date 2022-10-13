@@ -10,8 +10,8 @@
 # include <Battery18650Stats.h>
 #endif
 
-#define BOT_TOKEN "5684634931:AAHZYKsOHjR29Jxi71B4SDvOaZFwoiCVMTw" // zenbooster_device
-#define CHAT_ID 443232875
+#define BOT_TOKEN "" // zenbooster_device
+#define CHAT_ID 0
 
 namespace TgmBot
 {
