@@ -33,7 +33,7 @@ void TBluetoothDataProcessor::task(void *p)
     TTgamParsedValues *p;
     if(pdTRUE == xQueueReceive(p_this->queue, &p, portMAX_DELAY))
     {
-      TBluetoothStuff::pfn_callback(*p, TBluetoothStuff::p_app);
+      TBluetoothStuff::pfn_callback(p, TCallbackEvent::eData);
       delete p;
     }
   }
@@ -61,7 +61,6 @@ void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
 int TBluetoothStuff::ref_cnt = 0;
 SemaphoreHandle_t TBluetoothStuff::xConnSemaphore;
 bool TBluetoothStuff::is_connected = false;
-TMyApplication *TBluetoothStuff::p_app;
 tpfn_callback TBluetoothStuff::pfn_callback = NULL;
 TTgamPacketParser *TBluetoothStuff::p_tpp = NULL;
 TBluetoothDataProcessor *TBluetoothStuff::dp = NULL;
@@ -76,6 +75,7 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     dp = new TBluetoothDataProcessor();
     // Тут семафор не нужен, т.к. событие происходит до выхода из функции connect.
     TBluetoothStuff::is_connected = true;
+    TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eConnect);
     Serial.println("Connected Succesfully!");
   }
   else
@@ -103,6 +103,7 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
     TBluetoothStuff::is_connected = false;
     xSemaphoreGive(xConnSemaphore);
+    TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eDisconnect);
   }
 }
 
@@ -131,7 +132,7 @@ void TBluetoothStuff::task(void *p)
   }
 }
 
-TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_callback pfn_callback):
+TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback):
   dev_name(dev_name)
 {
   if(ref_cnt)
@@ -141,7 +142,6 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_ca
   ref_cnt++;
 
   TBluetoothStuff::pfn_callback = pfn_callback;
-  TBluetoothStuff::p_app = p_app;
   p_tpp = NULL;
 
   pin = "0000";

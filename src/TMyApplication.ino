@@ -1,6 +1,5 @@
 #include "Version.h"
 #include <Arduino.h>
-#include "TBluetoothStuff.h"
 #include "TWiFiStuff.h"
 #include "TConf.h"
 #include "TCalcFormula.h"
@@ -16,13 +15,6 @@
 namespace MyApplication
 {
 using namespace std;
-//#ifdef SOUND
-//using namespace Noise;
-//#endif
-//using namespace BluetoothStuff;
-//using namespace WiFiStuff;
-//using namespace Conf;
-//using namespace CalcFormula;
 using namespace common;
 using namespace Util;
 
@@ -30,8 +22,17 @@ const char *TMyApplication::DEVICE_NAME_FULL = "zenbooster device";
 const char *TMyApplication::DEVICE_NAME = "zenbooster-dev";
 const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
 const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
+TConf *TMyApplication::p_conf = NULL;
 int TMyApplication::MED_THRESHOLD;
 int TMyApplication::MED_PRE_TRESHOLD_DELTA;
+TRingBufferInItem TMyApplication::ring_buffer_in[4] = {};
+int TMyApplication::ring_buffer_in_index = 0;
+int TMyApplication::ring_buffer_in_size = 0;
+#ifdef SOUND
+TNoise *TMyApplication::p_noise = NULL;
+#endif
+TBluetoothStuff *TMyApplication::p_bluetooth_stuff = NULL;
+TWiFiStuff *TMyApplication::p_wifi_stuff = NULL;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xCFSemaphore;
 bool TMyApplication::is_blink_on_packets = false;
@@ -68,74 +69,87 @@ int TMyApplication::int_from_12bit(const uint8_t *buf)
   return (*buf << 16) + (buf[1] << 8) + buf[2];
 }
 
-void TMyApplication::callback(const TTgamParsedValues tpv, void *arg)
+void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt)
 {
-  TMyApplication *p_this = (TMyApplication *)arg;
-
-  #ifdef PIN_BTN
-    if(is_blink_on_packets)
-    {
-      ledcWrite(2, is_blue_pulse ? 255: 128);
-      is_blue_pulse = !is_blue_pulse;
-    }
-    else
-    {
-      ledcWrite(2, 255);
-    }
-  #endif
-  
-  p_this->ring_buffer_in[p_this->ring_buffer_in_index] = tpv;
-
-  if(p_this->ring_buffer_in_size < 4)
-    p_this->ring_buffer_in_size++;
-
-  int med = p_this->calc_formula_meditation();
-  p_this->ring_buffer_in_index = (p_this->ring_buffer_in_index + 1) & 3;
-  
-  String s = tpv.serialize() + "; --> f=" + med;
-  Serial.println(s);
-
-  if(p_this->is_log_data_to_bot)
+  switch(evt)
   {
-    p_this->p_wifi_stuff->tgb_send("`" + s + "`");
-  }
+    case TCallbackEvent::eConnect:
+      Serial.println("TMyApplication::callback: TCallbackEvent::eConnect");
+      break;
 
-  if(med > TMyApplication::MED_THRESHOLD)
-  {
-  #ifdef SOUND
-    TNoise::set_level(0);
-  #endif
-  #ifdef PIN_BTN
-    ledcWrite(0, 255);
-    ledcWrite(1, 255);
-  #endif
-  }
-  else
-  {
-    int d = TMyApplication::MED_THRESHOLD - med;
+    case TCallbackEvent::eDisconnect:
+      Serial.println("TMyApplication::callback: TCallbackEvent::eDisconnect");
+      break;
 
-    if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
+    case TCallbackEvent::eData:
     {
-    #ifdef SOUND
-      TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
-    #endif
     #ifdef PIN_BTN
-      int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
-      ledcWrite(0, led_lvl);
-      ledcWrite(1, led_lvl);
+      if(is_blink_on_packets)
+      {
+        ledcWrite(2, is_blue_pulse ? 255: 128);
+        is_blue_pulse = !is_blue_pulse;
+      }
+      else
+      {
+        ledcWrite(2, 255);
+      }
     #endif
-    }
-    else
-    {
-    #ifdef SOUND
-      TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
-    #endif
-    #ifdef PIN_BTN
-      ledcWrite(0, 0);
-      ledcWrite(1, 0);
-    #endif
-    }
-  }
+      
+      ring_buffer_in[ring_buffer_in_index] = *p_tpv;
+
+      if(ring_buffer_in_size < 4)
+        ring_buffer_in_size++;
+
+      int med = calc_formula_meditation();
+      ring_buffer_in_index = (ring_buffer_in_index + 1) & 3;
+      
+      String s = p_tpv->serialize() + "; --> f=" + med;
+      Serial.println(s);
+
+      if(is_log_data_to_bot)
+      {
+        p_wifi_stuff->tgb_send("`" + s + "`");
+      }
+
+      if(med > TMyApplication::MED_THRESHOLD)
+      {
+      #ifdef SOUND
+        TNoise::set_level(0);
+      #endif
+      #ifdef PIN_BTN
+        ledcWrite(0, 255);
+        ledcWrite(1, 255);
+      #endif
+      }
+      else
+      {
+        int d = TMyApplication::MED_THRESHOLD - med;
+
+        if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
+        {
+        #ifdef SOUND
+          TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
+        #endif
+        #ifdef PIN_BTN
+          int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
+          ledcWrite(0, led_lvl);
+          ledcWrite(1, led_lvl);
+        #endif
+        }
+        else
+        {
+        #ifdef SOUND
+          TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
+        #endif
+        #ifdef PIN_BTN
+          ledcWrite(0, 0);
+          ledcWrite(1, 0);
+        #endif
+        }
+      }
+      break;
+    } // case TCallbackEvent::eData:
+  } // switch(evt)
 } // void TMyApplication::callback(uint8_t code, uint8_t *data, void *arg)
 
 void TMyApplication::update_calc_formula(TCalcFormula *pcf)
@@ -143,22 +157,17 @@ void TMyApplication::update_calc_formula(TCalcFormula *pcf)
   xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
   if (p_calc_formula)
   {
+    TMyApplication::callback(NULL, TCallbackEvent::eDisconnect);
     delete p_calc_formula;
+    TMyApplication::callback(NULL, TCallbackEvent::eConnect);
   }
   p_calc_formula = pcf;
   xSemaphoreGive(xCFSemaphore);
 }
 
-TMyApplication::TMyApplication():
-  p_conf(NULL),
-  ring_buffer_in({}),
-  ring_buffer_in_index(0),
-  ring_buffer_in_size(0)
+TMyApplication::TMyApplication()
   /*, ring_buffer_out({})
   , ring_buffer_out_index(0)*/
-#ifdef SOUND
-  , p_noise(NULL)
-#endif
 {
   Serial.println(get_version_string());
   p_conf = new TConf(this);
@@ -187,7 +196,7 @@ TMyApplication::TMyApplication():
   {
     update_calc_formula(pcf);
   });
-  p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, this, callback);
+  p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, callback);
 #ifdef SOUND
   p_noise = new TNoise();
 #endif

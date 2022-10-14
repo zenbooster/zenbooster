@@ -6,10 +6,10 @@
 #endif
 #include "TTgamParsedValues.h"
 #include "TRingBufferInItem.h"
+#include "TBluetoothStuff.h"
 
 namespace Conf {class TConf;}
 namespace Noise {class TNoise;}
-namespace BluetoothStuff {class TBluetoothStuff;}
 namespace WiFiStuff {class TWiFiStuff;}
 namespace CalcFormula {class TCalcFormula;}
 
@@ -43,7 +43,7 @@ class TMyApplication
     static const char *WIFI_SSID;
     static const char *WIFI_PASS;
     
-    TConf *p_conf;
+    static TConf *p_conf;
 #ifdef PIN_BTN
     TSleepMode SleepMode;
 #endif
@@ -52,9 +52,9 @@ class TMyApplication
     static int MED_THRESHOLD;// = 95;
     static int MED_PRE_TRESHOLD_DELTA;// = 10;
 
-    TRingBufferInItem ring_buffer_in[4];
-    int ring_buffer_in_index;
-    int ring_buffer_in_size;
+    static TRingBufferInItem ring_buffer_in[4];
+    static int ring_buffer_in_index;
+    static int ring_buffer_in_size;
 
     // размер подобрать под ширину отображаемого графика:
     //TRingBufferOutItem ring_buffer_out[1024];
@@ -62,10 +62,10 @@ class TMyApplication
     //int ring_buffer_out_index;
     
   #ifdef SOUND
-    TNoise *p_noise;
+    static TNoise *p_noise;
   #endif
-    TBluetoothStuff *p_bluetooth_stuff;
-    TWiFiStuff *p_wifi_stuff;
+    static TBluetoothStuff *p_bluetooth_stuff;
+    static TWiFiStuff *p_wifi_stuff;
     static TCalcFormula *p_calc_formula;
     static SemaphoreHandle_t xCFSemaphore;
     
@@ -73,9 +73,9 @@ class TMyApplication
     static bool is_blue_pulse;
     static bool is_log_data_to_bot;
 
-    int calc_formula_meditation();
+    static int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);
-    static void callback(const TTgamParsedValues tpv, void *arg);
+    static void callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt);
     static void update_calc_formula(TCalcFormula *pcf);
 
     friend class Conf::TConf;

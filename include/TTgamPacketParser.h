@@ -17,13 +17,10 @@ enum TEnumState
 };
 
 typedef void (*tpfn_data_callback)(const TTgamParsedValues& tpv);
-typedef void (*tpfn_callback)(const TTgamParsedValues tpv, void *arg);
 
 class TTgamPacketParser
 {
   private:
-    //typedef void (*tpfn_callback)(uint8_t code, uint8_t *data, void *arg);
-  
     static const char SYNC = 0xAA;
     static const char EXCODE = 0x55;
 
@@ -40,7 +37,6 @@ class TTgamPacketParser
     uint8_t i;
 
     tpfn_data_callback data_callback;
-    tpfn_callback callback;
 
     static int int_from_12bit(const uint8_t *buf);
 

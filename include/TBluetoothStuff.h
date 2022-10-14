@@ -11,6 +11,15 @@ using namespace std;
 using namespace TgamPacketParser;
 using namespace MyApplication;
 
+enum TCallbackEvent
+{
+  eConnect,
+  eDisconnect,
+  eData
+};
+
+typedef void (*tpfn_callback)(const TTgamParsedValues *p_tpv, TCallbackEvent evt);
+
 class TBluetoothDataProcessor;
 
 class TBluetoothStuff
@@ -18,7 +27,6 @@ class TBluetoothStuff
   private:
     static int ref_cnt;
     String dev_name;
-    static TMyApplication *p_app;
     static tpfn_callback pfn_callback;
 
     BluetoothSerial SerialBT;
@@ -40,7 +48,7 @@ class TBluetoothStuff
     friend class TBluetoothDataProcessor;
 
   public:
-    TBluetoothStuff(String dev_name, TMyApplication *p_app, tpfn_callback pfn_callback);
+    TBluetoothStuff(String dev_name, tpfn_callback pfn_callback);
     ~TBluetoothStuff();
 };
 }
