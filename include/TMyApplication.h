@@ -7,6 +7,7 @@
 #include "TTgamParsedValues.h"
 #include "TRingBufferInItem.h"
 #include "TBluetoothStuff.h"
+#include "TMedSession.h"
 
 namespace Conf {class TConf;}
 namespace Noise {class TNoise;}
@@ -28,6 +29,7 @@ using namespace SleepMode;
 #endif
 using namespace TgamParsedValues;
 using namespace RingBufferInItem;
+using namespace MedSession;
 
 /*struct TRingBufferOutItem
 {
@@ -72,6 +74,8 @@ class TMyApplication
     static bool is_blink_on_packets; // мигнуть при поступлении нового пакета от гарнитуры?
     static bool is_blue_pulse;
     static bool is_log_data_to_bot;
+
+    static TMedSession *p_med_session;
 
     static int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);

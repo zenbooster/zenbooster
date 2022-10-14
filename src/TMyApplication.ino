@@ -38,6 +38,7 @@ SemaphoreHandle_t TMyApplication::xCFSemaphore;
 bool TMyApplication::is_blink_on_packets = false;
 bool TMyApplication::is_blue_pulse = true;
 bool TMyApplication::is_log_data_to_bot = false;
+TMedSession *TMyApplication::p_med_session = NULL;
 
 String TMyApplication::get_version_string(void)
 {
@@ -75,10 +76,22 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
   {
     case TCallbackEvent::eConnect:
       Serial.println("TMyApplication::callback: TCallbackEvent::eConnect");
+      p_med_session = new TMedSession(MED_THRESHOLD);
       break;
 
     case TCallbackEvent::eDisconnect:
       Serial.println("TMyApplication::callback: TCallbackEvent::eDisconnect");
+      p_wifi_stuff->tgb_send(
+        "*Отчёт по сессии:*\n`" + 
+        TUtil::screen_mark_down(
+          "Формула: \"" + (*p_conf->get_prefs())["f"] + "\"\n" +
+          "Порог: " + (*p_conf->get_prefs())["tr"] + "\n" +
+          p_med_session->gen_report()
+        ) + 
+        "`"
+      );
+      delete p_med_session;
+      p_med_session = NULL;
       break;
 
     case TCallbackEvent::eData:
@@ -101,6 +114,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
         ring_buffer_in_size++;
 
       int med = calc_formula_meditation();
+      //
+      p_med_session->calc_next(med);
+      //
       ring_buffer_in_index = (ring_buffer_in_index + 1) & 3;
       
       String s = p_tpv->serialize() + "; --> f=" + med;
@@ -157,9 +173,16 @@ void TMyApplication::update_calc_formula(TCalcFormula *pcf)
   xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
   if (p_calc_formula)
   {
-    TMyApplication::callback(NULL, TCallbackEvent::eDisconnect);
-    delete p_calc_formula;
-    TMyApplication::callback(NULL, TCallbackEvent::eConnect);
+    if(p_med_session)
+    {
+      TMyApplication::callback(NULL, TCallbackEvent::eDisconnect);
+      delete p_calc_formula;
+      TMyApplication::callback(NULL, TCallbackEvent::eConnect);
+    }
+    else
+    {
+      delete p_calc_formula;
+    }
   }
   p_calc_formula = pcf;
   xSemaphoreGive(xCFSemaphore);
