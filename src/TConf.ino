@@ -181,6 +181,12 @@ void TConf::validate_json(const DynamicJsonDocument& doc)
   const char *key_f = key_formulas;
   fn(key_f);
 
+  String f_val = doc[key_o]["f"];
+  if(!doc[key_f].containsKey(f_val))
+  {
+    throw "список формул не содержит ключа \"" + f_val + "\" из \"f\"";
+  }
+
   p_prefs->validate_json(doc[key_o]);
   p_fdb->validate_json(doc[key_f]);
 }
@@ -188,14 +194,14 @@ void TConf::validate_json(const DynamicJsonDocument& doc)
 void TConf::add_json(const DynamicJsonDocument& doc)
 {
   validate_json(doc);
-  p_prefs->set_json(doc[key_options]);
   p_fdb->add_json(doc[key_formulas]);
+  p_prefs->set_json(doc[key_options]);
 }
 
 void TConf::set_json(const DynamicJsonDocument& doc)
 {
   validate_json(doc);
-  p_prefs->set_json(doc[key_options]);
   p_fdb->set_json(doc[key_formulas]);
+  p_prefs->set_json(doc[key_options]);
 }
 }
