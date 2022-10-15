@@ -2,13 +2,10 @@
 #include "TPrefs.h"
 #include "TFormulaDB.h"
 
-namespace MyApplication { class TMyApplication; }
-
 namespace Conf
 {
 using namespace Prefs;
 using namespace FormulaDB;
-using namespace MyApplication;
 
 class TConf
 {
@@ -20,7 +17,7 @@ class TConf
         const char *key_formulas = "formulas";
 
     public:
-        TConf(TMyApplication *p_app);
+        TConf();
         ~TConf();
 
         TPrefs *get_prefs();

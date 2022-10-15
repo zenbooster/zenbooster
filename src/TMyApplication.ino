@@ -35,12 +35,9 @@ TBluetoothStuff *TMyApplication::p_bluetooth_stuff = NULL;
 TWiFiStuff *TMyApplication::p_wifi_stuff = NULL;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xCFSemaphore;
-bool TMyApplication::is_blink_on_packets = false;
-bool TMyApplication::is_led_pulse = true;
-uint8_t TMyApplication::led_pulse_id;
 bool TMyApplication::is_log_data_to_bot = false;
 bool TMyApplication::is_use_poor_signal = false;
-bool TMyApplication::is_poor_signal_indicated = false;
+TButtonIllumination TMyApplication::btn_il;
 TMedSession *TMyApplication::p_med_session = NULL;
 
 String TMyApplication::get_version_string(void)
@@ -82,6 +79,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       if(!is_use_poor_signal)
       {
         p_med_session = new TMedSession(p_wifi_stuff);
+        btn_il.on_msession_connect();
       }
       break;
 
@@ -95,7 +93,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
     #ifdef SOUND
       TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
     #endif
-      is_poor_signal_indicated = false;
+      btn_il.on_msession_disconnect();
       break;
 
     case TCallbackEvent::eData:
@@ -125,39 +123,20 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           {
             callback(p_tpv, TCallbackEvent::eDisconnect);
           }
-          if(!is_poor_signal_indicated)
-          {
-            ledcWrite(0, 0);
-            ledcWrite(2, 0);
-            led_pulse_id = 1;
-            is_poor_signal_indicated = true;
-          }
+          btn_il.on_msession_poor_signal();
         }
         else
         {
           if(!p_med_session)
           {
-            ledcWrite(1, 0);
-            led_pulse_id = 2;
-            is_poor_signal_indicated = false;
+            btn_il.on_msession_connect();
             p_med_session = new TMedSession(p_wifi_stuff);
           }
         }
       }
 
-    #ifdef PIN_BTN
-      if(is_blink_on_packets)
-      {
-        ledcWrite(led_pulse_id, is_led_pulse ? 255: 128);
-        is_led_pulse = !is_led_pulse;
-      }
-      else
-      {
-        ledcWrite(led_pulse_id, 255);
-      }
-    #endif
-
-      if(is_poor_signal_indicated)
+      btn_il.on_msession_data();
+      if(TButtonIllumination::is_poor_signal_indicated)
       {
         return;
       }
@@ -230,7 +209,7 @@ TMyApplication::TMyApplication()
   , ring_buffer_out_index(0)*/
 {
   Serial.println(get_version_string());
-  p_conf = new TConf(this);
+  p_conf = new TConf();
 
 #ifdef PIN_BTN
   ledcSetup(0, 40, 8);

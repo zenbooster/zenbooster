@@ -1,15 +1,18 @@
 #include "TConf.h"
 #include "TMyApplication.h"
+#include "TButtonIllumination.h"
 #include "TNoise.h"
 #include "TCalcFormula.h"
 #include "TUtil.h"
 
 namespace Conf
 {
+using namespace MyApplication;
+using namespace ButtonIllumination;
 using namespace Noise;
 using namespace Util;
 
-TConf::TConf(TMyApplication *p_app):
+TConf::TConf():
   p_prefs(new TPrefs(TMyApplication::DEVICE_NAME)),
   p_fdb(NULL)
 
@@ -111,7 +114,7 @@ TConf::TConf(TMyApplication *p_app):
 
     if(!is_validate_only)
     {
-      TMyApplication::is_blink_on_packets = (value == "true");
+      TButtonIllumination::is_blink_on_packets = (value == "true");
     }
   });
 
@@ -158,7 +161,7 @@ TConf::TConf(TMyApplication *p_app):
 
     if(!is_validate_only)
     {
-      TMyApplication::is_use_poor_signal = (value == "true");
+      TButtonIllumination::is_use_poor_signal = TMyApplication::is_use_poor_signal = (value == "true");
     }
   });
 

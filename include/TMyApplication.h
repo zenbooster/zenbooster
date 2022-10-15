@@ -8,6 +8,7 @@
 #include "TRingBufferInItem.h"
 #include "TBluetoothStuff.h"
 #include "TMedSession.h"
+#include "TButtonIllumination.h"
 
 namespace Conf {class TConf;}
 namespace Noise {class TNoise;}
@@ -30,6 +31,7 @@ using namespace SleepMode;
 using namespace TgamParsedValues;
 using namespace RingBufferInItem;
 using namespace MedSession;
+using namespace ButtonIllumination;
 
 /*struct TRingBufferOutItem
 {
@@ -71,13 +73,10 @@ class TMyApplication
     static TCalcFormula *p_calc_formula;
     static SemaphoreHandle_t xCFSemaphore;
     
-    static bool is_blink_on_packets; // мигнуть при поступлении нового пакета от гарнитуры?
-    static bool is_led_pulse;
-    static uint8_t led_pulse_id;
     static bool is_log_data_to_bot;
-    static bool is_use_poor_signal;
-    static bool is_poor_signal_indicated;
 
+    static bool is_use_poor_signal;
+    static TButtonIllumination btn_il;
     static TMedSession *p_med_session;
 
     static int calc_formula_meditation();
