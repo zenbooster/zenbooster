@@ -36,8 +36,11 @@ TWiFiStuff *TMyApplication::p_wifi_stuff = NULL;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xCFSemaphore;
 bool TMyApplication::is_blink_on_packets = false;
-bool TMyApplication::is_blue_pulse = true;
+bool TMyApplication::is_led_pulse = true;
+uint8_t TMyApplication::led_pulse_id;
 bool TMyApplication::is_log_data_to_bot = false;
+bool TMyApplication::is_use_poor_signal = false;
+bool TMyApplication::is_poor_signal_indicated = false;
 TMedSession *TMyApplication::p_med_session = NULL;
 
 String TMyApplication::get_version_string(void)
@@ -76,38 +79,38 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
   {
     case TCallbackEvent::eConnect:
       Serial.println("TMyApplication::callback: TCallbackEvent::eConnect");
-      p_med_session = new TMedSession(MED_THRESHOLD);
+      if(!is_use_poor_signal)
+      /*{
+        ledcWrite(0, 0);
+        ledcWrite(1, 255);
+      }
+      else*/
+      {
+        p_med_session = new TMedSession(MED_THRESHOLD);
+      }
       break;
 
     case TCallbackEvent::eDisconnect:
       Serial.println("TMyApplication::callback: TCallbackEvent::eDisconnect");
-      p_wifi_stuff->tgb_send(
-        "*Отчёт по сессии:*\n`" + 
-        TUtil::screen_mark_down(
-          "Формула: \"" + (*p_conf->get_prefs())["f"] + "\"\n" +
-          "Порог: " + (*p_conf->get_prefs())["tr"] + "\n" +
-          p_med_session->gen_report()
-        ) + 
-        "`"
-      );
-      delete p_med_session;
-      p_med_session = NULL;
+      if(p_med_session)
+      {
+        p_wifi_stuff->tgb_send(
+          "*Отчёт по сессии:*\n`" + 
+          TUtil::screen_mark_down(
+            "Формула: \"" + (*p_conf->get_prefs())["f"] + "\"\n" +
+            "Порог: " + (*p_conf->get_prefs())["tr"] + "\n" +
+            p_med_session->gen_report()
+          ) + 
+          "`"
+        );
+        delete p_med_session;
+        p_med_session = NULL;
+      }
+      is_poor_signal_indicated = false;
       break;
 
     case TCallbackEvent::eData:
     {
-    #ifdef PIN_BTN
-      if(is_blink_on_packets)
-      {
-        ledcWrite(2, is_blue_pulse ? 255: 128);
-        is_blue_pulse = !is_blue_pulse;
-      }
-      else
-      {
-        ledcWrite(2, 255);
-      }
-    #endif
-      
       ring_buffer_in[ring_buffer_in_index] = *p_tpv;
 
       if(ring_buffer_in_size < 4)
@@ -115,7 +118,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
       int med = calc_formula_meditation();
       //
-      p_med_session->calc_next(med);
+      //p_med_session->calc_next(med);
       //
       ring_buffer_in_index = (ring_buffer_in_index + 1) & 3;
       
@@ -126,6 +129,54 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       {
         p_wifi_stuff->tgb_send("`" + s + "`");
       }
+
+      // подсветка:
+      if(is_use_poor_signal)
+      {
+        if(p_tpv->is_has_poor && p_tpv->poor)
+        {
+          if(p_med_session)
+          {
+            callback(p_tpv, TCallbackEvent::eDisconnect);
+          }
+          if(!is_poor_signal_indicated)
+          {
+            ledcWrite(0, 0);
+            ledcWrite(2, 0);
+            led_pulse_id = 1;
+            is_poor_signal_indicated = true;
+          }
+        }
+        else
+        {
+          if(!p_med_session)
+          {
+            ledcWrite(1, 0);
+            led_pulse_id = 2;
+            is_poor_signal_indicated = false;
+            p_med_session = new TMedSession(MED_THRESHOLD);
+          }
+        }
+      }
+
+    #ifdef PIN_BTN
+      if(is_blink_on_packets)
+      {
+        ledcWrite(led_pulse_id, is_led_pulse ? 255: 128);
+        is_led_pulse = !is_led_pulse;
+      }
+      else
+      {
+        ledcWrite(led_pulse_id, 255);
+      }
+    #endif
+
+      if(is_poor_signal_indicated)
+      {
+        return;
+      }
+
+      p_med_session->calc_next(med);
 
       if(med > TMyApplication::MED_THRESHOLD)
       {

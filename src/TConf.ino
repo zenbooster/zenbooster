@@ -92,7 +92,7 @@ TConf::TConf(TMyApplication *p_app):
   {
     TUtil::chk_value_is_bool(value);
 
-    if(is_validate_only)
+    if(!is_validate_only)
     {
       TMyApplication::is_blink_on_packets = (value == "true");
     }
@@ -130,6 +130,16 @@ TConf::TConf(TMyApplication *p_app):
     if(!is_validate_only)
     {
       TMyApplication::is_log_data_to_bot = (value == "true");
+    }
+  });
+
+  p_prefs->init_key("ups", "use poor signal \\- использовать признак POOR\\_SIGNAL от гарнитуры \\(bool\\)", "true", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_bool(value);
+
+    if(!is_validate_only)
+    {
+      TMyApplication::is_use_poor_signal = (value == "true");
     }
   });
 }
