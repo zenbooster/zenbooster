@@ -24,7 +24,7 @@ const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
 const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
 TConf *TMyApplication::p_conf = NULL;
 int TMyApplication::MED_THRESHOLD;
-int TMyApplication::MED_PRE_TRESHOLD_DELTA;
+int TMyApplication::MED_PRE_THRESHOLD;
 TRingBufferInItem TMyApplication::ring_buffer_in[4] = {};
 int TMyApplication::ring_buffer_in_index = 0;
 int TMyApplication::ring_buffer_in_size = 0;
@@ -80,13 +80,8 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
     case TCallbackEvent::eConnect:
       Serial.println("TMyApplication::callback: TCallbackEvent::eConnect");
       if(!is_use_poor_signal)
-      /*{
-        ledcWrite(0, 0);
-        ledcWrite(1, 255);
-      }
-      else*/
       {
-        p_med_session = new TMedSession(MED_THRESHOLD);
+        p_med_session = new TMedSession(p_wifi_stuff);
       }
       break;
 
@@ -94,18 +89,12 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       Serial.println("TMyApplication::callback: TCallbackEvent::eDisconnect");
       if(p_med_session)
       {
-        p_wifi_stuff->tgb_send(
-          "*Отчёт по сессии:*\n`" + 
-          TUtil::screen_mark_down(
-            "Формула: \"" + (*p_conf->get_prefs())["f"] + "\"\n" +
-            "Порог: " + (*p_conf->get_prefs())["tr"] + "\n" +
-            p_med_session->gen_report()
-          ) + 
-          "`"
-        );
         delete p_med_session;
         p_med_session = NULL;
       }
+    #ifdef SOUND
+      TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
+    #endif
       is_poor_signal_indicated = false;
       break;
 
@@ -117,9 +106,6 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
         ring_buffer_in_size++;
 
       int med = calc_formula_meditation();
-      //
-      //p_med_session->calc_next(med);
-      //
       ring_buffer_in_index = (ring_buffer_in_index + 1) & 3;
       
       String s = p_tpv->serialize() + "; --> f=" + med;
@@ -131,9 +117,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       }
 
       // подсветка:
-      if(is_use_poor_signal)
+      if(is_use_poor_signal) // если отслеживаем POOR_SIGNAL
       {
-        if(p_tpv->is_has_poor && p_tpv->poor)
+        if(p_tpv->is_has_poor && p_tpv->poor) // если сигнал плохой
         {
           if(p_med_session)
           {
@@ -154,7 +140,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
             ledcWrite(1, 0);
             led_pulse_id = 2;
             is_poor_signal_indicated = false;
-            p_med_session = new TMedSession(MED_THRESHOLD);
+            p_med_session = new TMedSession(p_wifi_stuff);
           }
         }
       }
@@ -192,13 +178,13 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       {
         int d = TMyApplication::MED_THRESHOLD - med;
 
-        if(d < TMyApplication::MED_PRE_TRESHOLD_DELTA)
+        if(d < TMyApplication::MED_PRE_THRESHOLD)
         {
         #ifdef SOUND
-          TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_TRESHOLD_DELTA);
+          TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_THRESHOLD);
         #endif
         #ifdef PIN_BTN
-          int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_TRESHOLD_DELTA;
+          int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_THRESHOLD;
           ledcWrite(0, led_lvl);
           ledcWrite(1, led_lvl);
         #endif

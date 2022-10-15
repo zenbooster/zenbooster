@@ -57,20 +57,30 @@ TConf::TConf(TMyApplication *p_app):
   p_prefs->init_key("tr", "установка порога", "100", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_number(value);
+    int v = atoi(value.c_str());
+    TUtil::chk_value_is_positive(v);
+    TUtil::chk_value_is_not_zero(v);
 
     if(!is_validate_only)
     {
-      TMyApplication::MED_THRESHOLD = atoi(value.c_str());
+      TMedSession::threshold = TMyApplication::MED_THRESHOLD = v;
     }
   });
 
-  p_prefs->init_key("trdt", "определяет, за сколько пунктов до порога уменьшать громкость шума", "60", [](const String& value, bool is_validate_only) -> void
+  p_prefs->init_key("pretr", "предпорог \\- определяет, за сколько пунктов до порога уменьшать громкость шума", "60", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_number(value);
+    int v = atoi(value.c_str());
+    TUtil::chk_value_is_positive(v);
+
+    if(v > TMyApplication::MED_THRESHOLD)
+    {
+      throw String("должно выполняться условие: значение <= tr");
+    }
 
     if(!is_validate_only)
     {
-      TMyApplication::MED_PRE_TRESHOLD_DELTA = atoi(value.c_str());
+      TMedSession::pre_threshold = TMyApplication::MED_PRE_THRESHOLD = v;
     }
   });
 
@@ -78,12 +88,19 @@ TConf::TConf(TMyApplication *p_app):
   p_prefs->init_key("mnl", "максимальная громкость шума \\(numeric\\)", "0.6", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_numeric(value);
+    float v = atof(value.c_str());
+    TUtil::chk_value_is_positive(v);
+
+    if(v > 100.0)
+    {
+      throw String("должно выполняться условие: значение <= 100.0");
+    }
 
     if(!is_validate_only)
     {
       float old_lvl = TNoise::get_level();
       float old_mnl = TNoise::MAX_NOISE_LEVEL;
-      TNoise::MAX_NOISE_LEVEL = atof(value.c_str());
+      TNoise::MAX_NOISE_LEVEL = v;
       TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
     }
   });
@@ -120,6 +137,8 @@ TConf::TConf(TMyApplication *p_app):
     if(!is_validate_only)
     {
       TMyApplication::update_calc_formula(pcf);
+      TMedSession::formula_name = value;
+      TMedSession::formula_text = val;
     }
   });
 
@@ -140,6 +159,19 @@ TConf::TConf(TMyApplication *p_app):
     if(!is_validate_only)
     {
       TMyApplication::is_use_poor_signal = (value == "true");
+    }
+  });
+
+  p_prefs->init_key("minsessec", "минимальная продолжительность сессии медитации в секундах, для формипрвания отчёта", "15", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_number(value);
+    int v = atoi(value.c_str());
+    TUtil::chk_value_is_positive(v);
+    TUtil::chk_value_is_not_zero(v);
+    
+    if(!is_validate_only)
+    {
+      TMedSession::minsessec = v;
     }
   });
 }

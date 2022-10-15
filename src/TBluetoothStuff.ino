@@ -84,8 +84,6 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     uint32_t handle = param->close.handle;
     Serial.printf("callback: ESP_SPP_CLOSE_EVT, handle=%u\n", handle);
 
-    TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
-
     // В данный момент никто не может изменять is_connected, по этому и семафор не нужен.
     if(TBluetoothStuff::is_connected) // были подключены, а теперь отключились
     {

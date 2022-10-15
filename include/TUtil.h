@@ -17,6 +17,11 @@ class TUtil
         static void chk_value_is_numeric(const String& v);
         static void chk_value_is_bool(const String& v);
 
+        template<class T>
+        static void chk_value_is_positive(T v);
+        template<class T>
+        static void chk_value_is_not_zero(T v);
+
         static String screen_mark_down(const String s);
         static bool mac_2_array(String mac, uint8_t *buf);
 

@@ -51,8 +51,8 @@ class TMyApplication
 #endif
     WiFiManager wifiManager;
 
-    static int MED_THRESHOLD;// = 95;
-    static int MED_PRE_TRESHOLD_DELTA;// = 10;
+    static int MED_THRESHOLD;
+    static int MED_PRE_THRESHOLD;
 
     static TRingBufferInItem ring_buffer_in[4];
     static int ring_buffer_in_index;

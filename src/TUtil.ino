@@ -44,6 +44,24 @@ void TUtil::chk_value_is_bool(const String& v)
   }
 }
 
+template<class T>
+void TUtil::chk_value_is_positive(T v)
+{
+  if(v < 0)
+  {
+    throw String("значение должно быть положительным");
+  }
+}
+
+template<class T>
+void TUtil::chk_value_is_not_zero(T v)
+{
+  if(!v)
+  {
+    throw String("значение не может быть равным нулю");
+  }
+}
+
 String TUtil::screen_mark_down(const String s)
 {
     String res = s;
