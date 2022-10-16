@@ -73,7 +73,7 @@ class TMyApplication
     static TBluetoothStuff *p_bluetooth_stuff;
     static TWiFiStuff *p_wifi_stuff;
     static TCalcFormula *p_calc_formula;
-    static SemaphoreHandle_t xOptSemaphore;
+    static SemaphoreHandle_t xOptRcMutex;
     
     static bool is_log_data_to_bot;
 

@@ -24,17 +24,17 @@ TMedSession::TMedSession(TWiFiStuff *p_wifi_stuff):
 {
     // по хорошему, если порог или предпорог поменялись пока сессия была открыта,
     // надо её закрыть, применить изменения порогов и затем снова открыть сессию...
-    xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
     tr = TMyApplication::threshold;
     pretr = TMyApplication::pre_threshold;
-    xSemaphoreGive(TMyApplication::xOptSemaphore);
+    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
 }
 
 TMedSession::~TMedSession()
 {
-    xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
     uint16_t mss = minsessec;
-    xSemaphoreGive(TMyApplication::xOptSemaphore);
+
     if(sess_time_sec >= mss)
     {
         p_wifi_stuff->tgb_send(
@@ -48,6 +48,7 @@ TMedSession::~TMedSession()
             "`"
         );
     }
+    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
 }
 
 void TMedSession::calc_next(int32_t med)

@@ -17,8 +17,9 @@ TConf::TConf():
   p_fdb(NULL)
 
 {
-  TMyApplication::xOptSemaphore = xSemaphoreCreateBinary();
-  xSemaphoreGive(TMyApplication::xOptSemaphore);
+  //TMyApplication::xOptRcMutex = xSemaphoreCreateBinary();
+  TMyApplication::xOptRcMutex = xSemaphoreCreateRecursiveMutex();
+  //xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
 
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2
@@ -69,9 +70,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TMyApplication::threshold = v;
-      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 
@@ -88,9 +89,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TMyApplication::pre_threshold = v;
-      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 
@@ -110,10 +111,10 @@ TConf::TConf():
     {
       float old_lvl = TNoise::get_level();
       float old_mnl = TNoise::MAX_NOISE_LEVEL;
-      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TNoise::MAX_NOISE_LEVEL = v;
       TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
-      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 #endif
@@ -145,11 +146,11 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TMyApplication::update_calc_formula(pcf);
-      xSemaphoreGive(TMyApplication::xOptSemaphore);
       TMedSession::formula_name = value;
       TMedSession::formula_text = val;
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 
@@ -159,9 +160,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TMyApplication::is_log_data_to_bot = (value == "true");
-      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 
@@ -171,9 +172,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TMyApplication::is_use_poor_signal = (value == "true");
-      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 
@@ -186,9 +187,9 @@ TConf::TConf():
     
     if(!is_validate_only)
     {
-      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TMedSession::minsessec = v;
-      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 }
