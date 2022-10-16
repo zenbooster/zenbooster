@@ -79,7 +79,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       if(!is_use_poor_signal)
       {
         p_med_session = new TMedSession(p_wifi_stuff);
+      #ifdef PIN_BTN
         btn_il.on_msession_connect();
+      #endif
       }
       break;
 
@@ -93,7 +95,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
     #ifdef SOUND
       TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
     #endif
+    #ifdef PIN_BTN
       btn_il.on_msession_disconnect();
+    #endif
       break;
 
     case TCallbackEvent::eData:
@@ -123,19 +127,25 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           {
             callback(p_tpv, TCallbackEvent::eDisconnect);
           }
+        #ifdef PIN_BTN
           btn_il.on_msession_poor_signal();
+        #endif
         }
         else
         {
           if(!p_med_session)
           {
+          #ifdef PIN_BTN
             btn_il.on_msession_connect();
+          #endif
             p_med_session = new TMedSession(p_wifi_stuff);
           }
         }
       }
 
+    #ifdef PIN_BTN
       btn_il.on_msession_data();
+    #endif
       if(TButtonIllumination::is_poor_signal_indicated)
       {
         return;
@@ -143,14 +153,14 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
       p_med_session->calc_next(med);
 
-      if(med > TMyApplication::MED_THRESHOLD)
+      //if(med > TMyApplication::MED_THRESHOLD)
+      if(med >= TMyApplication::MED_THRESHOLD)
       {
       #ifdef SOUND
         TNoise::set_level(0);
       #endif
       #ifdef PIN_BTN
-        ledcWrite(0, 255);
-        ledcWrite(1, 255);
+        btn_il.on_threshold_reached();
       #endif
       }
       else
@@ -163,9 +173,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_THRESHOLD);
         #endif
         #ifdef PIN_BTN
-          int led_lvl = 255 - (d * 255) / TMyApplication::MED_PRE_THRESHOLD;
-          ledcWrite(0, led_lvl);
-          ledcWrite(1, led_lvl);
+          btn_il.on_pre_threshold_reached(d, TMyApplication::MED_PRE_THRESHOLD);
         #endif
         }
         else
@@ -174,8 +182,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
         #endif
         #ifdef PIN_BTN
-          ledcWrite(0, 0);
-          ledcWrite(1, 0);
+          btn_il.on_pre_threshold_not_reached();
         #endif
         }
       }

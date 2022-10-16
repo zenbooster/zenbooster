@@ -27,5 +27,9 @@ class TButtonIllumination
         void on_msession_disconnect(void);
         void on_msession_poor_signal(void);
         void on_msession_data(void);
+
+        void on_threshold_reached(void);
+        void on_pre_threshold_reached(int d, int threshold);
+        void on_pre_threshold_not_reached(void);
 };
 }

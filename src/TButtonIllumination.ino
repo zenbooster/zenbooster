@@ -40,7 +40,6 @@ void TButtonIllumination::on_msession_connect(void)
 
 void TButtonIllumination::on_msession_data(void)
 {
-#ifdef PIN_BTN
     if(is_blink_on_packets)
     {
         ledcWrite(led_pulse_id, is_led_pulse ? 255: 128);
@@ -50,6 +49,24 @@ void TButtonIllumination::on_msession_data(void)
     {
         ledcWrite(led_pulse_id, 255);
     }
-#endif
+}
+
+void TButtonIllumination::on_threshold_reached(void)
+{
+    ledcWrite(0, 255);
+    ledcWrite(1, 255);
+}
+
+void TButtonIllumination::on_pre_threshold_reached(int d, int threshold)
+{
+    int led_lvl = 255 - (d * 255) / threshold;
+    ledcWrite(0, led_lvl);
+    ledcWrite(1, led_lvl);
+}
+
+void TButtonIllumination::on_pre_threshold_not_reached(void)
+{
+    ledcWrite(0, 0);
+    ledcWrite(1, 0);
 }
 }
