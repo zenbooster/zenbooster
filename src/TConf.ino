@@ -17,9 +17,7 @@ TConf::TConf():
   p_fdb(NULL)
 
 {
-  //TMyApplication::xOptRcMutex = xSemaphoreCreateBinary();
   TMyApplication::xOptRcMutex = xSemaphoreCreateRecursiveMutex();
-  //xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
 
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2
@@ -58,6 +56,18 @@ TConf::TConf():
         esp_deep_sleep_start();
       }
       Serial.println("Проснулись по нажатию кнопки.");
+    }
+  });
+
+  p_prefs->init_key("hsbtmacaddr", "headset bluetooth MAC address \\- MAC адрес нейрогарнитуры", "20:21:04:08:39:93", [](const String& value, bool is_validate_only) -> void
+  {
+    //TUtil::chk_value_is_number(value);
+    
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      TBluetoothStuff::MACadd = value;
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 

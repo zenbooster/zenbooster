@@ -88,6 +88,7 @@ class TMyApplication
 
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
+    friend class BluetoothStuff::TBluetoothStuff;
 
   public:
     TMyApplication();

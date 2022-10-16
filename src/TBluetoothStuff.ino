@@ -1,4 +1,5 @@
 #include "TBluetoothStuff.h"
+#include "TMyApplication.h"
 #include "common.h"
 #include "TUtil.h"
 #include "TNoise.h"
@@ -7,6 +8,7 @@
 
 namespace BluetoothStuff
 {
+using namespace MyApplication;
 using namespace common;
 using namespace Util;
 using namespace Noise;
@@ -62,6 +64,8 @@ int TBluetoothStuff::ref_cnt = 0;
 SemaphoreHandle_t TBluetoothStuff::xConnSemaphore;
 bool TBluetoothStuff::is_connected = false;
 tpfn_callback TBluetoothStuff::pfn_callback = NULL;
+String TBluetoothStuff::MACadd = "";
+uint8_t TBluetoothStuff::address[6] = {};
 TTgamPacketParser *TBluetoothStuff::p_tpp = NULL;
 TBluetoothDataProcessor *TBluetoothStuff::dp = NULL;
 
@@ -143,9 +147,11 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback):
   p_tpp = NULL;
 
   pin = "0000";
-  name = "MindWave";
-  MACadd = "20:21:04:08:39:93";
+  //name = "MindWave";
+  //MACadd = "20:21:04:08:39:93";
+  xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
   TUtil::mac_2_array(MACadd, address);
+  xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
 
   xConnSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(xConnSemaphore);

@@ -4,6 +4,7 @@
 #include "TTgamPacketParser.h"
 
 namespace MyApplication {class TMyApplication;}
+namespace Conf {class TConf;}
 
 namespace BluetoothStuff
 {
@@ -31,9 +32,9 @@ class TBluetoothStuff
 
     BluetoothSerial SerialBT;
 
-    String MACadd;
-    uint8_t address[6];
-    String name;
+    static String MACadd;
+    static uint8_t address[6];
+    //String name;
     String pin;
 
     static SemaphoreHandle_t xConnSemaphore;
@@ -46,6 +47,7 @@ class TBluetoothStuff
     static void task(void *p);
 
     friend class TBluetoothDataProcessor;
+    friend class Conf::TConf;
 
   public:
     TBluetoothStuff(String dev_name, tpfn_callback pfn_callback);
