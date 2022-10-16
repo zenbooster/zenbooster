@@ -7,7 +7,6 @@ namespace ButtonIllumination
 bool TButtonIllumination::is_blink_on_packets = false;
 bool TButtonIllumination::is_led_pulse = true;
 uint8_t TButtonIllumination::led_pulse_id;
-bool TButtonIllumination::is_use_poor_signal = false;
 bool TButtonIllumination::is_poor_signal_indicated = false;
 
 TButtonIllumination::TButtonIllumination()

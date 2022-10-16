@@ -23,8 +23,8 @@ const char *TMyApplication::DEVICE_NAME = "zenbooster-dev";
 const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
 const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
 TConf *TMyApplication::p_conf = NULL;
-int TMyApplication::MED_THRESHOLD;
-int TMyApplication::MED_PRE_THRESHOLD;
+int TMyApplication::threshold;
+int TMyApplication::pre_threshold;
 TRingBufferInItem TMyApplication::ring_buffer_in[4] = {};
 int TMyApplication::ring_buffer_in_index = 0;
 int TMyApplication::ring_buffer_in_size = 0;
@@ -34,7 +34,7 @@ TNoise *TMyApplication::p_noise = NULL;
 TBluetoothStuff *TMyApplication::p_bluetooth_stuff = NULL;
 TWiFiStuff *TMyApplication::p_wifi_stuff = NULL;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
-SemaphoreHandle_t TMyApplication::xCFSemaphore;
+SemaphoreHandle_t TMyApplication::xOptSemaphore;
 bool TMyApplication::is_log_data_to_bot = false;
 bool TMyApplication::is_use_poor_signal = false;
 TButtonIllumination TMyApplication::btn_il;
@@ -49,7 +49,7 @@ int TMyApplication::calc_formula_meditation()
 {
   double res = 0;
 
-  xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
+  xSemaphoreTake(xOptSemaphore, portMAX_DELAY);
   for(int i = 0; i < ring_buffer_in_size; i++)
   {
     TRingBufferInItem *p_item = ring_buffer_in + ((ring_buffer_in_index - i) & 3);
@@ -61,7 +61,7 @@ int TMyApplication::calc_formula_meditation()
     *pcf = *p_item; // копируем уровни ритмов
     res += p_calc_formula->run();
   }
-  xSemaphoreGive(xCFSemaphore);
+  xSemaphoreGive(xOptSemaphore);
   return res / ring_buffer_in_size;
 }
 
@@ -75,8 +75,12 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
   switch(evt)
   {
     case TCallbackEvent::eConnect:
+    {
       Serial.println("TMyApplication::callback: TCallbackEvent::eConnect");
-      if(!is_use_poor_signal)
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      bool is_use = is_use_poor_signal;
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      if(!is_use)
       {
         p_med_session = new TMedSession(p_wifi_stuff);
       #ifdef PIN_BTN
@@ -84,6 +88,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       #endif
       }
       break;
+    }
 
     case TCallbackEvent::eDisconnect:
       Serial.println("TMyApplication::callback: TCallbackEvent::eDisconnect");
@@ -93,7 +98,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
         p_med_session = NULL;
       }
     #ifdef SOUND
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
       TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
     #endif
     #ifdef PIN_BTN
       btn_il.on_msession_disconnect();
@@ -113,13 +120,19 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       String s = p_tpv->serialize() + "; --> f=" + med;
       Serial.println(s);
 
-      if(is_log_data_to_bot)
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      bool is_log = is_log_data_to_bot;
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      if(is_log)
       {
         p_wifi_stuff->tgb_send("`" + s + "`");
       }
 
       // подсветка:
-      if(is_use_poor_signal) // если отслеживаем POOR_SIGNAL
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      bool is_use = is_use_poor_signal;
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
+      if(is_use) // если отслеживаем POOR_SIGNAL
       {
         if(p_tpv->is_has_poor && p_tpv->poor) // если сигнал плохой
         {
@@ -153,8 +166,12 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
       p_med_session->calc_next(med);
 
-      //if(med > TMyApplication::MED_THRESHOLD)
-      if(med >= TMyApplication::MED_THRESHOLD)
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      int tr = TMyApplication::threshold;
+      int pretr = TMyApplication::pre_threshold;
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
+
+      if(med >= tr)
       {
       #ifdef SOUND
         TNoise::set_level(0);
@@ -165,21 +182,24 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       }
       else
       {
-        int d = TMyApplication::MED_THRESHOLD - med;
-
-        if(d < TMyApplication::MED_PRE_THRESHOLD)
+        int d = tr - med;
+        if(d < pretr)
         {
         #ifdef SOUND
-          TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)TMyApplication::MED_PRE_THRESHOLD);
+          xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+          TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)pretr);
+          xSemaphoreGive(TMyApplication::xOptSemaphore);
         #endif
         #ifdef PIN_BTN
-          btn_il.on_pre_threshold_reached(d, TMyApplication::MED_PRE_THRESHOLD);
+          btn_il.on_pre_threshold_reached(d, pretr);
         #endif
         }
         else
         {
         #ifdef SOUND
+          xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
           TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
+          xSemaphoreGive(TMyApplication::xOptSemaphore);
         #endif
         #ifdef PIN_BTN
           btn_il.on_pre_threshold_not_reached();
@@ -193,7 +213,6 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
 void TMyApplication::update_calc_formula(TCalcFormula *pcf)
 {
-  xSemaphoreTake(xCFSemaphore, portMAX_DELAY);
   if (p_calc_formula)
   {
     if(p_med_session)
@@ -208,7 +227,6 @@ void TMyApplication::update_calc_formula(TCalcFormula *pcf)
     }
   }
   p_calc_formula = pcf;
-  xSemaphoreGive(xCFSemaphore);
 }
 
 TMyApplication::TMyApplication()

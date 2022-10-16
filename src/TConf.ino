@@ -17,6 +17,9 @@ TConf::TConf():
   p_fdb(NULL)
 
 {
+  TMyApplication::xOptSemaphore = xSemaphoreCreateBinary();
+  xSemaphoreGive(TMyApplication::xOptSemaphore);
+
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2
     "true",
@@ -66,7 +69,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      TMedSession::threshold = TMyApplication::MED_THRESHOLD = v;
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      TMyApplication::threshold = v;
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
     }
   });
 
@@ -76,14 +81,16 @@ TConf::TConf():
     int v = atoi(value.c_str());
     TUtil::chk_value_is_positive(v);
 
-    if(v > TMyApplication::MED_THRESHOLD)
+    if(v > TMyApplication::threshold)
     {
       throw String("должно выполняться условие: значение <= tr");
     }
 
     if(!is_validate_only)
     {
-      TMedSession::pre_threshold = TMyApplication::MED_PRE_THRESHOLD = v;
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      TMyApplication::pre_threshold = v;
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
     }
   });
 
@@ -103,8 +110,10 @@ TConf::TConf():
     {
       float old_lvl = TNoise::get_level();
       float old_mnl = TNoise::MAX_NOISE_LEVEL;
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
       TNoise::MAX_NOISE_LEVEL = v;
       TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
     }
   });
 #endif
@@ -117,9 +126,6 @@ TConf::TConf():
       TButtonIllumination::is_blink_on_packets = (value == "true");
     }
   });
-
-  TMyApplication::xCFSemaphore = xSemaphoreCreateBinary();
-  xSemaphoreGive(TMyApplication::xCFSemaphore);
 
   p_fdb = new TFormulaDB();
 
@@ -139,7 +145,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
       TMyApplication::update_calc_formula(pcf);
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
       TMedSession::formula_name = value;
       TMedSession::formula_text = val;
     }
@@ -151,7 +159,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
       TMyApplication::is_log_data_to_bot = (value == "true");
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
     }
   });
 
@@ -161,7 +171,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      TButtonIllumination::is_use_poor_signal = TMyApplication::is_use_poor_signal = (value == "true");
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+      TMyApplication::is_use_poor_signal = (value == "true");
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
     }
   });
 
@@ -174,7 +186,9 @@ TConf::TConf():
     
     if(!is_validate_only)
     {
+      xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
       TMedSession::minsessec = v;
+      xSemaphoreGive(TMyApplication::xOptSemaphore);
     }
   });
 }

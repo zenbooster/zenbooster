@@ -1,4 +1,5 @@
 #include "TMedSession.h"
+#include "TMyApplication.h"
 #include "TUtil.h"
 #include "TWiFiStuff.h"
 #include "TConf.h"
@@ -6,9 +7,8 @@
 namespace MedSession
 {
 using namespace Util;
+using namespace MyApplication;
 
-uint32_t TMedSession::threshold;
-uint32_t TMedSession::pre_threshold;
 uint16_t TMedSession::minsessec;
 String TMedSession::formula_name;
 String TMedSession::formula_text;
@@ -22,19 +22,27 @@ TMedSession::TMedSession(TWiFiStuff *p_wifi_stuff):
     max_med_val(0),
     avg_med_val(0)
 {
-    //
+    // по хорошему, если порог или предпорог поменялись пока сессия была открыта,
+    // надо её закрыть, применить изменения порогов и затем снова открыть сессию...
+    xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+    tr = TMyApplication::threshold;
+    pretr = TMyApplication::pre_threshold;
+    xSemaphoreGive(TMyApplication::xOptSemaphore);
 }
 
 TMedSession::~TMedSession()
 {
-    if(sess_time_sec >= minsessec)
+    xSemaphoreTake(TMyApplication::xOptSemaphore, portMAX_DELAY);
+    uint16_t mss = minsessec;
+    xSemaphoreGive(TMyApplication::xOptSemaphore);
+    if(sess_time_sec >= mss)
     {
         p_wifi_stuff->tgb_send(
             "*Отчёт по сессии:*\n`" + 
             TUtil::screen_mark_down(
             "Формула: " + formula_name + " = " + formula_text + "\n" +
-            "Порог: " + String(threshold) + "\n" +
-            "Предпорог: " + String(pre_threshold) + "\n" +
+            "Порог: " + String(tr) + "\n" +
+            "Предпорог: " + String(pretr) + "\n" +
             gen_report()
             ) + 
             "`"
@@ -46,7 +54,7 @@ void TMedSession::calc_next(int32_t med)
 {
     // данные приходят раз в секунду, по этому обойдёмся простым инкрементом:
     sess_time_sec++;
-    if(med >= threshold)
+    if(med >= tr)
     {
         med_tot_time_sec++;
         med_sd_time_sec++;
@@ -75,7 +83,7 @@ String TMedSession::gen_report(void) const
         "Продолжительность сессии: " + String(sess_time_sec) + " с.\n"
         "Общая продолжительность медитации (ОПМ): " + String(med_tot_time_sec) + " с. (" + String((med_tot_time_sec * 100) / sess_time_sec) + "%)\n"
         "Максимальная продолжительность непрерывной медитации: " + String(med_msd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_msd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"
-        "Максимальное значение уровня медитации: " + String(max_med_val);
+        "Максимальное значение уровня медитации: " + String(max_med_val) + "\n"
         "Среднее значение уровня медитации: " + String(avg_med_val, 1);
 
     return res;

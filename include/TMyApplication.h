@@ -11,6 +11,7 @@
 #include "TButtonIllumination.h"
 
 namespace Conf {class TConf;}
+namespace MedSession {class TMedSession;}
 namespace Noise {class TNoise;}
 namespace WiFiStuff {class TWiFiStuff;}
 namespace CalcFormula {class TCalcFormula;}
@@ -18,6 +19,7 @@ namespace CalcFormula {class TCalcFormula;}
 namespace MyApplication
 {
 using namespace Conf;
+using namespace MedSession;
 #ifdef SOUND
 using namespace Noise;
 #endif
@@ -53,8 +55,8 @@ class TMyApplication
 #endif
     WiFiManager wifiManager;
 
-    static int MED_THRESHOLD;
-    static int MED_PRE_THRESHOLD;
+    static int threshold;
+    static int pre_threshold;
 
     static TRingBufferInItem ring_buffer_in[4];
     static int ring_buffer_in_index;
@@ -71,7 +73,7 @@ class TMyApplication
     static TBluetoothStuff *p_bluetooth_stuff;
     static TWiFiStuff *p_wifi_stuff;
     static TCalcFormula *p_calc_formula;
-    static SemaphoreHandle_t xCFSemaphore;
+    static SemaphoreHandle_t xOptSemaphore;
     
     static bool is_log_data_to_bot;
 
@@ -85,6 +87,7 @@ class TMyApplication
     static void update_calc_formula(TCalcFormula *pcf);
 
     friend class Conf::TConf;
+    friend class MedSession::TMedSession;
 
   public:
     TMyApplication();

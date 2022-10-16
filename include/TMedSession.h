@@ -15,9 +15,9 @@ using namespace Conf;
 class TMedSession
 {
     private:
+        int tr;
+        int pretr;
         TWiFiStuff *p_wifi_stuff;
-        static uint32_t threshold;
-        static uint32_t pre_threshold;
         static uint16_t minsessec;
         static String formula_name;
         static String formula_text;
