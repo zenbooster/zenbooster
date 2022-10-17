@@ -32,7 +32,6 @@ class TBluetoothStuff
 
     BluetoothSerial SerialBT;
 
-    static String MACadd;
     static uint8_t address[6];
     //String name;
     String pin;

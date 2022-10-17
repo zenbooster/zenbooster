@@ -49,7 +49,7 @@ int TMyApplication::calc_formula_meditation()
 {
   double res = 0;
 
-  xSemaphoreTake(xOptRcMutex, portMAX_DELAY);
+  xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
   for(int i = 0; i < ring_buffer_in_size; i++)
   {
     TRingBufferInItem *p_item = ring_buffer_in + ((ring_buffer_in_index - i) & 3);
@@ -61,7 +61,7 @@ int TMyApplication::calc_formula_meditation()
     *pcf = *p_item; // копируем уровни ритмов
     res += p_calc_formula->run();
   }
-  xSemaphoreGive(xOptRcMutex);
+  xSemaphoreGiveRecursive(xOptRcMutex);
   return res / ring_buffer_in_size;
 }
 
@@ -213,7 +213,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
 void TMyApplication::update_calc_formula(TCalcFormula *pcf)
 {
-  if (p_calc_formula)
+  if(p_calc_formula)
   {
     if(p_med_session)
     {

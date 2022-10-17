@@ -59,14 +59,26 @@ TConf::TConf():
     }
   });
 
-  p_prefs->init_key("hsbtmacaddr", "headset bluetooth MAC address \\- MAC адрес нейрогарнитуры", "20:21:04:08:39:93", [](const String& value, bool is_validate_only) -> void
+  p_prefs->init_key("hsbtmacaddr", "headset bluetooth MAC address \\- MAC адрес нейрогарнитуры, разделитель - ':'", "20:21:04:08:39:93", [](const String& value, bool is_validate_only) -> void
   {
-    //TUtil::chk_value_is_number(value);
+    uint8_t addr[6];
+
+    //Serial.println("hsbtmacaddr: HIT.1");
+    TUtil::mac_2_array(value, addr);
+    /*Serial.printf("hsbtmacaddr: HIT.2: ");
+    for(int i = 0; i < 5; i++)
+    {
+      Serial.printf("%x:", addr[i]);
+    }
+    Serial.printf("%x\n", addr[5]);
+    */
     
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
-      TBluetoothStuff::MACadd = value;
+      //Serial.println("hsbtmacaddr: HIT.3");
+      memcpy(TBluetoothStuff::address, addr, 6);
+      //Serial.println("hsbtmacaddr: HIT.4");
       xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });

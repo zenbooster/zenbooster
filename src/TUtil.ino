@@ -3,6 +3,8 @@
 
 namespace Util
 {
+using namespace std;
+
 bool TUtil::is_number(const String &s)
 {
   return !s.isEmpty() && std::all_of(s.begin(), s.end(), ::isdigit);
@@ -87,22 +89,72 @@ String TUtil::screen_mark_down(const String s)
     return res;
 }
 
-void TUtil::parse_bytes(const char* str, char sep, byte* bytes, int maxBytes, int base)
+// take a hex string and convert it to a 32bit number (max 8 hex digits)
+uint32_t TUtil::hex2int(const char *hex, int len)
 {
-    for (int i = 0; i < maxBytes; i++) {
-        bytes[i] = strtoul(str, NULL, base);  // Convert byte
-        str = strchr(str, sep);               // Find next separator
-        if (str == NULL || *str == '\0') {
-            break;                            // No more separators, exit
-        }
-        str++;                                // Point to next character after separator
+  uint32_t val = 0;
+  while (*hex && len--)
+  {
+    // get current character then increment
+    uint8_t byte = *hex++; 
+    // transform hex character to the 4bit equivalent number, using the ascii table indexes
+    if (byte >= '0' && byte <= '9') byte = byte - '0';
+    else if (byte >= 'a' && byte <='f') byte = byte - 'a' + 10;
+    else if (byte >= 'A' && byte <='F') byte = byte - 'A' + 10;
+    else
+    {
+      throw "hex2int(..): символ '" + String((char)byte) + "' не является цифрой";
     }
+    // shift 4 to make space for new digit, and add the 4 bits of the new digit 
+    val = (val << 4) | (byte & 0xF);
+  }
+  return val;
 }
 
-bool TUtil::mac_2_array(String mac, uint8_t *buf)
+void TUtil::parse_bytes(const char* str, char sep, byte* bytes, int maxBytes, /*int base,*/ function<void(const char *p0, const char *p1)> cb)
 {
-    parse_bytes(mac.c_str(), ':', buf, 6, 0x10);
-    return true;    
+  const char *p;
+  int i = 0;
+
+  for( ; i < maxBytes; i++)
+  {
+    p = strchr(str, sep);
+
+    if(cb)
+    {
+      cb(str, p);
+    }
+
+    //bytes[i] = strtoul(str, NULL, base);
+    bytes[i] = hex2int(str, 2);
+    str = p;
+    if (str == NULL || *str == '\0')
+    {
+      break;
+    }
+    str++;
+  }
+}
+
+void TUtil::mac_2_array(String mac, uint8_t *buf)
+{
+  int i = 0;
+
+  parse_bytes(mac.c_str(), ':', buf, 6, //0x10,
+    [&i](const char *p0, const char *p1) -> void
+    {
+      i++;
+      if(p1 && (p1 - p0 != 2))
+      {
+        throw String("неверный MAC адрес, байт должен состоять из 2-х цифр");
+      }
+    }
+  );
+
+  if(i != 6)
+  {
+    throw String("MAC адрес должен состоять из 6-ти байт");
+  }
 }
 
 void TUtil::chk_nvs_key(const String& key)

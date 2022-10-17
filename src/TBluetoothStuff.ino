@@ -59,12 +59,10 @@ void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
     xQueueSend(queue, &p, 0);
 }
 
-////////
 int TBluetoothStuff::ref_cnt = 0;
 SemaphoreHandle_t TBluetoothStuff::xConnSemaphore;
 bool TBluetoothStuff::is_connected = false;
 tpfn_callback TBluetoothStuff::pfn_callback = NULL;
-String TBluetoothStuff::MACadd = "";
 uint8_t TBluetoothStuff::address[6] = {};
 TTgamPacketParser *TBluetoothStuff::p_tpp = NULL;
 TBluetoothDataProcessor *TBluetoothStuff::dp = NULL;
@@ -123,11 +121,23 @@ void TBluetoothStuff::task(void *p)
 
     if(!is_conn)
     {
-      bool is_was_connected = pthis->SerialBT.connect(pthis->address);
-      
+      uint8_t addr[6];
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      memcpy(addr, address, 6); // делаем копию
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+
+      /*Serial.printf("TBluetoothStuff::task(..): ");
+      for(int i = 0; i < 5; i++)
+      {
+        Serial.printf("%x:", addr[i]);
+      }
+      Serial.printf("%x\n", addr[5]);
+      */
+
+      bool is_was_connected = pthis->SerialBT.connect(addr);
       if(!is_was_connected)
       {
-        Serial.println(F("Failed to connect. Make sure remote device is available and in range."));
+        Serial.println("Failed to connect. Make sure remote device is available and in range.");
       }
     }
     vTaskDelay(100);
@@ -148,11 +158,6 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback):
 
   pin = "0000";
   //name = "MindWave";
-  //MACadd = "20:21:04:08:39:93";
-  xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
-  TUtil::mac_2_array(MACadd, address);
-  xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
-
   xConnSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(xConnSemaphore);
 
