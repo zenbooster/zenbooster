@@ -17,11 +17,13 @@ class TBluetoothDataProcessor
 {
   private:
     QueueHandle_t queue;
+    TaskHandle_t h_task;
 
     static void task(void *p);
 
   public:
     TBluetoothDataProcessor();
+    ~TBluetoothDataProcessor();
 
     void send(const TTgamParsedValues& tpv);
 };
@@ -41,7 +43,8 @@ void TBluetoothDataProcessor::task(void *p)
   }
 }
 
-TBluetoothDataProcessor::TBluetoothDataProcessor()
+TBluetoothDataProcessor::TBluetoothDataProcessor():
+  h_task(NULL)
 {
   queue = xQueueCreate(64, sizeof(TTgamParsedValues*));
 
@@ -50,7 +53,20 @@ TBluetoothDataProcessor::TBluetoothDataProcessor()
   }
 
   xTaskCreatePinnedToCore(task, "TBluetoothDataProcessor::task", 2000, this,
-      (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
+      (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 1);
+}
+
+TBluetoothDataProcessor::~TBluetoothDataProcessor()
+{
+  if(h_task)
+  {
+    vTaskDelete(h_task);
+  }
+
+  if(queue)
+  {
+    vQueueDelete(queue);
+  }
 }
 
 void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
@@ -125,14 +141,6 @@ void TBluetoothStuff::task(void *p)
       xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       memcpy(addr, address, 6); // делаем копию
       xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
-
-      /*Serial.printf("TBluetoothStuff::task(..): ");
-      for(int i = 0; i < 5; i++)
-      {
-        Serial.printf("%x:", addr[i]);
-      }
-      Serial.printf("%x\n", addr[5]);
-      */
 
       bool is_was_connected = pthis->SerialBT.connect(addr);
       if(!is_was_connected)
