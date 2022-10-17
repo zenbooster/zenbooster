@@ -14,6 +14,7 @@ class TButtonIllumination
         static bool is_led_pulse;
         static uint8_t led_pulse_id;
         //static bool is_poor_signal_indicated;
+        static float max_illumination_level;
 
         friend class Conf::TConf;
     
@@ -22,13 +23,15 @@ class TButtonIllumination
 
         static bool is_poor_signal_indicated;
 
-        void on_msession_connect(void);
-        void on_msession_disconnect(void);
-        void on_msession_poor_signal(void);
-        void on_msession_data(void);
+        static void on_wait_for_connect(void);
 
-        void on_threshold_reached(void);
-        void on_pre_threshold_reached(int d, int threshold);
-        void on_pre_threshold_not_reached(void);
+        static void on_msession_connect(void);
+        static void on_msession_disconnect(void);
+        static void on_msession_poor_signal(void);
+        static void on_msession_data(void);
+
+        static void on_threshold_reached(void);
+        static void on_pre_threshold_reached(int d, int threshold);
+        static void on_pre_threshold_not_reached(void);
 };
 }

@@ -129,6 +129,33 @@ TConf::TConf():
     }
   });
 #endif
+
+#ifdef PIN_BTN
+  p_prefs->init_key("mil", "максимальный уровень подсветки \\(numeric\\)", "75.0", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_numeric(value);
+    float v = atof(value.c_str());
+    TUtil::chk_value_is_positive(v);
+
+    if(v > 100.0)
+    {
+      throw String("должно выполняться условие: значение <= 100.0");
+    }
+
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      TButtonIllumination::max_illumination_level = v;
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    
+      if(TMyApplication::p_btn_il && !TBluetoothStuff::is_connected)
+      {
+        TButtonIllumination::on_wait_for_connect();
+      }
+    }
+  });
+#endif
+
   p_prefs->init_key("bod", "blink on data \\- мигнуть при поступлении нового пакета от гарнитуры \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_bool(value);

@@ -78,7 +78,9 @@ class TMyApplication
     static bool is_log_data_to_bot;
 
     static bool is_use_poor_signal;
-    static TButtonIllumination btn_il;
+#ifdef PIN_BTN
+    static TButtonIllumination *p_btn_il;
+#endif
     static TMedSession *p_med_session;
 
     static int calc_formula_meditation();
@@ -89,6 +91,7 @@ class TMyApplication
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
     friend class BluetoothStuff::TBluetoothStuff;
+    friend class ButtonIllumination::TButtonIllumination;
 
   public:
     TMyApplication();

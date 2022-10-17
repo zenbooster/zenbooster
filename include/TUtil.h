@@ -28,6 +28,8 @@ class TUtil
 
         static String screen_mark_down(const String s);
         static void mac_2_array(String mac, uint8_t *buf);
+        template<class T>
+        static T percent_of(float pct, T val);
 
         static void chk_nvs_key(const String& key); // может бросить исключение
 };

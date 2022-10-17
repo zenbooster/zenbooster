@@ -1,5 +1,6 @@
 #include "TBluetoothStuff.h"
 #include "TMyApplication.h"
+#include "TButtonIllumination.h"
 #include "common.h"
 #include "TUtil.h"
 #include "TNoise.h"
@@ -9,6 +10,7 @@
 namespace BluetoothStuff
 {
 using namespace MyApplication;
+using namespace ButtonIllumination;
 using namespace common;
 using namespace Util;
 using namespace Noise;
@@ -106,9 +108,7 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     if(TBluetoothStuff::is_connected) // были подключены, а теперь отключились
     {
     #ifdef PIN_BTN
-      ledcWrite(0, 0x40);
-      ledcWrite(1, 0);
-      ledcWrite(2, 0);
+      TButtonIllumination::on_wait_for_connect();
     #endif
       digitalWrite(LED_BUILTIN, LOW);
     }

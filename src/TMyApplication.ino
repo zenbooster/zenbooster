@@ -37,7 +37,9 @@ TCalcFormula *TMyApplication::p_calc_formula = NULL;
 SemaphoreHandle_t TMyApplication::xOptRcMutex;
 bool TMyApplication::is_log_data_to_bot = false;
 bool TMyApplication::is_use_poor_signal = false;
-TButtonIllumination TMyApplication::btn_il;
+#ifdef PIN_BTN
+TButtonIllumination *TMyApplication::p_btn_il = NULL;
+#endif
 TMedSession *TMyApplication::p_med_session = NULL;
 
 String TMyApplication::get_version_string(void)
@@ -84,7 +86,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       {
         p_med_session = new TMedSession(p_wifi_stuff);
       #ifdef PIN_BTN
-        btn_il.on_msession_connect();
+        TButtonIllumination::on_msession_connect();
       #endif
       }
       break;
@@ -103,7 +105,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     #endif
     #ifdef PIN_BTN
-      btn_il.on_msession_disconnect();
+      TButtonIllumination::on_msession_disconnect();
     #endif
       break;
 
@@ -141,7 +143,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
             callback(p_tpv, TCallbackEvent::eDisconnect);
           }
         #ifdef PIN_BTN
-          btn_il.on_msession_poor_signal();
+          TButtonIllumination::on_msession_poor_signal();
         #endif
         }
         else
@@ -149,7 +151,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           if(!p_med_session)
           {
           #ifdef PIN_BTN
-            btn_il.on_msession_connect();
+            TButtonIllumination::on_msession_connect();
           #endif
             p_med_session = new TMedSession(p_wifi_stuff);
           }
@@ -157,7 +159,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       }
 
     #ifdef PIN_BTN
-      btn_il.on_msession_data();
+      TButtonIllumination::on_msession_data();
     #endif
       if(TButtonIllumination::is_poor_signal_indicated)
       {
@@ -177,7 +179,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
         TNoise::set_level(0);
       #endif
       #ifdef PIN_BTN
-        btn_il.on_threshold_reached();
+        TButtonIllumination::on_threshold_reached();
       #endif
       }
       else
@@ -191,7 +193,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
         #endif
         #ifdef PIN_BTN
-          btn_il.on_pre_threshold_reached(d, pretr);
+          TButtonIllumination::on_pre_threshold_reached(d, pretr);
         #endif
         }
         else
@@ -202,7 +204,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
         #endif
         #ifdef PIN_BTN
-          btn_il.on_pre_threshold_not_reached();
+          TButtonIllumination::on_pre_threshold_not_reached();
         #endif
         }
       }
@@ -235,18 +237,10 @@ TMyApplication::TMyApplication()
 {
   Serial.println(get_version_string());
   p_conf = new TConf();
-
 #ifdef PIN_BTN
-  ledcSetup(0, 40, 8);
-  ledcSetup(1, 40, 8);
-  ledcSetup(2, 40, 8);
-
-  ledcAttachPin(PIN_LED_R, 0);
-  ledcAttachPin(PIN_LED_G, 1);
-  ledcAttachPin(PIN_LED_B, 2);
-
-  ledcWrite(0, 0xff);
+  p_btn_il = new TButtonIllumination();
 #endif
+
   pinMode(LED_BUILTIN, OUTPUT);
 
   // инициализация WiFi:
@@ -265,22 +259,30 @@ TMyApplication::TMyApplication()
   p_noise = new TNoise();
 #endif
 #ifdef PIN_BTN
-  ledcWrite(0, 0x40);
+  TButtonIllumination::on_wait_for_connect();
 #endif
 }
 
 TMyApplication::~TMyApplication()
 {
-  if(p_conf)
-    delete p_conf;
-  if(p_bluetooth_stuff)
-    delete p_bluetooth_stuff;
-  if(p_wifi_stuff)
-    delete p_wifi_stuff;
 #ifdef SOUND
   if(p_noise)
     delete p_noise;
 #endif
+
+  if(p_bluetooth_stuff)
+    delete p_bluetooth_stuff;
+
+  if(p_wifi_stuff)
+    delete p_wifi_stuff;
+
+#ifdef PIN_BTN
+  if(p_btn_il)
+    delete p_btn_il;
+#endif
+
+  if(p_conf)
+    delete p_conf;
 }
 
 void TMyApplication::run(void)
