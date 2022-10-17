@@ -188,7 +188,7 @@ TConf::TConf():
     }
   });
 
-  p_prefs->init_key("minsessec", "минимальная продолжительность сессии медитации в секундах, для формипрвания отчёта", "15", [](const String& value, bool is_validate_only) -> void
+  p_prefs->init_key("minsessec", "минимальная продолжительность сессии медитации в секундах, для формирования отчёта", "15", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_number(value);
     int v = atoi(value.c_str());
