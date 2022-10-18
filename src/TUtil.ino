@@ -160,7 +160,7 @@ void TUtil::mac_2_array(String mac, uint8_t *buf)
 template<class T>
 T TUtil::percent_of(float pct, T val)
 {
-  return (pct * 100.0) / (float)val;
+  return (pct * (float)val) / 100.0;
 }
 
 void TUtil::chk_nvs_key(const String& key)
