@@ -1,6 +1,7 @@
 #include "TConf.h"
 #include "TMyApplication.h"
 #include "TButtonIllumination.h"
+#include "TWiFiStuff.h"
 #include "TNoise.h"
 #include "TCalcFormula.h"
 #include "TUtil.h"
@@ -9,6 +10,7 @@ namespace Conf
 {
 using namespace MyApplication;
 using namespace ButtonIllumination;
+using namespace WiFiStuff;
 using namespace Noise;
 using namespace Util;
 
@@ -56,6 +58,20 @@ TConf::TConf():
         esp_deep_sleep_start();
       }
       Serial.println("Проснулись по нажатию кнопки.");
+    }
+  });
+
+  p_prefs->init_key("timezone", "часовой пояс \\(numeric\\)", "3", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_numeric(value);
+    float v = atof(value.c_str());
+
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      TWiFiStuff::time_cli.setTimeOffset(v * 3600);
+      TWiFiStuff::tgb_send(TUtil::screen_mark_down(TWiFiStuff::time_cli.getFormattedDate()));
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 

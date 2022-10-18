@@ -17,7 +17,6 @@ class TMedSession
     private:
         int tr;
         int pretr;
-        TWiFiStuff *p_wifi_stuff;
         static uint16_t minsessec;
         static String formula_name;
         static String formula_text;
@@ -26,13 +25,14 @@ class TMedSession
         uint16_t med_tot_time_sec; // общая (суммарная) продолжительность медитации
         uint16_t med_sd_time_sec; // solid time - текущая продолжительность непрерывной медитации
         uint16_t med_msd_time_sec; // max solid time - максимальная продолжительность непрерывной медитации
+        uint16_t med_asd_time_sec; // average solid time - средняя продолжительность непрерывной медитации
         uint32_t max_med_val; // максимальное значение уровня медитации
         double avg_med_val; // среднее значение уровня медитации
 
         friend class Conf::TConf;
 
     public:
-        TMedSession(TWiFiStuff *p_wifi_stuff);
+        TMedSession();
         ~TMedSession();
 
         void calc_next(int32_t med);

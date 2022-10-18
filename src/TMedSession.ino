@@ -13,8 +13,7 @@ uint16_t TMedSession::minsessec;
 String TMedSession::formula_name;
 String TMedSession::formula_text;
 
-TMedSession::TMedSession(TWiFiStuff *p_wifi_stuff):
-    p_wifi_stuff(p_wifi_stuff),
+TMedSession::TMedSession():
     sess_time_sec(0),
     med_tot_time_sec(0),
     med_sd_time_sec(0),
@@ -37,11 +36,11 @@ TMedSession::~TMedSession()
 
     if(sess_time_sec >= mss)
     {
-        p_wifi_stuff->tgb_send(
+        TWiFiStuff::tgb_send(
             "*Отчёт по сессии:*\n`" + 
             TUtil::screen_mark_down(
-            "Формула: " + formula_name + " = " + formula_text + "\n" +
-            "Порог: " + String(tr) + "\n" +
+            "Формула: " + formula_name + " = " + formula_text + "\n"
+            "Порог: " + String(tr) + "\n"
             "Предпорог: " + String(pretr) + "\n" +
             gen_report()
             ) + 
@@ -67,6 +66,7 @@ void TMedSession::calc_next(int32_t med)
     }
     else
     {
+        med_asd_time_sec += (med_sd_time_sec - med_asd_time_sec) / sess_time_sec;
         med_sd_time_sec = 0;
     }
 
@@ -81,9 +81,11 @@ void TMedSession::calc_next(int32_t med)
 String TMedSession::gen_report(void) const
 {
     String res = 
+        "Начало сессии: " + TWiFiStuff::time_cli.getFormattedDate() + "\n"
         "Продолжительность сессии: " + String(sess_time_sec) + " с.\n"
         "Общая продолжительность медитации (ОПМ): " + String(med_tot_time_sec) + " с. (" + String((med_tot_time_sec * 100) / sess_time_sec) + "%)\n"
         "Максимальная продолжительность непрерывной медитации: " + String(med_msd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_msd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"
+        "Средняя продолжительность непрерывной медитации: " + String(med_asd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_asd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"
         "Максимальное значение уровня медитации: " + String(max_med_val) + "\n"
         "Среднее значение уровня медитации: " + String(avg_med_val, 1);
 

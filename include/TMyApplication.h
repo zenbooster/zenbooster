@@ -90,6 +90,7 @@ class TMyApplication
 
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
+    friend class WiFiStuff::TWiFiStuff;
     friend class BluetoothStuff::TBluetoothStuff;
     friend class ButtonIllumination::TButtonIllumination;
 

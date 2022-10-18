@@ -174,6 +174,7 @@ void TTgmBot::run(void)// *p)
       pbot->sendMessage(msg, *p_m);
       delete p_m;
       msg.isMarkdownEnabled = false;
+      //flush_message();
     }
   }
 
@@ -411,14 +412,16 @@ void TTgmBot::run(void)// *p)
           #ifdef SOUND_DAC
             timer_start(TIMER_GROUP_0, TIMER_0);
           #endif
-              pbot->sendMessage(msg, "Ok!");
+              //pbot->sendMessage(msg, "Ok!");
+              send("Ok\\!");
             }
             catch(String& e)
             {
           #ifdef SOUND_DAC
             timer_start(TIMER_GROUP_0, TIMER_0);
           #endif
-              pbot->sendMessage(msg, "Ошибка: " + e +  "!");
+              //pbot->sendMessage(msg, "Ошибка: " + e +  "!");
+              send(TUtil::screen_mark_down("Ошибка: " + e +  "!"));
             }
           }
         }

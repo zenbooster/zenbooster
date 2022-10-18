@@ -84,7 +84,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
       if(!is_use)
       {
-        p_med_session = new TMedSession(p_wifi_stuff);
+        p_med_session = new TMedSession();
       #ifdef PIN_BTN
         TButtonIllumination::on_msession_connect();
       #endif
@@ -127,7 +127,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
       if(is_log)
       {
-        p_wifi_stuff->tgb_send("`" + s + "`");
+        TWiFiStuff::tgb_send("`" + s + "`");
       }
 
       // подсветка:
@@ -153,7 +153,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           #ifdef PIN_BTN
             TButtonIllumination::on_msession_connect();
           #endif
-            p_med_session = new TMedSession(p_wifi_stuff);
+            p_med_session = new TMedSession();
           }
         }
       }
