@@ -18,6 +18,7 @@ TMedSession::TMedSession():
     med_tot_time_sec(0),
     med_sd_time_sec(0),
     med_msd_time_sec(0),
+    med_asd_time_sec(0),
     max_med_val(0),
     avg_med_val(0)
 {
