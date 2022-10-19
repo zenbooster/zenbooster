@@ -66,8 +66,11 @@ void TMedSession::calc_next(int32_t med)
     }
     else
     {
-        med_asd_time_sec += (med_sd_time_sec - med_asd_time_sec) / sess_time_sec;
-        med_sd_time_sec = 0;
+        if(med_sd_time_sec)
+        {
+            med_asd_time_sec += (med_sd_time_sec - med_asd_time_sec) / sess_time_sec;
+            med_sd_time_sec = 0;
+        }
     }
 
     if(med > max_med_val)
