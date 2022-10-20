@@ -17,11 +17,13 @@ TMedSession::TMedSession():
     sess_time_sec(0),
     med_tot_time_sec(0),
     med_sd_time_sec(0),
+    med_sd_count(0),
     med_msd_time_sec(0),
     med_asd_time_sec(0),
     max_med_val(0),
     avg_med_val(0)
 {
+    sess_beg = TWiFiStuff::time_cli.getEpochTime();
     // по хорошему, если порог или предпорог поменялись пока сессия была открыта,
     // надо её закрыть, применить изменения порогов и затем снова открыть сессию...
     xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
@@ -69,7 +71,8 @@ void TMedSession::calc_next(int32_t med)
     {
         if(med_sd_time_sec)
         {
-            med_asd_time_sec += (med_sd_time_sec - med_asd_time_sec) / sess_time_sec;
+            med_sd_count++;
+            med_asd_time_sec += (med_sd_time_sec - med_asd_time_sec) / med_sd_count;
             med_sd_time_sec = 0;
         }
     }
@@ -85,9 +88,10 @@ void TMedSession::calc_next(int32_t med)
 String TMedSession::gen_report(void) const
 {
     String res = 
-        "Начало сессии: " + TWiFiStuff::time_cli.getFormattedDate() + "\n"
+        "Начало сессии: " + TWiFiStuff::time_cli.getFormattedDate(sess_beg) + "\n"
         "Продолжительность сессии: " + String(sess_time_sec) + " с.\n"
         "Общая продолжительность медитации (ОПМ): " + String(med_tot_time_sec) + " с. (" + String((med_tot_time_sec * 100) / sess_time_sec) + "%)\n"
+        "Общее количество непрерывных медитаций: " + String(med_sd_count) + "\n"
         "Максимальная продолжительность непрерывной медитации: " + String(med_msd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_msd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"
         "Средняя продолжительность непрерывной медитации: " + String(med_asd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_asd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"
         "Максимальное значение уровня медитации: " + String(max_med_val) + "\n"

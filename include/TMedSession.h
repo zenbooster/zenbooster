@@ -15,6 +15,7 @@ using namespace Conf;
 class TMedSession
 {
     private:
+        unsigned long sess_beg;
         int tr;
         int pretr;
         static uint16_t minsessec;
@@ -24,6 +25,7 @@ class TMedSession
         uint16_t sess_time_sec; // продолжительность сессии в секундах
         uint16_t med_tot_time_sec; // общая (суммарная) продолжительность медитации
         uint16_t med_sd_time_sec; // solid time - текущая продолжительность непрерывной медитации
+        uint16_t med_sd_count; // общее количество непрерывных медитаций
         uint16_t med_msd_time_sec; // max solid time - максимальная продолжительность непрерывной медитации
         uint16_t med_asd_time_sec; // average solid time - средняя продолжительность непрерывной медитации
         uint32_t max_med_val; // максимальное значение уровня медитации
