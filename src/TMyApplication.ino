@@ -3,6 +3,7 @@
 #include "TWiFiStuff.h"
 #include "TConf.h"
 #include "TCalcFormula.h"
+#include <limits>
 #include <sstream>
 #include <exception>
 #include "common.h"
@@ -61,7 +62,8 @@ int TMyApplication::calc_formula_meditation()
     }
     TRingBufferInItem *pcf = p_calc_formula;
     *pcf = *p_item; // копируем уровни ритмов
-    res += p_calc_formula->run();
+    float m = p_calc_formula->run();
+    res += (m == numeric_limits<float>::infinity()) ? 0 : m;
   }
   xSemaphoreGiveRecursive(xOptRcMutex);
   return res / ring_buffer_in_size;
