@@ -6,7 +6,7 @@ namespace WiFiStuff
 using namespace MyApplication;
 
 int TWiFiStuff::ref_cnt = 0;
-String TWiFiStuff::dev_name;
+//String TWiFiStuff::dev_name;
 TaskHandle_t TWiFiStuff::h_task = NULL;
 WiFiUDP TWiFiStuff::ntp_udp;
 NTPClient TWiFiStuff::time_cli(ntp_udp);
@@ -38,7 +38,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction
   }
   ref_cnt++;
 
-  TWiFiStuff::dev_name = dev_name;
+  //TWiFiStuff::dev_name = dev_name;
   time_cli.begin();
 
   pTgmBot = new TTgmBot(dev_name, p_conf, cb_change_formula);

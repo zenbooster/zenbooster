@@ -116,6 +116,13 @@ TNoise::TNoise()
 #endif
 }
 
+TNoise::~TNoise()
+{
+  //#ifdef SOUND_DAC
+  //timer_stop(TIMER_GROUP_0, TIMER_0);
+  //#endif
+}
+
 numeric TNoise::set_level(numeric lvl)
 {
   numeric res = level;

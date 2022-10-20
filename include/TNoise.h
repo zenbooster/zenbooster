@@ -30,6 +30,8 @@ class TNoise
     static numeric MAX_NOISE_LEVEL;
 
     TNoise();
+    ~TNoise();
+
     static numeric set_level(numeric lvl);
     static numeric get_level(void);
 };

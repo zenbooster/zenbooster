@@ -1,18 +1,27 @@
 #pragma once
 #include "common.h"
+#include <functional>
+
+#ifdef PIN_BTN
+namespace MyApplication {class TMyApplication;}
 
 namespace SleepMode
 {
-#ifdef PIN_BTN
-    class TSleepMode
-    {
-        private:
-            static const uint8_t sleep_pin = PIN_BTN;
+using namespace MyApplication;
+using namespace std;
 
-            static void IRAM_ATTR isr_handle() __attribute__ ((noreturn));
+typedef function<void(void)> TCbSleepFunction;
 
-        public:
-            TSleepMode();
-    };
-#endif
+class TSleepMode
+{
+    private:
+        static const uint8_t sleep_pin = PIN_BTN;
+        static TCbSleepFunction cb;
+
+        static void IRAM_ATTR isr_handle() __attribute__ ((noreturn));
+
+    public:
+        TSleepMode(TCbSleepFunction cb = 0);
+};
 }
+#endif

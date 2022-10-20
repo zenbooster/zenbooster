@@ -27,7 +27,8 @@ class TBluetoothStuff
 {
   private:
     static int ref_cnt;
-    String dev_name;
+    //static String dev_name;
+    static TaskHandle_t h_task;
     static tpfn_callback pfn_callback;
 
     BluetoothSerial SerialBT;

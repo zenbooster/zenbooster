@@ -17,7 +17,7 @@ class TWiFiStuff
 {
   private:
     static int ref_cnt;
-    static String dev_name;
+    //static String dev_name;
     static TaskHandle_t h_task;
     static WiFiUDP ntp_udp;
     static NTPClient time_cli;

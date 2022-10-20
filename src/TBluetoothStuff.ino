@@ -78,6 +78,8 @@ void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
 }
 
 int TBluetoothStuff::ref_cnt = 0;
+//String TBluetoothStuff::dev_name;
+TaskHandle_t TBluetoothStuff::h_task = NULL;
 SemaphoreHandle_t TBluetoothStuff::xConnSemaphore;
 bool TBluetoothStuff::is_connected = false;
 tpfn_callback TBluetoothStuff::pfn_callback = NULL;
@@ -152,8 +154,7 @@ void TBluetoothStuff::task(void *p)
   }
 }
 
-TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback):
-  dev_name(dev_name)
+TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
 {
   if(ref_cnt)
   {
@@ -161,6 +162,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback):
   }
   ref_cnt++;
 
+  //TBluetoothStuff::dev_name = dev_name;
   TBluetoothStuff::pfn_callback = pfn_callback;
   p_tpp = NULL;
 
@@ -202,14 +204,19 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback):
 
   //xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
   xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2200, this,
-      (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 1);
+      (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 1);
 }
 
 TBluetoothStuff::~TBluetoothStuff()
 {
-  // сделать удаление задачи.
+  if(h_task)
+  {
+    vTaskDelete(h_task);
+  }
+
+  if(p_tpp)
+      delete p_tpp;
+
   --ref_cnt;
-    if(p_tpp)
-        delete p_tpp;
 }
 }

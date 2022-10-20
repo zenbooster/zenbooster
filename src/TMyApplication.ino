@@ -24,6 +24,8 @@ const char *TMyApplication::DEVICE_NAME = "zenbooster-dev";
 const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
 const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
 TConf *TMyApplication::p_conf = NULL;
+TSleepMode *TMyApplication::p_sleep_mode = NULL;
+WiFiManager TMyApplication::wifiManager;
 int TMyApplication::threshold;
 int TMyApplication::pre_threshold;
 TRingBufferInItem TMyApplication::ring_buffer_in[4] = {};
@@ -238,6 +240,8 @@ TMyApplication::TMyApplication()
   , ring_buffer_out_index(0)*/
 {
   Serial.println(get_version_string());
+  p_sleep_mode = new TSleepMode();
+
   p_conf = new TConf();
 #ifdef PIN_BTN
   p_btn_il = new TButtonIllumination();
