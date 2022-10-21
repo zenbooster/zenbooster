@@ -61,6 +61,18 @@ TConf::TConf():
     }
   });
 
+  p_prefs->init_key("hsdown", "hard shutdown \\- не уничтожать объекты перед завершением работы \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_bool(value);
+
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      TMyApplication::is_hard_shutdown = (value == "true");
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    }
+  });
+
   p_prefs->init_key("timezone", "часовой пояс \\(numeric\\)", "3", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_numeric(value);
@@ -178,7 +190,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
+      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
       TButtonIllumination::is_blink_on_packets = (value == "true");
+      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
     }
   });
 

@@ -24,6 +24,7 @@ const char *TMyApplication::DEVICE_NAME = "zenbooster-dev";
 const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
 const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
 TConf *TMyApplication::p_conf = NULL;
+bool TMyApplication::is_hard_shutdown = false;
 TSleepMode *TMyApplication::p_sleep_mode = NULL;
 WiFiManager TMyApplication::wifiManager;
 int TMyApplication::threshold;
@@ -240,13 +241,15 @@ TMyApplication::TMyApplication()
   , ring_buffer_out_index(0)*/
 {
   Serial.println(get_version_string());
-  p_sleep_mode = new TSleepMode(
-    [this]() -> void {
-      Serial.println("TCbSleepFunction: begin");
-      delete this;
-      Serial.println("TCbSleepFunction: end");
-    }
-  );
+
+  TCbSleepFunction cb = [this]() -> void
+  {
+    Serial.println("TCbSleepFunction: begin");
+    delete this;
+    Serial.println("TCbSleepFunction: end");
+  };
+
+  p_sleep_mode = new TSleepMode(is_hard_shutdown ? NULL : cb);
 
   p_conf = new TConf();
 #ifdef PIN_BTN

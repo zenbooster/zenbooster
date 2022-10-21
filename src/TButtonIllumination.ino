@@ -70,9 +70,10 @@ void TButtonIllumination::on_msession_data(void)
 {
     xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
     uint8_t vmax = TUtil::percent_of(max_illumination_level, 255);
+    bool is_bod = is_blink_on_packets;
     xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
 
-    if(is_blink_on_packets)
+    if(is_bod)
     {
         ledcWrite(led_pulse_id, is_led_pulse ? vmax: (vmax >> 1));
         is_led_pulse = !is_led_pulse;

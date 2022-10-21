@@ -50,6 +50,7 @@ class TMyApplication
     static const char *WIFI_PASS;
     
     static TConf *p_conf;
+    static bool is_hard_shutdown;
 #ifdef PIN_BTN
     static TSleepMode *p_sleep_mode;
 #endif
