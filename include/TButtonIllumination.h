@@ -15,11 +15,12 @@ class TButtonIllumination
         static uint8_t led_pulse_id;
         //static bool is_poor_signal_indicated;
         static float max_illumination_level;
-
+ 
         friend class Conf::TConf;
     
     public:
         TButtonIllumination();
+        ~TButtonIllumination();
 
         static bool is_poor_signal_indicated;
 

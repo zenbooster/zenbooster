@@ -280,6 +280,12 @@ TMyApplication::TMyApplication()
 
 TMyApplication::~TMyApplication()
 {
+#ifdef PIN_BTN
+  if(p_btn_il)
+    // это запустит индикацию завершения работы:
+    delete p_btn_il;
+#endif
+
 #ifdef SOUND
   if(p_noise)
     delete p_noise;
@@ -290,11 +296,6 @@ TMyApplication::~TMyApplication()
 
   if(p_wifi_stuff)
     delete p_wifi_stuff;
-
-#ifdef PIN_BTN
-  if(p_btn_il)
-    delete p_btn_il;
-#endif
 
   if(p_conf)
     delete p_conf;

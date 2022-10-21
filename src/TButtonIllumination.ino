@@ -32,6 +32,18 @@ TButtonIllumination::TButtonIllumination()
     ledcWrite(0, vmax);
 }
 
+TButtonIllumination::~TButtonIllumination()
+{
+    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    uint8_t vmax = TUtil::percent_of(max_illumination_level, 255);
+    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+
+    ledcWrite(0, vmax);
+    ledcWrite(1, 0);
+    ledcWrite(2, 0);
+    ledcWriteTone(0, 12);
+}
+
 void TButtonIllumination::on_wait_for_connect(void)
 {
     xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
