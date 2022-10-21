@@ -240,7 +240,13 @@ TMyApplication::TMyApplication()
   , ring_buffer_out_index(0)*/
 {
   Serial.println(get_version_string());
-  p_sleep_mode = new TSleepMode();
+  p_sleep_mode = new TSleepMode(
+    [this]() -> void {
+      Serial.println("TCbSleepFunction: begin");
+      delete this;
+      Serial.println("TCbSleepFunction: end");
+    }
+  );
 
   p_conf = new TConf();
 #ifdef PIN_BTN

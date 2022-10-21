@@ -156,6 +156,25 @@ bool TTgmBot::cmd_conf_1_arg(const String& s_cmd, const String& text, void (TCon
   return res;
 }
 
+bool TTgmBot::ProcessQueue(void)
+{
+  bool res;
+  TBMessage msg;
+  String *p_m = NULL;
+
+  res = xQueueReceive(queue, &p_m, 10);//portMAX_DELAY)
+  if(res)
+  {
+    msg.chatId = CHAT_ID;
+    msg.isMarkdownEnabled = true;
+    pbot->sendMessage(msg, *p_m);
+    delete p_m;
+    msg.isMarkdownEnabled = false;
+    flush_message();
+  }
+  return res;
+}
+
 void TTgmBot::run(void)// *p)
 {
   // a variable to store telegram message data
@@ -163,20 +182,7 @@ void TTgmBot::run(void)// *p)
   TFormulaDB *p_fdb = p_conf->get_fdb();
   TBMessage msg;
 
-  {
-    String *p_m = NULL;
-    if(pdTRUE == xQueueReceive(queue, &p_m, 10))//portMAX_DELAY))
-    //xQueueReceive(queue, &p_m, 10);
-    {
-      //Serial.printf("HIT.1: %p\n", p_m);
-      msg.chatId = CHAT_ID;
-      msg.isMarkdownEnabled = true;
-      pbot->sendMessage(msg, *p_m);
-      delete p_m;
-      msg.isMarkdownEnabled = false;
-      //flush_message();
-    }
-  }
+  ProcessQueue();
 
   // if there is an incoming message...
   if (pbot->getNewMessage(msg))
@@ -435,6 +441,11 @@ void TTgmBot::run(void)// *p)
   }
 }
 
+void TTgmBot::say_goodbye(void)
+{
+  send(TUtil::screen_mark_down((String("Бот @") + pbot->getBotName() + " выключился!")).c_str());
+}
+
 TTgmBot::TTgmBot(String dev_name, TConf *p_conf, TCbChangeFunction cb_change_formula):
   dev_name(dev_name),
   p_conf(p_conf)
@@ -464,15 +475,11 @@ TTgmBot::TTgmBot(String dev_name, TConf *p_conf, TCbChangeFunction cb_change_for
     throw String("Error creating the queue");
   }
 
-  char welcome_msg[128];
-  snprintf(welcome_msg, 128, "BOT @%s в сети!\nНабери \"help\" для справки.", pbot->getBotName());
-
-  pbot->sendTo(CHAT_ID, welcome_msg);
+  pbot->sendTo(CHAT_ID, (String("Бот @") + pbot->getBotName() + " в сети!\nНаберите \"help\" для справки.").c_str());
 }
 
 TTgmBot::~TTgmBot()
 {
-  // сделать удаление задачи.
   if(pbot)
   {
     delete pbot;

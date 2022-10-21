@@ -43,6 +43,7 @@ class TTgmBot
     void send_config(TBMessage& msg);
 
     void flush_message(void);
+    bool ProcessQueue(void);
 
     bool cmd_conf_1_arg(const String& s_cmd, const String& text, void (TConf::*p_mtd)(const DynamicJsonDocument& ), TBMessage& msg);
 
@@ -52,5 +53,6 @@ class TTgmBot
 
     void run(void);
     void send(const String& m, bool isMarkdownEnabled = true);
+    void say_goodbye(void);
 };
 }

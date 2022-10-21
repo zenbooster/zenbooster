@@ -16,9 +16,12 @@ class TSleepMode
 {
     private:
         static const uint8_t sleep_pin = PIN_BTN;
+        static TaskHandle_t h_task;
         static TCbSleepFunction cb;
 
-        static void IRAM_ATTR isr_handle() __attribute__ ((noreturn));
+        static void IRAM_ATTR isr_handle();
+
+        static void task(void *p) __attribute__ ((noreturn));
 
     public:
         TSleepMode(TCbSleepFunction cb = 0);

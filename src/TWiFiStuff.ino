@@ -8,6 +8,8 @@ using namespace MyApplication;
 int TWiFiStuff::ref_cnt = 0;
 //String TWiFiStuff::dev_name;
 TaskHandle_t TWiFiStuff::h_task = NULL;
+SemaphoreHandle_t TWiFiStuff::xDtorMutex = NULL;
+TaskHandle_t TWiFiStuff::h_dtor_task = NULL;
 WiFiUDP TWiFiStuff::ntp_udp;
 NTPClient TWiFiStuff::time_cli(ntp_udp);
 TTgmBot *TWiFiStuff::pTgmBot = NULL;
@@ -26,6 +28,13 @@ void TWiFiStuff::task(void *p)
     if (pTgmBot)
       pTgmBot->run();
 
+    xSemaphoreTake(xDtorMutex, portMAX_DELAY);
+    if(h_dtor_task)
+    {
+      xTaskNotify(h_dtor_task, 0, eNoAction);
+    }
+    xSemaphoreGive(xDtorMutex);
+
     yield();
   }
 }
@@ -42,7 +51,8 @@ TWiFiStuff::TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction
   time_cli.begin();
 
   pTgmBot = new TTgmBot(dev_name, p_conf, cb_change_formula);
-  
+
+  xDtorMutex = xSemaphoreCreateMutex();
   //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,
   xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,
     (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
@@ -50,6 +60,18 @@ TWiFiStuff::TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction
 
 TWiFiStuff::~TWiFiStuff()
 {
+  pTgmBot->say_goodbye(); // попрощаемся
+  // Нам нужно уведомить себя о том, что цикл в задаче совершил очередную
+  // итерацию, чтобы гарантировать отправку прощального сообщения:
+  xSemaphoreTake(xDtorMutex, portMAX_DELAY);
+  // сообщаем, что уведомить надо нас:
+  h_dtor_task = xTaskGetCurrentTaskHandle();
+  xSemaphoreGive(xDtorMutex);
+  // Чтоб гарантировать полную итерацию, вызываем два раза:
+  xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+  xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+
+  // Мы всё сделали для того, чтобы сообщение ушло. Теперь можно удалить задачу:
   if(h_task)
   {
     vTaskDelete(h_task);
