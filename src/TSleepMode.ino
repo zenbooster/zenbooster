@@ -50,7 +50,7 @@ TSleepMode::TSleepMode(TCbSleepFunction cb)
         break;
     }
 
-    xTaskCreatePinnedToCore(task, "TSleepMode::task", 2000, this,
+    xTaskCreatePinnedToCore(task, "TSleepMode::task", 1500, this,
         (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 
     pinMode(sleep_pin, INPUT_PULLUP);
