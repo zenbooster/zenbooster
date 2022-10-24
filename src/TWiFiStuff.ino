@@ -76,6 +76,8 @@ TWiFiStuff::~TWiFiStuff()
   {
     vTaskDelete(h_task);
   }
+
+  vSemaphoreDelete(xDtorMutex);
   
   if(pTgmBot)
   {

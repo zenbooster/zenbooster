@@ -481,6 +481,11 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
 
 TTgmBot::~TTgmBot()
 {
+  if(queue)
+  {
+    vQueueDelete(queue);
+  }
+
   if(pbot)
   {
     delete pbot;
