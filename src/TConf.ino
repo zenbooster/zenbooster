@@ -77,6 +77,50 @@ TConf::TConf()
     }
   });
 
+#ifdef PIN_BTN
+  p_prefs->init_key("mil", "максимальный уровень подсветки \\(numeric\\)", "75.0", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_numeric(value);
+    float v = atof(value.c_str());
+    TUtil::chk_value_is_positive(v);
+
+    if(v > 100.0)
+    {
+      throw String("должно выполняться условие: значение <= 100.0");
+    }
+
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      TButtonIllumination::max_illumination_level = v;
+      xSemaphoreGiveRecursive(xOptRcMutex);
+    
+      if(!TMyApplication::p_btn_il)
+      {
+        TMyApplication::p_btn_il = new TButtonIllumination();
+      }
+
+      bool is_conn;
+      // В 1-й раз TBluetoothStuff ещё не создан, поэтому проверяем:
+      if(TBluetoothStuff::xConnSemaphore)
+      {
+        xSemaphoreTake(TBluetoothStuff::xConnSemaphore, portMAX_DELAY);
+        is_conn = TBluetoothStuff::is_connected;
+        xSemaphoreGive(TBluetoothStuff::xConnSemaphore);
+      }
+      else
+      {
+        is_conn = false;
+      }
+
+      if(!is_conn)
+      {
+        TButtonIllumination::on_wait_for_connect();
+      }
+    }
+  });
+#endif
+
   p_prefs->init_key("hsdown", "hard shutdown \\- не уничтожать объекты перед завершением работы \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_bool(value);
@@ -170,32 +214,6 @@ TConf::TConf()
       TNoise::MAX_NOISE_LEVEL = v;
       TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
       xSemaphoreGiveRecursive(xOptRcMutex);
-    }
-  });
-#endif
-
-#ifdef PIN_BTN
-  p_prefs->init_key("mil", "максимальный уровень подсветки \\(numeric\\)", "75.0", [](const String& value, bool is_validate_only) -> void
-  {
-    TUtil::chk_value_is_numeric(value);
-    float v = atof(value.c_str());
-    TUtil::chk_value_is_positive(v);
-
-    if(v > 100.0)
-    {
-      throw String("должно выполняться условие: значение <= 100.0");
-    }
-
-    if(!is_validate_only)
-    {
-      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TButtonIllumination::max_illumination_level = v;
-      xSemaphoreGiveRecursive(xOptRcMutex);
-    
-      if(TMyApplication::p_btn_il && !TBluetoothStuff::is_connected)
-      {
-        TButtonIllumination::on_wait_for_connect();
-      }
     }
   });
 #endif

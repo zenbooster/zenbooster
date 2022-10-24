@@ -80,7 +80,8 @@ void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
 int TBluetoothStuff::ref_cnt = 0;
 //String TBluetoothStuff::dev_name;
 TaskHandle_t TBluetoothStuff::h_task = NULL;
-SemaphoreHandle_t TBluetoothStuff::xConnSemaphore;
+// используется в т.ч. для инициализации "mil":
+SemaphoreHandle_t TBluetoothStuff::xConnSemaphore = NULL;
 bool TBluetoothStuff::is_connected = false;
 tpfn_callback TBluetoothStuff::pfn_callback = NULL;
 uint8_t TBluetoothStuff::address[6] = {};

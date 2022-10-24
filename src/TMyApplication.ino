@@ -249,11 +249,7 @@ TMyApplication::TMyApplication()
   };
 
   p_sleep_mode = new TSleepMode(is_hard_shutdown ? NULL : cb);
-
   p_conf = new TConf();
-#ifdef PIN_BTN
-  p_btn_il = new TButtonIllumination();
-#endif
 
   pinMode(LED_BUILTIN, OUTPUT);
 
