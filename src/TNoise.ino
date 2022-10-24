@@ -12,6 +12,9 @@ namespace Noise
 {
 numeric TNoise::MAX_NOISE_LEVEL = 0.1;
 numeric TNoise::level = TNoise::MAX_NOISE_LEVEL;
+#ifdef SOUND_I2S
+TaskHandle_t TNoise::h_task = NULL;
+#endif
 
 #ifdef SOUND_DAC
 void TNoise::timer0_ISR(void *ptr)
@@ -112,15 +115,26 @@ TNoise::TNoise()
   i2s_set_sample_rates((i2s_port_t)i2s_num, SAMPLE_RATE_I2S); 
 
   xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 1200, this,
-    (tskIDLE_PRIORITY + 2), NULL, portNUM_PROCESSORS - 2);
+    (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 #endif
 }
 
 TNoise::~TNoise()
 {
-  //#ifdef SOUND_DAC
-  //timer_stop(TIMER_GROUP_0, TIMER_0);
-  //#endif
+#ifdef SOUND_DAC
+  timer_pause(TIMER_GROUP_0, TIMER_0);
+  ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL));
+  ESP_ERROR_CHECK(timer_disable_intr(TIMER_GROUP_0, TIMER_0));
+#endif
+
+#ifdef SOUND_I2S
+  if(h_task)
+  {
+    vTaskDelete(h_task);
+  }
+  i2s_driver_uninstall((i2s_port_t)i2s_num);
+  digitalWrite(PIN_I2S_SD, LOW);
+#endif
 }
 
 numeric TNoise::set_level(numeric lvl)
