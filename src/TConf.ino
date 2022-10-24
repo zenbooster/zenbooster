@@ -206,7 +206,7 @@ TConf::TConf():
     p_fdb->assign("gamma", "100 * 3 * gl / (gm + bh + bl)");
   }
 
-  p_prefs->init_key("f", "формула", "diss", [this](const String& value, bool is_validate_only) -> void
+  p_prefs->init_key("f", "формула", "samadhi", [this](const String& value, bool is_validate_only) -> void
   {
     String val = p_fdb->get_value(value);
     
