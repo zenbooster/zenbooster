@@ -118,10 +118,10 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     delete dp;
     dp = NULL;
     // А вот тут кое-кто может проверять состояние xConnSemaphore, по этому используем семафор.
+    TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eDisconnect);
     xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
     TBluetoothStuff::is_connected = false;
     xSemaphoreGive(xConnSemaphore);
-    TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eDisconnect);
   }
 }
 
@@ -209,6 +209,26 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
 
 TBluetoothStuff::~TBluetoothStuff()
 {
+  bool is_conn;
+
+  xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
+  is_conn = is_connected;
+  xSemaphoreGive(xConnSemaphore);
+  // Если соединение было установлено, разрываем
+  // его, и ждём, когда отработают обработчики:
+  if(is_conn)
+  {
+    SerialBT.disconnect();
+    
+    do
+    {
+      xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
+      is_conn = is_connected;
+      xSemaphoreGive(xConnSemaphore);
+      yield();
+    } while(is_conn);
+  }
+
   if(h_task)
   {
     vTaskDelete(h_task);
@@ -217,6 +237,7 @@ TBluetoothStuff::~TBluetoothStuff()
   if(p_tpp)
       delete p_tpp;
 
+  vSemaphoreDelete(xConnSemaphore);
   --ref_cnt;
 }
 }
