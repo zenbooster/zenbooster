@@ -10,6 +10,7 @@ TCbSleepFunction TSleepMode::cb = NULL;
 
 void /*IRAM_ATTR*/ TSleepMode::isr_handle()
 {
+    detachInterrupt(sleep_pin);
     Serial.printf("Нажата кнопка на пине GPIO_NUM_%d.\n", sleep_pin);
 
     BaseType_t xHigherPriorityTaskWoken = 0;
