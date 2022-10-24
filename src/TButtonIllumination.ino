@@ -1,5 +1,5 @@
 #include "TButtonIllumination.h"
-#include "TMyApplication.h"
+#include "TConf.h"
 #include "common.h"
 #include "TUtil.h"
 #include <esp32-hal-ledc.h>
@@ -25,18 +25,18 @@ TButtonIllumination::TButtonIllumination()
     ledcAttachPin(PIN_LED_G, 1);
     ledcAttachPin(PIN_LED_B, 2);
 
-    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     uint8_t vmax = TUtil::percent_of(max_illumination_level, 255);
-    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
     ledcWrite(0, vmax);
 }
 
 TButtonIllumination::~TButtonIllumination()
 {
-    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     uint8_t vmax = TUtil::percent_of(max_illumination_level, 255);
-    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
     ledcWrite(0, vmax);
     ledcWrite(1, 0);
@@ -46,9 +46,9 @@ TButtonIllumination::~TButtonIllumination()
 
 void TButtonIllumination::on_wait_for_connect(void)
 {
-    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     uint8_t v = TUtil::percent_of(max_illumination_level, 255);
-    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
     ledcWrite(0, v >> 2);
     ledcWrite(1, 0);
@@ -80,10 +80,10 @@ void TButtonIllumination::on_msession_connect(void)
 
 void TButtonIllumination::on_msession_data(void)
 {
-    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     uint8_t vmax = TUtil::percent_of(max_illumination_level, 255);
     bool is_bod = is_blink_on_packets;
-    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
     if(is_bod)
     {
@@ -98,9 +98,9 @@ void TButtonIllumination::on_msession_data(void)
 
 void TButtonIllumination::on_threshold_reached(void)
 {
-    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     uint8_t vmax = TUtil::percent_of(max_illumination_level, 255);
-    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
     ledcWrite(0, vmax);
     ledcWrite(1, vmax);
@@ -108,9 +108,9 @@ void TButtonIllumination::on_threshold_reached(void)
 
 void TButtonIllumination::on_pre_threshold_reached(int d, int threshold)
 {
-    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     uint8_t vmax = TUtil::percent_of(max_illumination_level, 255);
-    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
     int led_lvl = vmax - (d * vmax) / threshold;
     ledcWrite(0, led_lvl);

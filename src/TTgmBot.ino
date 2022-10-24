@@ -7,6 +7,7 @@
 #include ".\\tg_certificate.h"
 #include "TUtil.h"
 #include "TMyApplication.h"
+#include "TConf.h"
 #include <StreamString.h>
 #include "ArduinoJson.h"
 //#include "esp_arduino_version.h"
@@ -15,6 +16,7 @@ namespace TgmBot
 {
 using namespace Util;
 using namespace MyApplication;
+using namespace Conf;
 
 int TTgmBot::ref_cnt = 0;
 
@@ -47,7 +49,7 @@ void TTgmBot::show_help(TBMessage& msg)
     "\\(*\\<имя\\>* должно иметь длину не больше 15 символов\\)\n"
     "*flist* \\- показать список всех формул\n"
   );
-  pbot->sendMessage(msg, ("*Опции*:\n" + p_conf->get_prefs()->get_desc()).c_str());
+  pbot->sendMessage(msg, ("*Опции*:\n" + TConf::get_prefs()->get_desc()).c_str());
   flush_message();
   pbot->sendMessage(msg, "\nУстановить значение: *option\\=value*\nЗапросить значение: *option?*");
 }
@@ -55,7 +57,7 @@ void TTgmBot::show_help(TBMessage& msg)
 void TTgmBot::show_info(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, ("*Опции*:\n" + p_conf->get_prefs()->get_values()).c_str());
+  pbot->sendMessage(msg, ("*Опции*:\n" + TConf::get_prefs()->get_values()).c_str());
 }
 
 String ip2str(ip4_addr_t& ip)
@@ -103,7 +105,7 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
 
 void TTgmBot::send_config(TBMessage& msg)
 {
-  DynamicJsonDocument doc = p_conf->get_json();
+  DynamicJsonDocument doc = TConf::get_json();
   StreamString ss;
   serializeJson(doc, ss);
   msg.isMarkdownEnabled = true;
@@ -119,7 +121,7 @@ void TTgmBot::flush_message(void)
     }
 }
 
-bool TTgmBot::cmd_conf_1_arg(const String& s_cmd, const String& text, void (TConf::*p_mtd)(const DynamicJsonDocument& ), TBMessage& msg)
+bool TTgmBot::cmd_conf_1_arg(const String& s_cmd, const String& text, void (*p_mtd)(const DynamicJsonDocument& ), TBMessage& msg)
 {
   bool is_no_args = (text == s_cmd);
   bool res = (is_no_args || text.startsWith(s_cmd + " "));
@@ -142,7 +144,7 @@ bool TTgmBot::cmd_conf_1_arg(const String& s_cmd, const String& text, void (TCon
       {
         DynamicJsonDocument doc(1024);
         deserializeJson(doc, args.c_str());
-        (p_conf->*p_mtd)(doc);
+        p_mtd(doc);
       }
       catch(String& e)
       {
@@ -178,8 +180,8 @@ bool TTgmBot::ProcessQueue(void)
 void TTgmBot::run(void)// *p)
 {
   // a variable to store telegram message data
-  TPrefs *p_prefs = p_conf->get_prefs();
-  TFormulaDB *p_fdb = p_conf->get_fdb();
+  TPrefs *p_prefs = TConf::get_prefs();
+  TFormulaDB *p_fdb = TConf::get_fdb();
   TBMessage msg;
 
   ProcessQueue();
@@ -446,9 +448,8 @@ void TTgmBot::say_goodbye(void)
   send(TUtil::screen_mark_down((String("Бот @") + pbot->getBotName() + " выключился!")).c_str());
 }
 
-TTgmBot::TTgmBot(String dev_name, TConf *p_conf, TCbChangeFunction cb_change_formula):
-  dev_name(dev_name),
-  p_conf(p_conf)
+TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
+  dev_name(dev_name)
 #ifdef PIN_BATTARY
   , battery(PIN_BATTARY)
 #endif

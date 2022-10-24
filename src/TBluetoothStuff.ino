@@ -1,5 +1,5 @@
 #include "TBluetoothStuff.h"
-#include "TMyApplication.h"
+#include "TConf.h"
 #include "TButtonIllumination.h"
 #include "common.h"
 #include "TUtil.h"
@@ -140,9 +140,9 @@ void TBluetoothStuff::task(void *p)
     if(!is_conn)
     {
       uint8_t addr[6];
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       memcpy(addr, address, 6); // делаем копию
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
       bool is_was_connected = pthis->SerialBT.connect(addr);
       if(!is_was_connected)

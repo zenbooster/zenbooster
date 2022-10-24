@@ -2,7 +2,6 @@
 #include <Arduino.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
-#include "TConf.h"
 #include "TTgmBot.h"
 
 namespace MedSession {class TMedSession;}
@@ -31,7 +30,7 @@ class TWiFiStuff
     friend class MedSession::TMedSession;
 
   public:
-    TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction cb_change_formula);
+    TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula);
     ~TWiFiStuff();
 
     static void tgb_send(const String& m, bool isMarkdownEnabled = true);

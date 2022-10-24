@@ -14,12 +14,28 @@ using namespace WiFiStuff;
 using namespace Noise;
 using namespace Util;
 
-TConf::TConf():
-  p_prefs(new TPrefs(TMyApplication::DEVICE_NAME)),
-  p_fdb(NULL)
+SemaphoreHandle_t TConf::xOptRcMutex;
+TPrefs *TConf::p_prefs;
+TFormulaDB *TConf::p_fdb;
+const char *TConf::key_options = "options";
+const char *TConf::key_formulas = "formulas";
 
+TConf::~TConf()
 {
-  TMyApplication::xOptRcMutex = xSemaphoreCreateRecursiveMutex();
+  if(p_fdb)
+    delete p_fdb;
+  if(p_prefs)
+    delete p_prefs;
+  
+  vSemaphoreDelete(xOptRcMutex);
+}
+
+TConf::TConf()
+{
+  p_prefs = new TPrefs(TMyApplication::DEVICE_NAME);
+  p_fdb = NULL;
+
+  xOptRcMutex = xSemaphoreCreateRecursiveMutex();
 
   p_prefs->init_key("wop", "wake on power \\- проснуться при возобновлении питания \\(bool\\)",
   #ifdef LILYGO_WATCH_2020_V2
@@ -67,9 +83,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMyApplication::is_hard_shutdown = (value == "true");
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -80,10 +96,10 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TWiFiStuff::time_cli.setTimeOffset(v * 3600);
       TWiFiStuff::tgb_send(TUtil::screen_mark_down(TWiFiStuff::time_cli.getFormattedDate()));
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -94,9 +110,9 @@ TConf::TConf():
     
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       memcpy(TBluetoothStuff::address, addr, 6);
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -109,9 +125,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMyApplication::threshold = v;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -128,9 +144,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMyApplication::pre_threshold = v;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -150,10 +166,10 @@ TConf::TConf():
     {
       float old_lvl = TNoise::get_level();
       float old_mnl = TNoise::MAX_NOISE_LEVEL;
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TNoise::MAX_NOISE_LEVEL = v;
       TNoise::set_level(old_mnl ? (TNoise::MAX_NOISE_LEVEL * old_lvl) / old_mnl : TNoise::MAX_NOISE_LEVEL);
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 #endif
@@ -172,9 +188,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TButtonIllumination::max_illumination_level = v;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     
       if(TMyApplication::p_btn_il && !TBluetoothStuff::is_connected)
       {
@@ -190,9 +206,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TButtonIllumination::is_blink_on_packets = (value == "true");
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -214,11 +230,11 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMyApplication::update_calc_formula(pcf);
       TMedSession::formula_name = value;
       TMedSession::formula_text = val;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -228,9 +244,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMyApplication::is_log_data_to_bot = (value == "true");
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -240,9 +256,9 @@ TConf::TConf():
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMyApplication::is_use_poor_signal = (value == "true");
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 
@@ -255,19 +271,11 @@ TConf::TConf():
     
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMedSession::minsessec = v;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
-}
-
-TConf::~TConf()
-{
-  if(p_fdb)
-    delete p_fdb;
-  if(p_prefs)
-    delete p_prefs;
 }
 
 TPrefs *TConf::get_prefs()

@@ -19,6 +19,7 @@ class TMedSession
         int tr;
         int pretr;
         static uint16_t minsessec;
+        static bool is_minsessec;
         static String formula_name;
         static String formula_text;
 

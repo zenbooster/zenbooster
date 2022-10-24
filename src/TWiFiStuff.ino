@@ -1,5 +1,5 @@
 #include "TWiFiStuff.h"
-#include "TMyApplication.h"
+#include "TConf.h"
 
 namespace WiFiStuff
 {
@@ -21,9 +21,9 @@ void TWiFiStuff::task(void *p)
 
   for(;;)
   {
-    xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     time_cli.update();
-    xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
     if (pTgmBot)
       pTgmBot->run();
@@ -39,7 +39,7 @@ void TWiFiStuff::task(void *p)
   }
 }
 
-TWiFiStuff::TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction cb_change_formula)
+TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula)
 {
   if(ref_cnt)
   {
@@ -50,7 +50,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TConf *p_conf, TgmBot::TCbChangeFunction
   //TWiFiStuff::dev_name = dev_name;
   time_cli.begin();
 
-  pTgmBot = new TTgmBot(dev_name, p_conf, cb_change_formula);
+  pTgmBot = new TTgmBot(dev_name, cb_change_formula);
 
   xDtorMutex = xSemaphoreCreateMutex();
   //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,

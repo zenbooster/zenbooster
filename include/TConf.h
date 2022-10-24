@@ -2,30 +2,48 @@
 #include "TPrefs.h"
 #include "TFormulaDB.h"
 
+namespace MyApplication {class TMyApplication;}
+namespace BluetoothStuff {class TBluetoothStuff;}
+namespace WiFiStuff {class TWiFiStuff;}
+namespace ButtonIllumination {class TButtonIllumination;}
+namespace MedSession {class TMedSession;}
+
 namespace Conf
 {
 using namespace Prefs;
 using namespace FormulaDB;
+using namespace MyApplication;
+using namespace BluetoothStuff;
+using namespace WiFiStuff;
+using namespace ButtonIllumination;
+using namespace MedSession;
 
 class TConf
 {
     private:
-        TPrefs *p_prefs;
-        TFormulaDB *p_fdb;
+        static SemaphoreHandle_t xOptRcMutex;
+        static TPrefs *p_prefs;
+        static TFormulaDB *p_fdb;
 
-        const char *key_options = "options";
-        const char *key_formulas = "formulas";
+        static const char *key_options;
+        static const char *key_formulas;
+
+        friend class MyApplication::TMyApplication;
+        friend class BluetoothStuff::TBluetoothStuff;
+        friend class WiFiStuff::TWiFiStuff;
+        friend class ButtonIllumination::TButtonIllumination;
+        friend class MedSession::TMedSession;
 
     public:
         TConf();
         ~TConf();
 
-        TPrefs *get_prefs();
-        TFormulaDB *get_fdb();
+        static TPrefs *get_prefs();
+        static TFormulaDB *get_fdb();
 
-        DynamicJsonDocument get_json(void);
-        void validate_json(const DynamicJsonDocument& doc);
-        void add_json(const DynamicJsonDocument& doc);
-        void set_json(const DynamicJsonDocument& doc);
+        static DynamicJsonDocument get_json(void);
+        static void validate_json(const DynamicJsonDocument& doc);
+        static void add_json(const DynamicJsonDocument& doc);
+        static void set_json(const DynamicJsonDocument& doc);
 };
 }

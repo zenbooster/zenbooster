@@ -74,7 +74,6 @@ class TMyApplication
     static TBluetoothStuff *p_bluetooth_stuff;
     static TWiFiStuff *p_wifi_stuff;
     static TCalcFormula *p_calc_formula;
-    static SemaphoreHandle_t xOptRcMutex;
     
     static bool is_log_data_to_bot;
 
@@ -91,9 +90,6 @@ class TMyApplication
 
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
-    friend class WiFiStuff::TWiFiStuff;
-    friend class BluetoothStuff::TBluetoothStuff;
-    friend class ButtonIllumination::TButtonIllumination;
 
   public:
     TMyApplication();

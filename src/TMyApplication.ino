@@ -38,7 +38,6 @@ TNoise *TMyApplication::p_noise = NULL;
 TBluetoothStuff *TMyApplication::p_bluetooth_stuff = NULL;
 TWiFiStuff *TMyApplication::p_wifi_stuff = NULL;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
-SemaphoreHandle_t TMyApplication::xOptRcMutex;
 bool TMyApplication::is_log_data_to_bot = false;
 bool TMyApplication::is_use_poor_signal = false;
 #ifdef PIN_BTN
@@ -55,7 +54,7 @@ int TMyApplication::calc_formula_meditation()
 {
   double res = 0;
 
-  xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+  xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
   for(int i = 0; i < ring_buffer_in_size; i++)
   {
     TRingBufferInItem *p_item = ring_buffer_in + ((ring_buffer_in_index - i) & 3);
@@ -68,7 +67,7 @@ int TMyApplication::calc_formula_meditation()
     float m = p_calc_formula->run();
     res += (m == numeric_limits<float>::infinity()) ? 0 : m;
   }
-  xSemaphoreGiveRecursive(xOptRcMutex);
+  xSemaphoreGiveRecursive(TConf::xOptRcMutex);
   return res / ring_buffer_in_size;
 }
 
@@ -84,9 +83,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
     case TCallbackEvent::eConnect:
     {
       Serial.println("TMyApplication::callback: TCallbackEvent::eConnect");
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       bool is_use = is_use_poor_signal;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(TConf::xOptRcMutex);
       if(!is_use)
       {
         p_med_session = new TMedSession();
@@ -105,9 +104,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
         p_med_session = NULL;
       }
     #ifdef SOUND
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(TConf::xOptRcMutex);
     #endif
     #ifdef PIN_BTN
       TButtonIllumination::on_msession_disconnect();
@@ -127,18 +126,18 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       String s = p_tpv->serialize() + "; --> f=" + med;
       Serial.println(s);
 
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       bool is_log = is_log_data_to_bot;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(TConf::xOptRcMutex);
       if(is_log)
       {
         TWiFiStuff::tgb_send("`" + s + "`");
       }
 
       // подсветка:
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       bool is_use = is_use_poor_signal;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(TConf::xOptRcMutex);
       if(is_use) // если отслеживаем POOR_SIGNAL
       {
         if(p_tpv->is_has_poor && p_tpv->poor) // если сигнал плохой
@@ -173,10 +172,10 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
       p_med_session->calc_next(med);
 
-      xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       int tr = TMyApplication::threshold;
       int pretr = TMyApplication::pre_threshold;
-      xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+      xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 
       if(med >= tr)
       {
@@ -193,9 +192,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
         if(d < pretr)
         {
         #ifdef SOUND
-          xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+          xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
           TNoise::set_level(((float)d * TNoise::MAX_NOISE_LEVEL) / (float)pretr);
-          xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+          xSemaphoreGiveRecursive(TConf::xOptRcMutex);
         #endif
         #ifdef PIN_BTN
           TButtonIllumination::on_pre_threshold_reached(d, pretr);
@@ -204,9 +203,9 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
         else
         {
         #ifdef SOUND
-          xSemaphoreTakeRecursive(TMyApplication::xOptRcMutex, portMAX_DELAY);
+          xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
           TNoise::set_level(TNoise::MAX_NOISE_LEVEL);
-          xSemaphoreGiveRecursive(TMyApplication::xOptRcMutex);
+          xSemaphoreGiveRecursive(TConf::xOptRcMutex);
         #endif
         #ifdef PIN_BTN
           TButtonIllumination::on_pre_threshold_not_reached();
@@ -265,7 +264,7 @@ TMyApplication::TMyApplication()
   //wifiManager.startConfigPortal(WIFI_SSID, WIFI_PASS);
   wifiManager.autoConnect(WIFI_SSID, WIFI_PASS);
 
-  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, p_conf, [](TCalcFormula *pcf) -> void
+  p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, [](TCalcFormula *pcf) -> void
   {
     update_calc_formula(pcf);
   });
