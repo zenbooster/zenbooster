@@ -426,7 +426,6 @@ bool TElementsDB::is_empty(void)
 {
     bool res;
     uint8_t i = 0;
-    uint8_t cnt = (bitmap_size >> 3);
 
     do
     {
@@ -436,7 +435,7 @@ bool TElementsDB::is_empty(void)
         prefs.end();
 
         res = !chunk;
-    } while(++i < cnt && res);
+    } while(++i < bitmap_size && res);
 
     return res;
 }
