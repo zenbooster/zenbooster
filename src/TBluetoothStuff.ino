@@ -218,15 +218,8 @@ TBluetoothStuff::~TBluetoothStuff()
   // его, и ждём, когда отработают обработчики:
   if(is_conn)
   {
+    // Все колбэки будут вызваны до выхода из метода disconnect:
     SerialBT.disconnect();
-    
-    do
-    {
-      xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
-      is_conn = is_connected;
-      xSemaphoreGive(xConnSemaphore);
-      yield();
-    } while(is_conn);
   }
 
   if(h_task)
