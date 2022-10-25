@@ -115,14 +115,14 @@ TConf::TConf()
   });
 #endif
 
-  p_prefs->init_key("hsdown", "hard shutdown \\- не уничтожать объекты перед завершением работы \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
+  p_prefs->init_key("gsdown", "graceful shutdown \\- уничтожать объекты перед завершением работы \\(bool\\)", "true", [](const String& value, bool is_validate_only) -> void
   {
     TUtil::chk_value_is_bool(value);
 
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TMyApplication::is_hard_shutdown = (value == "true");
+      TSleepMode::is_graceful = (value == "true");
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });

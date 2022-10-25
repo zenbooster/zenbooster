@@ -1,12 +1,15 @@
 #include "TSleepMode.h"
 
 #ifdef PIN_BTN
+#include "TConf.h"
 #include "TMyApplication.h"
 
 namespace SleepMode
 {
 TaskHandle_t TSleepMode::h_task = NULL;
 TCbSleepFunction TSleepMode::cb = NULL;
+bool TSleepMode::is_graceful = true;
+bool TSleepMode::is_reset = false;
 
 void /*IRAM_ATTR*/ TSleepMode::isr_handle()
 {
@@ -21,15 +24,28 @@ void TSleepMode::task(void *p)
 {
     xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
 
-    if(TSleepMode::cb)
+    xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
+    bool is = is_graceful;
+    xSemaphoreGiveRecursive(TConf::xOptRcMutex);
+
+    if(is && TSleepMode::cb)
     {
         TSleepMode::cb();
     }
 
-    Serial.println("Идём баиньки...");
-    Serial.flush();
-    ets_delay_us(100 * 1000); // борьба с дребезгом
-    esp_deep_sleep_start();
+    if(is_reset)
+    {
+        Serial.println("Перезагружаемся...");
+        Serial.flush();
+        esp_restart();
+    }
+    else
+    {
+        Serial.println("Идём баиньки...");
+        Serial.flush();
+        //ets_delay_us(100 * 1000); // борьба с дребезгом
+        esp_deep_sleep_start();
+    }
 }
 
 TSleepMode::TSleepMode(TCbSleepFunction cb)
@@ -57,6 +73,17 @@ TSleepMode::TSleepMode(TCbSleepFunction cb)
     pinMode(sleep_pin, INPUT_PULLUP);
     attachInterrupt(sleep_pin, isr_handle, RISING);
     esp_sleep_enable_ext0_wakeup((gpio_num_t)sleep_pin, 0);
+}
+
+void TSleepMode::reset(void)
+{
+    is_reset = true;
+    xTaskNotify(h_task, 0, eNoAction);
+}
+
+void TSleepMode::shutdown(void)
+{
+    xTaskNotify(h_task, 0, eNoAction);
 }
 }
 #endif

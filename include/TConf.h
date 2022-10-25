@@ -7,6 +7,7 @@ namespace BluetoothStuff {class TBluetoothStuff;}
 namespace WiFiStuff {class TWiFiStuff;}
 namespace ButtonIllumination {class TButtonIllumination;}
 namespace MedSession {class TMedSession;}
+namespace SleepMode {class TSleepMode;}
 
 namespace Conf
 {
@@ -17,6 +18,7 @@ using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace ButtonIllumination;
 using namespace MedSession;
+using namespace SleepMode;
 
 class TConf
 {
@@ -28,11 +30,13 @@ class TConf
         static const char *key_options;
         static const char *key_formulas;
 
+
         friend class MyApplication::TMyApplication;
         friend class BluetoothStuff::TBluetoothStuff;
         friend class WiFiStuff::TWiFiStuff;
         friend class ButtonIllumination::TButtonIllumination;
         friend class MedSession::TMedSession;
+        friend class SleepMode::TSleepMode;
 
     public:
         TConf();

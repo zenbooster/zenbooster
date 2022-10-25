@@ -252,7 +252,8 @@ void TTgmBot::run(void)// *p)
             pbot->sendMessage(msg, (dev_name + " будет перезагружен...").c_str());
             // Wait until bot synced with telegram to prevent cyclic reboot
             flush_message();
-            esp_restart();
+            TSleepMode::reset();
+            break;
           }
           else
           if(text == "shutdown")
@@ -260,7 +261,8 @@ void TTgmBot::run(void)// *p)
             pbot->sendMessage(msg, (dev_name + " будет выключен...").c_str());
             // Wait until bot synced with telegram to prevent cyclic reboot
             flush_message();
-            esp_deep_sleep_start();
+            TSleepMode::shutdown();
+            break;
           }
           else // команды для работы с конфигурационным JSON:
           if(text == "getconf")
