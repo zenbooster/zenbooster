@@ -475,7 +475,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
 
   queue = xQueueCreate(4, sizeof(String *));
   if (queue == NULL) {
-    throw String("Error creating the queue");
+    throw String("TTgmBot::TTgmBot(..): error creating the queue");
   }
 
   pbot->sendTo(CHAT_ID, (String("Бот @") + pbot->getBotName() + " в сети!\nНаберите \"help\" для справки.").c_str());

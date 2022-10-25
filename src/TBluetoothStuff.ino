@@ -4,6 +4,7 @@
 #include "common.h"
 #include "TUtil.h"
 #include "TNoise.h"
+#include "TWorker.h"
 #include "freertos\\task.h"
 #include <esp_spp_api.h>
 
@@ -14,6 +15,7 @@ using namespace ButtonIllumination;
 using namespace common;
 using namespace Util;
 using namespace Noise;
+using namespace Worker;
 
 class TBluetoothDataProcessor
 {
@@ -51,7 +53,7 @@ TBluetoothDataProcessor::TBluetoothDataProcessor():
   queue = xQueueCreate(64, sizeof(TTgamParsedValues*));
 
   if (queue == NULL) {
-    throw String("Error creating the queue");
+    throw String("TBluetoothDataProcessor::TBluetoothDataProcessor(): error creating the queue");
   }
 
   xTaskCreatePinnedToCore(task, "TBluetoothDataProcessor::task", 2000, this,
@@ -148,7 +150,7 @@ void TBluetoothStuff::task(void *p)
       bool is_was_connected = pthis->SerialBT.connect(addr);
       if(!is_was_connected)
       {
-        Serial.println("Failed to connect. Make sure remote device is available and in range.");
+        TWorker::printf("Failed to connect. Make sure remote device is available and in range.\n");
       }
     }
     vTaskDelay(100);
@@ -201,7 +203,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
     }
   );
   SerialBT.begin(dev_name, true);
-  Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
+  TWorker::printf("The device started in master mode, make sure remote BT device is on!\n");
 
   //xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
   xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2200, this,

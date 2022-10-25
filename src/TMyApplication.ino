@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "TWiFiStuff.h"
 #include "TConf.h"
+#include "TWorker.h"
 #include "TCalcFormula.h"
 #include <limits>
 #include <sstream>
@@ -24,6 +25,7 @@ const char *TMyApplication::DEVICE_NAME = "zenbooster-dev";
 const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
 const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
 TConf *TMyApplication::p_conf = NULL;
+TWorker *TMyApplication::p_worker = NULL;
 TSleepMode *TMyApplication::p_sleep_mode = NULL;
 WiFiManager TMyApplication::wifiManager;
 int TMyApplication::threshold;
@@ -240,6 +242,7 @@ TMyApplication::TMyApplication()
 {
   Serial.println(get_version_string());
 
+  p_worker = new TWorker();
   p_sleep_mode = new TSleepMode([this]() -> void
   {
     Serial.println("TCbSleepFunction: begin");

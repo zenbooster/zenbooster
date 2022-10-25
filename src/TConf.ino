@@ -121,9 +121,9 @@ TConf::TConf()
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      xSemaphoreTakeRecursive(TSleepMode::xGrMutex, portMAX_DELAY);
       TSleepMode::is_graceful = (value == "true");
-      xSemaphoreGiveRecursive(xOptRcMutex);
+      xSemaphoreGiveRecursive(TSleepMode::xGrMutex);
     }
   });
 

@@ -11,6 +11,7 @@
 #include "TButtonIllumination.h"
 
 namespace Conf {class TConf;}
+namespace Worker {class TWorker;}
 namespace MedSession {class TMedSession;}
 namespace Noise {class TNoise;}
 namespace WiFiStuff {class TWiFiStuff;}
@@ -27,6 +28,7 @@ using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace CalcFormula;
 
+using namespace Worker;
 #ifdef PIN_BTN
 using namespace SleepMode;
 #endif
@@ -50,6 +52,7 @@ class TMyApplication
     static const char *WIFI_PASS;
     
     static TConf *p_conf;
+    static TWorker *p_worker;
 #ifdef PIN_BTN
     static TSleepMode *p_sleep_mode;
 #endif
