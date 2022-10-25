@@ -95,27 +95,21 @@ TConf::TConf()
       TButtonIllumination::max_illumination_level = v;
       xSemaphoreGiveRecursive(xOptRcMutex);
     
-      if(!TMyApplication::p_btn_il)
+      if(TMyApplication::p_btn_il)
       {
-        TMyApplication::p_btn_il = new TButtonIllumination();
-      }
-
-      bool is_conn;
-      // В 1-й раз TBluetoothStuff ещё не создан, поэтому проверяем:
-      if(TBluetoothStuff::xConnSemaphore)
-      {
+        bool is_conn;
         xSemaphoreTake(TBluetoothStuff::xConnSemaphore, portMAX_DELAY);
         is_conn = TBluetoothStuff::is_connected;
         xSemaphoreGive(TBluetoothStuff::xConnSemaphore);
+
+        if(!is_conn)
+        {
+          TButtonIllumination::on_wait_for_connect();
+        }
       }
       else
       {
-        is_conn = false;
-      }
-
-      if(!is_conn)
-      {
-        TButtonIllumination::on_wait_for_connect();
+        TMyApplication::p_btn_il = new TButtonIllumination();
       }
     }
   });
