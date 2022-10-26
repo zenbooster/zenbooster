@@ -65,9 +65,9 @@ void TWorkerTaskLog::run(void)
 
 ////////////////
 TWorkerTaskLogVariadic::TWorkerTaskLogVariadic(const char *fmt, va_list ap):
-    text(fmt),
-    ap(ap)
+    text(fmt)
 {
+    va_copy(this->ap, ap);
     h_task = xTaskGetCurrentTaskHandle();
 }
 
@@ -92,7 +92,10 @@ void TWorkerTaskLogVariadic::run(void)
         vsnprintf(buf, nBufferLength, fmt, ap);
         delete [] buf;
     }
+    va_end(ap);
+    Serial.println("TWorkerTaskLogVariadic::run(..): HIT.1");
     xTaskNotify(h_task, 0, eNoAction);
+    Serial.println("TWorkerTaskLogVariadic::run(..): HIT.2");
 }
 
 ////////////////
@@ -172,7 +175,9 @@ void TWorker::send(TWorkerTaskBase *p)
 {
     Serial.printf("TWorker::send(0x%p)\n", p);
     xQueueSend(queue, &p, 0);
+    Serial.println("TWorker::send(..): HIT.1");
     p->post_send();
+    Serial.println("TWorker::send(..): HIT.2");
 }
 
 const void TWorker::printf(const char *fmt, ...)
