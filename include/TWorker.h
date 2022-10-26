@@ -6,18 +6,7 @@ namespace Worker
 {
 using namespace SleepMode;
 
-class TWorkerTaskTerminate;
-class TWorkerTaskLog;
-class TWorkerTaskLogVariadic;
-
-class TVisitor
-{
-public:
-	virtual void visit(TWorkerTaskTerminate *p) = 0;
-    virtual void visit(TWorkerTaskLog *p) = 0;
-    virtual void visit(TWorkerTaskLogVariadic *p) = 0;
-	virtual ~TVisitor() {};
-};
+class TVisitor;
 
 class TWorkerTaskBase
 {
@@ -27,7 +16,7 @@ public:
     TWorkerTaskBase();
     virtual ~TWorkerTaskBase();
 
-    virtual void accept(TVisitor *v) = 0;
+    virtual void accept(TVisitor *v);
     virtual void run(void) = 0;
 };
 
@@ -40,7 +29,6 @@ private:
 public:
     TWorkerTaskTerminate(TCbSleepFunction cb, bool is_reset = false);
 
-    void accept(TVisitor *v) {v->visit(this);};
     void run(void);
 };
 
@@ -52,7 +40,6 @@ private:
 public:
     TWorkerTaskLog(const String& text);
 
-    void accept(TVisitor *v);
     void run(void);
 };
 
@@ -66,8 +53,15 @@ public:
     template <class ... Args>
     TWorkerTaskLogVariadic(Args ... args);
 
-    void accept(TVisitor *v);
     void run(void);
+};
+
+class TVisitor
+{
+public:
+    virtual void visit(TWorkerTaskBase *p) = 0;
+	virtual void visit(TWorkerTaskTerminate *p) = 0;
+	virtual ~TVisitor() {};
 };
 
 class TWorker: public TVisitor
@@ -79,9 +73,8 @@ private:
     static bool is_terminate; // reset или shutdown
     static QueueHandle_t queue;
 
+    void visit(TWorkerTaskBase *p);
 	void visit(TWorkerTaskTerminate *p);
-    void visit(TWorkerTaskLog *p);
-    void visit(TWorkerTaskLogVariadic *p);
 
     static void task(void *p);
 

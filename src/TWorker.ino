@@ -19,6 +19,11 @@ TWorkerTaskBase::~TWorkerTaskBase()
     //
 }
 
+void TWorkerTaskBase::accept(TVisitor *v)
+{
+    v->visit(this);
+}
+
 ////////////////
 TWorkerTaskTerminate::TWorkerTaskTerminate(TCbSleepFunction cb, bool is_reset):
     cb(cb),
@@ -54,11 +59,6 @@ TWorkerTaskLog::TWorkerTaskLog(const String& text):
 {
 }
 
-void TWorkerTaskLog::accept(TVisitor *v)
-{
-    v->visit(this);
-}
-
 void TWorkerTaskLog::run(void)
 {
     Serial.print(text);
@@ -74,37 +74,22 @@ TWorkerTaskLogVariadic::TWorkerTaskLogVariadic(Args ... args)
     };
 }
 
-void TWorkerTaskLogVariadic::accept(TVisitor *v)
-{
-    v->visit(this);
-}
-
 void TWorkerTaskLogVariadic::run(void)
 {
     cb();
 }
 
 ////////////////
+void TWorker::visit(TWorkerTaskBase *p)
+{
+    //
+}
+
 void TWorker::visit(TWorkerTaskTerminate *p)
 {
     xSemaphoreTake(xTermMutex, portMAX_DELAY);
     is_terminate = true;
     xSemaphoreGive(xTermMutex);
-
-    p->run();
-    delete p;
-}
-
-void TWorker::visit(TWorkerTaskLog *p)
-{
-    p->run();
-    delete p;
-}
-
-void TWorker::visit(TWorkerTaskLogVariadic *p)
-{
-    p->run();
-    delete p;
 }
 
 ////////////////
@@ -119,6 +104,8 @@ void TWorker::task(void *p)
         if(res)
         {
             p_wt->accept(p_this);
+            p_wt->run();
+            delete p_wt;
         }
     }
 }
@@ -166,6 +153,8 @@ void TWorker::send(TWorkerTaskBase *p)
     if(xTaskGetCurrentTaskHandle() == h_task)
     {
         p->accept(p_instance);
+        p->run();
+        delete p;
     }
     else
     {
