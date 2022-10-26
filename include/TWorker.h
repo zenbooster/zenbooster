@@ -8,12 +8,14 @@ using namespace SleepMode;
 
 class TWorkerTaskTerminate;
 class TWorkerTaskLog;
+class TWorkerTaskLogVariadic;
 
 class TVisitor
 {
 public:
 	virtual void visit(TWorkerTaskTerminate *p) = 0;
     virtual void visit(TWorkerTaskLog *p) = 0;
+    virtual void visit(TWorkerTaskLogVariadic *p) = 0;
 	virtual ~TVisitor() {};
 };
 
@@ -26,6 +28,7 @@ public:
     virtual ~TWorkerTaskBase();
 
     virtual void accept(TVisitor *v) = 0;
+    virtual void post_send(void) {};
     virtual void run(void) = 0;
 };
 
@@ -50,7 +53,22 @@ private:
 public:
     TWorkerTaskLog(String& text);
 
-    void accept(TVisitor *v) {v->visit(this);};
+    void accept(TVisitor *v);
+    void run(void);
+};
+
+class TWorkerTaskLogVariadic: public TWorkerTaskBase
+{
+private:
+    String text;
+    va_list ap;
+    TaskHandle_t h_task;
+
+public:
+    TWorkerTaskLogVariadic(const char *fmt, va_list ap);
+
+    void accept(TVisitor *v);
+    void post_send(void);
     void run(void);
 };
 
@@ -64,6 +82,7 @@ private:
 
 	void visit(TWorkerTaskTerminate *p);
     void visit(TWorkerTaskLog *p);
+    void visit(TWorkerTaskLogVariadic *p);
 
     static void task(void *p);
 
@@ -73,6 +92,6 @@ public:
 
     // отправить объект задачи, созданный с помощью new:
     static void send(TWorkerTaskBase *p);
-    static const size_t printf(const char *szFormat, ...);
+    static const void printf(const char *fmt, ...);
 };
 }

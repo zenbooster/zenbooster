@@ -51,12 +51,48 @@ void TWorkerTaskTerminate::run(void)
 TWorkerTaskLog::TWorkerTaskLog(String& text):
     text(text)
 {
-    //
+}
+
+void TWorkerTaskLog::accept(TVisitor *v)
+{
+    v->visit(this);
 }
 
 void TWorkerTaskLog::run(void)
 {
     Serial.print(text);
+}
+
+////////////////
+TWorkerTaskLogVariadic::TWorkerTaskLogVariadic(const char *fmt, va_list ap):
+    text(fmt),
+    ap(ap)
+{
+    h_task = xTaskGetCurrentTaskHandle();
+}
+
+void TWorkerTaskLogVariadic::accept(TVisitor *v)
+{
+    v->visit(this);
+}
+
+void TWorkerTaskLogVariadic::post_send(void)
+{
+    xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+}
+
+void TWorkerTaskLogVariadic::run(void)
+{
+    char *buf = NULL;
+    const char *fmt = text.c_str();
+    const size_t nBufferLength = vsnprintf(buf, 0, fmt, ap) + 1;
+    if (nBufferLength > 1)
+    {
+        buf = new char[nBufferLength];
+        vsnprintf(buf, nBufferLength, fmt, ap);
+        delete [] buf;
+    }
+    xTaskNotify(h_task, 0, eNoAction);
 }
 
 ////////////////
@@ -76,6 +112,12 @@ void TWorker::visit(TWorkerTaskLog *p)
     delete p;
 }
 
+void TWorker::visit(TWorkerTaskLogVariadic *p)
+{
+    p->run();
+    delete p;
+}
+
 ////////////////
 void TWorker::task(void *p)
 {
@@ -84,7 +126,7 @@ void TWorker::task(void *p)
     {
         TWorkerTaskBase *p_wt = NULL;
         bool res = xQueueReceive(queue, &p_wt, portMAX_DELAY);
-        //Serial.printf("TWorker::task(..): p_wt=%p\n", p_wt);
+        Serial.printf("TWorker::task(..): p_wt=%p\n", p_wt);
 
         if(res)
         {
@@ -128,33 +170,16 @@ TWorker::~TWorker()
 
 void TWorker::send(TWorkerTaskBase *p)
 {
-    //Serial.printf("TWorker::send(0x%p)\n", p);
+    Serial.printf("TWorker::send(0x%p)\n", p);
     xQueueSend(queue, &p, 0);
+    p->post_send();
 }
 
-//
-// SerialPrintf
-// Реализует функциональность printf в Serial.print
-// Применяется для отладочной печати
-// Параметры как у printf
-// Возвращает 
-//    0 - ошибка формата
-//    отрицательное чило - нехватка памяти, модуль числа равен запрашиваемой памяти
-//    положительное число - количество символов, выведенное в Serial
-//
-const size_t TWorker::printf(const char *szFormat, ...)
+const void TWorker::printf(const char *fmt, ...)
 {
   va_list argptr;
-  va_start(argptr, szFormat);
-  char *szBuffer = 0;
-  const size_t nBufferLength = vsnprintf(szBuffer, 0, szFormat, argptr) + 1;
-  if (nBufferLength == 1) return 0;
-  szBuffer = (char *) malloc(nBufferLength);
-  if (! szBuffer) return - nBufferLength;
-  vsnprintf(szBuffer, nBufferLength, szFormat, argptr);
-  String text(szBuffer);
-  send(new TWorkerTaskLog(text));
-  free(szBuffer);
-  return nBufferLength - 1;
-} // const size_t SerialPrintf (const char *szFormat, ...)
+  va_start(argptr, fmt);
+  send(new TWorkerTaskLogVariadic(fmt, argptr));
+  va_end(argptr);
+}
 }
