@@ -28,7 +28,6 @@ public:
     virtual ~TWorkerTaskBase();
 
     virtual void accept(TVisitor *v) = 0;
-    virtual void post_send(void) {};
     virtual void run(void) = 0;
 };
 
@@ -51,30 +50,30 @@ private:
     String text;
 
 public:
-    TWorkerTaskLog(String& text);
+    TWorkerTaskLog(const String& text);
 
     void accept(TVisitor *v);
     void run(void);
 };
 
+typedef function<void(void)> TCbWorkerTaskLogVariadic;
 class TWorkerTaskLogVariadic: public TWorkerTaskBase
 {
 private:
-    String text;
-    va_list ap;
-    TaskHandle_t h_task;
+    TCbWorkerTaskLogVariadic cb;
 
 public:
-    TWorkerTaskLogVariadic(const char *fmt, va_list ap);
+    template <class ... Args>
+    TWorkerTaskLogVariadic(Args ... args);
 
     void accept(TVisitor *v);
-    void post_send(void);
     void run(void);
 };
 
 class TWorker: public TVisitor
 {
 private:
+    static TWorker *p_instance;
     static TaskHandle_t h_task;
     static SemaphoreHandle_t xTermMutex;
     static bool is_terminate; // reset или shutdown
@@ -92,6 +91,9 @@ public:
 
     // отправить объект задачи, созданный с помощью new:
     static void send(TWorkerTaskBase *p);
-    static const void printf(const char *fmt, ...);
+    template <class ... Args>
+    static const void printf(Args ... args);
+    static const void print(const String& text);
+    static const void println(const String& text);
 };
 }

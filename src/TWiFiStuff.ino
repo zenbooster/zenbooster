@@ -43,7 +43,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
 {
   if(ref_cnt)
   {
-    throw "Only one instance of TWiFiStuff allowed!";
+    throw String("Only one instance of TWiFiStuff allowed!");
   }
   ref_cnt++;
 
@@ -53,8 +53,8 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
   pTgmBot = new TTgmBot(dev_name, cb_change_formula);
 
   xDtorMutex = xSemaphoreCreateMutex();
-  //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,
-  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,
+  //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,
+  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,
     (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 

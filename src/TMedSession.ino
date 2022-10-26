@@ -1,5 +1,6 @@
 #include "TMedSession.h"
 #include "TMyApplication.h"
+#include "TWorker.h"
 #include "TConf.h"
 #include "TUtil.h"
 #include "TWiFiStuff.h"
@@ -7,6 +8,7 @@
 
 namespace MedSession
 {
+using namespace Worker;
 using namespace Util;
 using namespace MyApplication;
 
@@ -25,7 +27,7 @@ TMedSession::TMedSession():
     max_med_val(0),
     avg_med_val(0)
 {
-    Serial.println("TMedSession::TMedSession()");
+    TWorker::println("TMedSession::TMedSession()");
     is_minsessec = false;
     sess_beg = TWiFiStuff::time_cli.getEpochTime();
     // по хорошему, если порог или предпорог поменялись пока сессия была открыта,
@@ -38,7 +40,7 @@ TMedSession::TMedSession():
 
 TMedSession::~TMedSession()
 {
-    Serial.println("TMedSession::~TMedSession()");
+    TWorker::println("TMedSession::~TMedSession()");
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     if(is_minsessec)
     {
@@ -70,7 +72,7 @@ void TMedSession::calc_next(int32_t med)
 
         if(is_minsessec)
         {
-            Serial.println("TMedSession::calc_next(..): По окончании сессии будет сформирован отчёт.");
+            TWorker::println("TMedSession::calc_next(..): По окончании сессии будет сформирован отчёт.");
         }
     }
 

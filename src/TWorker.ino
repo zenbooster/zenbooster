@@ -2,6 +2,7 @@
 
 namespace Worker
 {
+TWorker *TWorker::p_instance = NULL;
 TaskHandle_t TWorker::h_task;
 SemaphoreHandle_t TWorker::xTermMutex;
 bool TWorker::is_terminate = false;
@@ -48,7 +49,7 @@ void TWorkerTaskTerminate::run(void)
 }
 
 ////////////////
-TWorkerTaskLog::TWorkerTaskLog(String& text):
+TWorkerTaskLog::TWorkerTaskLog(const String& text):
     text(text)
 {
 }
@@ -64,11 +65,13 @@ void TWorkerTaskLog::run(void)
 }
 
 ////////////////
-TWorkerTaskLogVariadic::TWorkerTaskLogVariadic(const char *fmt, va_list ap):
-    text(fmt)
+template <class ... Args>
+TWorkerTaskLogVariadic::TWorkerTaskLogVariadic(Args ... args)
 {
-    va_copy(this->ap, ap);
-    h_task = xTaskGetCurrentTaskHandle();
+    cb = [args...] (void)
+    {
+        Serial.printf(args...);
+    };
 }
 
 void TWorkerTaskLogVariadic::accept(TVisitor *v)
@@ -76,26 +79,9 @@ void TWorkerTaskLogVariadic::accept(TVisitor *v)
     v->visit(this);
 }
 
-void TWorkerTaskLogVariadic::post_send(void)
-{
-    xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
-}
-
 void TWorkerTaskLogVariadic::run(void)
 {
-    char *buf = NULL;
-    const char *fmt = text.c_str();
-    const size_t nBufferLength = vsnprintf(buf, 0, fmt, ap) + 1;
-    if (nBufferLength > 1)
-    {
-        buf = new char[nBufferLength];
-        vsnprintf(buf, nBufferLength, fmt, ap);
-        delete [] buf;
-    }
-    va_end(ap);
-    Serial.println("TWorkerTaskLogVariadic::run(..): HIT.1");
-    xTaskNotify(h_task, 0, eNoAction);
-    Serial.println("TWorkerTaskLogVariadic::run(..): HIT.2");
+    cb();
 }
 
 ////////////////
@@ -129,7 +115,6 @@ void TWorker::task(void *p)
     {
         TWorkerTaskBase *p_wt = NULL;
         bool res = xQueueReceive(queue, &p_wt, portMAX_DELAY);
-        Serial.printf("TWorker::task(..): p_wt=%p\n", p_wt);
 
         if(res)
         {
@@ -140,6 +125,7 @@ void TWorker::task(void *p)
 
 TWorker::TWorker()
 {
+    p_instance = this;
     xTermMutex = xSemaphoreCreateMutex();
 
     queue = xQueueCreate(4, sizeof(TWorkerTaskBase *));
@@ -147,7 +133,8 @@ TWorker::TWorker()
         throw String("TWorker::TWorker(): error creating the queue");
     }
 
-    xTaskCreatePinnedToCore(task, "TWorker::task", 2500, this,
+    //xTaskCreatePinnedToCore(task, "TWorker::task", 2500, this,
+    xTaskCreatePinnedToCore(task, "TWorker::task", 2000, this,
         (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 
@@ -173,18 +160,32 @@ TWorker::~TWorker()
 
 void TWorker::send(TWorkerTaskBase *p)
 {
-    Serial.printf("TWorker::send(0x%p)\n", p);
-    xQueueSend(queue, &p, 0);
-    Serial.println("TWorker::send(..): HIT.1");
-    p->post_send();
-    Serial.println("TWorker::send(..): HIT.2");
+    // Если задача посылается из задачи выполняющейся в данный
+    // момент. Например, если из TWorkerTaskTerminate вызывается
+    // колбек, использующий TWorker::printf, делаем такую проверку:
+    if(xTaskGetCurrentTaskHandle() == h_task)
+    {
+        p->accept(p_instance);
+    }
+    else
+    {
+        xQueueSend(queue, &p, 0);
+    }
 }
 
-const void TWorker::printf(const char *fmt, ...)
+template <class ... Args>
+const void TWorker::printf(Args ... args)
 {
-  va_list argptr;
-  va_start(argptr, fmt);
-  send(new TWorkerTaskLogVariadic(fmt, argptr));
-  va_end(argptr);
+    send(new TWorkerTaskLogVariadic(args...));
+}
+
+const void TWorker::print(const String& text)
+{
+    send(new TWorkerTaskLog(text));
+}
+
+const void TWorker::println(const String& text)
+{
+    print(text + "\n");
 }
 }

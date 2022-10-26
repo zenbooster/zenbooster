@@ -1,5 +1,6 @@
 #include "TConf.h"
 #include "TMyApplication.h"
+#include "TWorker.h"
 #include "TButtonIllumination.h"
 #include "TWiFiStuff.h"
 #include "TNoise.h"
@@ -9,6 +10,7 @@
 namespace Conf
 {
 using namespace MyApplication;
+using namespace Worker;
 using namespace ButtonIllumination;
 using namespace WiFiStuff;
 using namespace Noise;
@@ -53,27 +55,27 @@ TConf::TConf()
     }
 
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-    Serial.printf("wakeup_reason=%d\n", wakeup_reason);
+    TWorker::printf("wakeup_reason=%d\n", wakeup_reason);
     esp_reset_reason_t reset_reason = esp_reset_reason();
-    Serial.printf("reset_reason=%d\n", reset_reason);
+    TWorker::printf("reset_reason=%d\n", reset_reason);
 
     if(reset_reason != ESP_RST_POWERON && reset_reason != ESP_RST_DEEPSLEEP)
     {
       if(reset_reason == ESP_RST_SW)
       {
-        Serial.println("Перезагрузились по требованию.");
+        TWorker::println("Перезагрузились по требованию.");
       }
     }
     else
     {
       if(value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED)
       {
-        Serial.println("Согласно настройкам, засыпаем по возобновлении питания...");
+        TWorker::println("Согласно настройкам, засыпаем по возобновлении питания...");
         pinMode(14, OUTPUT); // после загрузки, и после перехода в сон, именно на этом пине может остаться маленькое напряжение,
         digitalWrite(14, LOW); // и оно там останется даже во сне! Поэтому сбрасываем.
         esp_deep_sleep_start();
       }
-      Serial.println("Проснулись по нажатию кнопки.");
+      TWorker::println("Проснулись по нажатию кнопки.");
     }
   });
 
@@ -228,7 +230,7 @@ TConf::TConf()
 
   if(p_fdb->is_empty())
   {
-    Serial.println("Выполняем первичную инициализацию базы формул.");
+    TWorker::println("Выполняем первичную инициализацию базы формул.");
     // https://scriptures.ru/yoga/eeg_voprosy_i_otvety.htm#formula2
     p_fdb->assign("samadhi", "(ah*0.8 + al) * 75 / (bh + bl + t*0.4 + d*0.08) - 10");
     p_fdb->assign("gamma", "100 * 3 * gl / (gm + bh + bl)");

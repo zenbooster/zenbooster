@@ -16,7 +16,7 @@ bool TSleepMode::is_graceful = true;
 void /*IRAM_ATTR*/ TSleepMode::isr_handle()
 {
     detachInterrupt(sleep_pin);
-    Serial.printf("Нажата кнопка на пине GPIO_NUM_%d.\n", sleep_pin);
+    TWorker::printf("Нажата кнопка на пине GPIO_NUM_%d.\n", sleep_pin);
 
     shutdown();
 }
@@ -33,7 +33,7 @@ TSleepMode::TSleepMode(TCbSleepFunction cb)
         buttonState = !digitalRead(sleep_pin);
         if(buttonState)
         {
-            Serial.printf("Клавиша на пине GPIO_NUM_%d всё ещё (?) нажата. Надо отпустить... )\n", sleep_pin);
+            TWorker::printf("Клавиша на пине GPIO_NUM_%d всё ещё (?) нажата. Надо отпустить... )\n", sleep_pin);
             vTaskDelay(300);
             continue;
         }
