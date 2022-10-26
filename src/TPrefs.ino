@@ -1,9 +1,11 @@
 #include "TPrefs.h"
 #include "TUtil.h"
+#include "TWorker.h"
 
 namespace Prefs
 {
 using namespace Util;
+using namespace Worker;
 
 TPrefs::TPrefs(const String& name):
   name(name)
@@ -54,7 +56,7 @@ void TPrefs::set_value(const String& key, const String& value)
   {
     if(!pv.cb_change)
     {
-      Serial.printf("bool TPrefs::set_value(\"%s\", \"%s\"): Ошибка! Не вызван метод init_key.\n", key.c_str(), value.c_str());
+      TWorker::printf("bool TPrefs::set_value(\"%s\", \"%s\"): Ошибка! Не вызван метод init_key.\n", key.c_str(), value.c_str());
       break;
     }
     pv.cb_change(value, false);
@@ -162,7 +164,7 @@ void TPrefs::set_json(const DynamicJsonDocument& doc)
   JsonObjectConst root = doc.as<JsonObjectConst>();
   for (JsonPairConst kv : root)
   {
-    //Serial.printf("TPrefs::set_json(..): set_value(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
+    //TWorker::printf("TPrefs::set_json(..): set_value(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
     set_value(
         kv.key().c_str(),
         kv.value().as<const char *>()

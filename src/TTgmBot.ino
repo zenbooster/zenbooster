@@ -7,6 +7,7 @@
 #include ".\\tg_certificate.h"
 #include "TUtil.h"
 #include "TMyApplication.h"
+#include "TWorker.h"
 #include "TConf.h"
 #include <StreamString.h>
 #include "ArduinoJson.h"
@@ -16,6 +17,7 @@ namespace TgmBot
 {
 using namespace Util;
 using namespace MyApplication;
+using namespace Worker;
 using namespace Conf;
 
 int TTgmBot::ref_cnt = 0;
@@ -203,7 +205,7 @@ void TTgmBot::run(void)// *p)
         text.trim();
         transform(text.begin(), text.end(), text.begin(), ::tolower);
 
-        Serial.printf("Text message received: %s\n", text.c_str());
+        TWorker::printf("Text message received: %s\n", text.c_str());
 
         int opt_len;
         bool is_get = (text[text.length()-1] == '?');
@@ -470,12 +472,12 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   pbot->setUpdateTime(mtbs);
   pbot->setTelegramToken(BOT_TOKEN);
   
-  Serial.print("\nTest Telegram connection... ");
-  pbot->begin() ? Serial.println("Ok!") : Serial.println("Ошибка!");
+  TWorker::print("\nTest Telegram connection... ");
+  pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
 
   queue = xQueueCreate(4, sizeof(String *));
   if (queue == NULL) {
-    throw String("Error creating the queue");
+    throw String("TTgmBot::TTgmBot(..): error creating the queue");
   }
 
   pbot->sendTo(CHAT_ID, (String("Бот @") + pbot->getBotName() + " в сети!\nНаберите \"help\" для справки.").c_str());

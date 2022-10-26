@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "TWiFiStuff.h"
 #include "TConf.h"
+#include "TWorker.h"
 #include "TCalcFormula.h"
 #include <limits>
 #include <sstream>
@@ -24,6 +25,7 @@ const char *TMyApplication::DEVICE_NAME = "zenbooster-dev";
 const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
 const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
 TConf *TMyApplication::p_conf = NULL;
+TWorker *TMyApplication::p_worker = NULL;
 TSleepMode *TMyApplication::p_sleep_mode = NULL;
 WiFiManager TMyApplication::wifiManager;
 int TMyApplication::threshold;
@@ -81,7 +83,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
   {
     case TCallbackEvent::eConnect:
     {
-      Serial.println("TMyApplication::callback: TCallbackEvent::eConnect");
+      TWorker::printf("TMyApplication::callback: TCallbackEvent::eConnect\n");
       xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       bool is_use = is_use_poor_signal;
       xSemaphoreGiveRecursive(TConf::xOptRcMutex);
@@ -96,7 +98,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
     }
 
     case TCallbackEvent::eDisconnect:
-      Serial.println("TMyApplication::callback: TCallbackEvent::eDisconnect");
+      TWorker::printf("TMyApplication::callback: TCallbackEvent::eDisconnect\n");
       if(p_med_session)
       {
         delete p_med_session;
@@ -123,7 +125,7 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       ring_buffer_in_index = (ring_buffer_in_index + 1) & 3;
       
       String s = p_tpv->serialize() + "; --> f=" + med;
-      Serial.println(s);
+      TWorker::println(s);
 
       xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       bool is_log = is_log_data_to_bot;
@@ -240,11 +242,12 @@ TMyApplication::TMyApplication()
 {
   Serial.println(get_version_string());
 
+  p_worker = new TWorker();
   p_sleep_mode = new TSleepMode([this]() -> void
   {
-    Serial.println("TCbSleepFunction: begin");
+    TWorker::println("TCbSleepFunction: begin");
     delete this;
-    Serial.println("TCbSleepFunction: end");
+    TWorker::println("TCbSleepFunction: end");
   });
   p_conf = new TConf();
 

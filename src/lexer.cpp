@@ -455,7 +455,7 @@ static const flex_int16_t yy_chk[41] =
 
 //#include <stdio.h>
 #include <HardwareSerial.h>
-extern const size_t SerialPrintf (const char *szFormat, ...);
+//#include "TWorker.h"
 
 #line 460 "src/lexer.cpp"
 #define YY_NO_UNISTD_H 1
@@ -2036,7 +2036,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #line 47 "lexer.l"
 
-
+//using namespace Worker;
 int yyerror(SExpression **expression, yyscan_t scanner, const char *msg) {
     Serial.printf("yyerror: %s\n", msg);
     return 0;

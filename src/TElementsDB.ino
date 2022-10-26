@@ -1,9 +1,11 @@
 #include "TElementsDB.h"
 #include "TUtil.h"
+#include "TWorker.h"
 
 namespace ElementsDB
 {
 using namespace Util;
+using namespace Worker;
 
 class TFirstZeroBitResult
 {
@@ -81,7 +83,7 @@ String TElementsDB::get_chunk_name(uint8_t i)
 
 void TElementsDB::init_chunks(void)
 {
-    Serial.print("TElementsDB::init_chunks(..): проверяем существование всех чанков, т.к. в процессе первичной инициализации могло отключиться питание...");
+    TWorker::print("TElementsDB::init_chunks(..): проверяем существование всех чанков, т.к. в процессе первичной инициализации могло отключиться питание...");
     prefs.begin(name_list.c_str(), false);
     for(int i = 0; i < bitmap_size; i++)
     {
@@ -90,26 +92,26 @@ void TElementsDB::init_chunks(void)
 
         if(!prefs.isKey(chunk_name))
         {
-            Serial.printf("TElementsDB::init_chunks(..): первичная инициализация чанка %s\n", chunk_name);
+            TWorker::printf("TElementsDB::init_chunks(..): первичная инициализация чанка %s\n", chunk_name);
             prefs.putUChar(chunk_name, 0);
         }
     }
     prefs.end();
-    Serial.println("Ok!");
+    TWorker::println("Ok!");
 }
 
 bool TElementsDB::integrity_check(void)
 {
     bool res = true;
     // Under construction...
-    Serial.print("TElementsDB::integrity_check(..): проверяем целостность БД...");
+    TWorker::print("TElementsDB::integrity_check(..): проверяем целостность БД...");
     traverse(
         [this, &res](const uint8_t id) -> void
         {
             String key = get_key_by_id(id);
             if(key.isEmpty())
             {
-                Serial.printf(
+                TWorker::printf(
                     "\nTElementsDB::integrity_check(..): name_list не содержит ключа для id=%d!"
                     " Сбрасываем соответствующий бит в битовой карте.\n", id
                 );
@@ -120,7 +122,7 @@ bool TElementsDB::integrity_check(void)
             {
                 if(get_value_id(key).isEmpty())
                 {
-                    Serial.printf(
+                    TWorker::printf(
                         "\nTElementsDB::integrity_check(..): name не содержит ключа \"%s\" для id=%d!\n"
                         " Сбрасываем соответствующий бит в битовой карте.\n", key.c_str(), id
                     );
@@ -134,7 +136,7 @@ bool TElementsDB::integrity_check(void)
     );
     if(res)
     {
-        Serial.println("Ok!");
+        TWorker::println("Ok!");
     }
     return res;
 }
@@ -162,16 +164,16 @@ TElementsDB::~TElementsDB()
 void TElementsDB::write_bit(uint8_t n, bool is)
 {
     uint8_t chunk_num = n >> 3;
-    Serial.printf("TElementsDB::write_bit(..): номер чанка: \"%d\".\n", chunk_num);
+    TWorker::printf("TElementsDB::write_bit(..): номер чанка: \"%d\".\n", chunk_num);
 
     uint8_t bit_num = n - (chunk_num << 3);
-    Serial.printf("TElementsDB::write_bit(..): номер бита в чанке: \"%d\".\n", bit_num);
+    TWorker::printf("TElementsDB::write_bit(..): номер бита в чанке: \"%d\".\n", bit_num);
 
     String s_chunk_name = get_chunk_name(chunk_num);
     
     prefs.begin(name_list.c_str(), false);
     uint8_t chunk = prefs.getUChar(s_chunk_name.c_str());
-    Serial.printf("TElementsDB::write_bit(..): прочитали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2).c_str());
+    TWorker::printf("TElementsDB::write_bit(..): прочитали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2).c_str());
 
     if(is)
     {
@@ -185,7 +187,7 @@ void TElementsDB::write_bit(uint8_t n, bool is)
     prefs.putUChar(s_chunk_name.c_str(), chunk);
     prefs.end();
 
-    Serial.printf("TElementsDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2).c_str());
+    TWorker::printf("TElementsDB::write_bit(..): записали чанк \"%s\": 0b%s.\n", s_chunk_name.c_str(), String(chunk, 2).c_str());
 }
 
 bool TElementsDB::has_value(const String& key)
@@ -210,22 +212,22 @@ void TElementsDB::assign(const String& key, const String& val)
 
         if(is_key)
         {
-            Serial.printf("TElementsDB::assign(..): ключ \"%s\" существует.\n", key.c_str());
+            TWorker::printf("TElementsDB::assign(..): ключ \"%s\" существует.\n", key.c_str());
             String value = get_value_id(key, (uint8_t*)&id);
 
             if(value == val)
             {
-                Serial.println("TElementsDB::assign(..): Новое значение совпадает со старым.");
+                TWorker::println("TElementsDB::assign(..): Новое значение совпадает со старым.");
                 break;
             }
         }
 
         if(val.length())
         {
-            Serial.printf("TElementsDB::assign(..): добавление ключа \"%s\".\n", key.c_str());
+            TWorker::printf("TElementsDB::assign(..): добавление ключа \"%s\".\n", key.c_str());
             if(!is_key) // новый элемент
             {
-                Serial.printf("TElementsDB::assign(..): ключ \"%s\" ещё не существует.\n", key.c_str());
+                TWorker::printf("TElementsDB::assign(..): ключ \"%s\" ещё не существует.\n", key.c_str());
                 prefs.begin(name_list.c_str(), false);
                 // найти номер первого нулевого бита в битовой карте:
                 TFirstZeroBitResult fzb = get_first_zero_bit();
@@ -240,15 +242,15 @@ void TElementsDB::assign(const String& key, const String& val)
 
                 write_bit(id, true);
 
-                Serial.printf("TElementsDB::assign(..): id = %d\n", id);
-                Serial.println("TElementsDB::assign(..): записываем ссылку на элемент в список.");
+                TWorker::printf("TElementsDB::assign(..): id = %d\n", id);
+                TWorker::println("TElementsDB::assign(..): записываем ссылку на элемент в список.");
                 prefs.begin(name_list.c_str(), false);
                 prefs.putString(String(id, 0x10).c_str(), key.c_str());
                 prefs.end();
             }
 
             prefs.begin(name.c_str(), false);
-            Serial.println("TElementsDB::assign(..): записываем элемент.");
+            TWorker::println("TElementsDB::assign(..): записываем элемент.");
 
             size_t sz_data = 1 + val.length();
             uint8_t *p_data = new uint8_t[sz_data];
@@ -261,7 +263,7 @@ void TElementsDB::assign(const String& key, const String& val)
         }
         else
         {
-            Serial.printf("TElementsDB::assign(..): удаление ключа \"%s\".\n", key.c_str());
+            TWorker::printf("TElementsDB::assign(..): удаление ключа \"%s\".\n", key.c_str());
             if(!is_key) // новый элемент
             {
                 throw String("TElementsDB::assign(..): попытка удалить несуществующий ключ");
@@ -270,7 +272,7 @@ void TElementsDB::assign(const String& key, const String& val)
             // Сбросить соответствующий бит в битовой карте:
             write_bit(id, false);
 
-            Serial.println("TElementsDB::assign(..): удаляем элемент.");
+            TWorker::println("TElementsDB::assign(..): удаляем элемент.");
             prefs.begin(name.c_str(), false);
             prefs.remove(key.c_str());
             prefs.end();
@@ -398,7 +400,7 @@ void TElementsDB::validate_json(const DynamicJsonDocument& doc)
 void TElementsDB::set_json(const DynamicJsonDocument& doc)
 {
     validate_json(doc);
-    //Serial.printf("TElementsDB::set_json(..): clear()\n");
+    //TWorker::printf("TElementsDB::set_json(..): clear()\n");
     clear();
     _add_json(doc);
 }
@@ -408,7 +410,7 @@ void TElementsDB::_add_json(const DynamicJsonDocument& doc)
     JsonObjectConst root = doc.as<JsonObjectConst>();
     for (JsonPairConst kv : root)
     {
-        //Serial.printf("TElementsDB::_add_json(..): assign(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
+        //TWorker::printf("TElementsDB::_add_json(..): assign(\"%s\", \"%s\")\n", kv.key().c_str(), kv.value().as<const char *>());
         assign(
             kv.key().c_str(),
             kv.value().as<const char *>()

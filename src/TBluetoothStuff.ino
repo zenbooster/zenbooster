@@ -4,6 +4,7 @@
 #include "common.h"
 #include "TUtil.h"
 #include "TNoise.h"
+#include "TWorker.h"
 #include "freertos\\task.h"
 #include <esp_spp_api.h>
 
@@ -14,6 +15,7 @@ using namespace ButtonIllumination;
 using namespace common;
 using namespace Util;
 using namespace Noise;
+using namespace Worker;
 
 class TBluetoothDataProcessor
 {
@@ -51,7 +53,7 @@ TBluetoothDataProcessor::TBluetoothDataProcessor():
   queue = xQueueCreate(64, sizeof(TTgamParsedValues*));
 
   if (queue == NULL) {
-    throw String("Error creating the queue");
+    throw String("TBluetoothDataProcessor::TBluetoothDataProcessor(): error creating the queue");
   }
 
   xTaskCreatePinnedToCore(task, "TBluetoothDataProcessor::task", 2000, this,
@@ -93,19 +95,19 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
   if (event == ESP_SPP_OPEN_EVT)
   {
     uint32_t handle = param->open.handle;
-    Serial.printf("callback: ESP_SPP_OPEN_EVT, handle=%u\n", handle);
+    TWorker::printf("callback: ESP_SPP_OPEN_EVT, handle=%u\n", handle);
 
     dp = new TBluetoothDataProcessor();
     // Тут семафор не нужен, т.к. событие происходит до выхода из функции connect.
     TBluetoothStuff::is_connected = true;
     TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eConnect);
-    Serial.println("Connected Succesfully!");
+    TWorker::println("Connected Succesfully!");
   }
   else
   if (event == ESP_SPP_CLOSE_EVT)
   {
     uint32_t handle = param->close.handle;
-    Serial.printf("callback: ESP_SPP_CLOSE_EVT, handle=%u\n", handle);
+    TWorker::printf("callback: ESP_SPP_CLOSE_EVT, handle=%u\n", handle);
 
     // В данный момент никто не может изменять is_connected, по этому и семафор не нужен.
     if(TBluetoothStuff::is_connected) // были подключены, а теперь отключились
@@ -148,7 +150,7 @@ void TBluetoothStuff::task(void *p)
       bool is_was_connected = pthis->SerialBT.connect(addr);
       if(!is_was_connected)
       {
-        Serial.println("Failed to connect. Make sure remote device is available and in range.");
+        TWorker::println("Failed to connect. Make sure remote device is available and in range.");
       }
     }
     vTaskDelay(100);
@@ -159,7 +161,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
 {
   if(ref_cnt)
   {
-    throw "Only one instance of TBluetoothStuff allowed!";
+    throw String("Only one instance of TBluetoothStuff allowed!");
   }
   ref_cnt++;
 
@@ -201,7 +203,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
     }
   );
   SerialBT.begin(dev_name, true);
-  Serial.println(F("The device started in master mode, make sure remote BT device is on!"));
+  TWorker::println("The device started in master mode, make sure remote BT device is on!");
 
   //xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
   xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2200, this,
