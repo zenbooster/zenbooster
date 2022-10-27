@@ -4,6 +4,7 @@
 #include <NTPClient.h>
 #include "TTgmBot.h"
 
+namespace Conf {class TConf;}
 namespace MedSession {class TMedSession;}
 
 namespace WiFiStuff

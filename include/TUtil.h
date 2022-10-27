@@ -25,12 +25,36 @@ class TUtil
         static void chk_value_is_positive(T v);
         template<class T>
         static void chk_value_is_not_zero(T v);
-
-        static String screen_mark_down(const String s);
-        static void mac_2_array(String mac, uint8_t *buf);
         template<class T>
         static T percent_of(float pct, T val);
 
+        static String screen_mark_down(const String s);
+        static void mac_2_array(String mac, uint8_t *buf);
+
         static void chk_nvs_key(const String& key); // может бросить исключение
 };
+
+template<class T>
+void TUtil::chk_value_is_positive(T v)
+{
+  if(v < 0)
+  {
+    throw String("значение должно быть положительным");
+  }
+}
+
+template<class T>
+void TUtil::chk_value_is_not_zero(T v)
+{
+  if(!v)
+  {
+    throw String("значение не может быть равным нулю");
+  }
+}
+
+template<class T>
+T TUtil::percent_of(float pct, T val)
+{
+  return (pct * (float)val) / 100.0;
+}
 }
