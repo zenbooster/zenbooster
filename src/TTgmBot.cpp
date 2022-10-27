@@ -449,7 +449,7 @@ void TTgmBot::run(void)// *p)
 
 void TTgmBot::say_goodbye(void)
 {
-  send(TUtil::screen_mark_down((String("Бот @") + pbot->getBotName() + " выключился!")).c_str());
+  send(TUtil::screen_mark_down(TWorker::sprintf("Бот @%s выключился!", pbot->getBotName())));
 }
 
 TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
@@ -480,7 +480,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
     throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
   }
 
-  pbot->sendTo(CHAT_ID, (String("Бот @") + pbot->getBotName() + " в сети!\nНаберите \"help\" для справки.").c_str());
+  pbot->sendTo(CHAT_ID, TWorker::sprintf("Бот @%s в сети!\nНаберите \"help\" для справки.", pbot->getBotName()).c_str());
 }
 
 TTgmBot::~TTgmBot()

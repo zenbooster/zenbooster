@@ -17,4 +17,9 @@ void TWorkerTaskAsyncBase::accept(TVisitor *v)
 {
     v->visit(this);
 }
+
+void TWorkerTaskAsyncBase::release(void)
+{
+    delete this;
+}
 }

@@ -32,7 +32,7 @@ void TWorker::task(void *p)
         {
             p_wt->accept(p_this);
             p_wt->run();
-            delete p_wt;
+            p_wt->release();
         }
     }
 }
@@ -86,6 +86,27 @@ void TWorker::send(TWorkerTaskAsyncBase *p)
     else
     {
         xQueueSend(queue, &p, 0);
+    }
+}
+
+void TWorker::send(TWorkerTaskSyncBase *p)
+{
+    // Если задача посылается из задачи выполняющейся в данный
+    // момент. Например, если из TWorkerTaskTerminate вызывается
+    // колбек, использующий TWorker::printf, делаем такую проверку:
+    if(xTaskGetCurrentTaskHandle() == h_task)
+    {
+        p->accept(p_instance);
+        p->run();
+        p->release();
+        xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); // просто очищаем уведомление (сработает ?)
+        delete p;
+    }
+    else
+    {
+        xQueueSend(queue, &p, 0);
+        xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+        delete p;
     }
 }
 

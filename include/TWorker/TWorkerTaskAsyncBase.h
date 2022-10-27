@@ -14,5 +14,6 @@ public:
 
     virtual void accept(TVisitor *v);
     virtual void run(void) = 0;
+    virtual void release(void);
 };
 }
