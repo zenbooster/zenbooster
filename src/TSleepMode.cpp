@@ -1,6 +1,4 @@
 #include "TSleepMode.h"
-
-#ifdef PIN_BTN
 #include "TConf.h"
 #include "TMyApplication.h"
 #include "TWorker.h"
@@ -13,6 +11,7 @@ TCbSleepFunction TSleepMode::cb = NULL;
 SemaphoreHandle_t TSleepMode::xGrMutex;
 bool TSleepMode::is_graceful = true;
 
+#ifdef PIN_BTN
 void /*IRAM_ATTR*/ TSleepMode::isr_handle()
 {
     detachInterrupt(sleep_pin);
@@ -20,11 +19,15 @@ void /*IRAM_ATTR*/ TSleepMode::isr_handle()
 
     shutdown();
 }
+#endif
 
 TSleepMode::TSleepMode(TCbSleepFunction cb)
 {
     TSleepMode::cb = cb;
 
+    xGrMutex = xSemaphoreCreateMutex();
+
+#ifdef PIN_BTN
     pinMode(sleep_pin, INPUT);
     
     int buttonState;
@@ -40,10 +43,9 @@ TSleepMode::TSleepMode(TCbSleepFunction cb)
         break;
     }
 
-    xGrMutex = xSemaphoreCreateMutex();
-
     pinMode(sleep_pin, INPUT_PULLUP);
     attachInterrupt(sleep_pin, isr_handle, RISING);
+#endif
     esp_sleep_enable_ext0_wakeup((gpio_num_t)sleep_pin, 0);
 }
 
@@ -66,4 +68,3 @@ void TSleepMode::shutdown(void)
     terminate(false);
 }
 }
-#endif

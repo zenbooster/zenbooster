@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <functional>
 
-#ifdef PIN_BTN
 namespace Conf {class TConf;}
 namespace MyApplication {class TMyApplication;}
 namespace Worker {class TWorker;}
@@ -20,18 +19,17 @@ typedef function<void(void)> TCbSleepFunction;
 class TSleepMode
 {
     private:
-        static const uint8_t sleep_pin = PIN_BTN;
-        //static TaskHandle_t h_task;
         static TCbSleepFunction cb;
         static SemaphoreHandle_t xGrMutex;
         static bool is_graceful;
-        //static bool is_reset;
+
+    #ifdef PIN_BTN
+        static const uint8_t sleep_pin = PIN_BTN;
 
         static void IRAM_ATTR isr_handle();
+    #endif
 
         static void terminate(bool is_reset);
-
-        //static void task(void *p) __attribute__ ((noreturn));
 
         friend class Conf::TConf;
 
@@ -42,4 +40,3 @@ class TSleepMode
         static void shutdown(void);
 };
 }
-#endif
