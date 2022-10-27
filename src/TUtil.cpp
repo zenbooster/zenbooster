@@ -46,24 +46,6 @@ void TUtil::chk_value_is_bool(const String& v)
   }
 }
 
-template<class T>
-void TUtil::chk_value_is_positive(T v)
-{
-  if(v < 0)
-  {
-    throw String("значение должно быть положительным");
-  }
-}
-
-template<class T>
-void TUtil::chk_value_is_not_zero(T v)
-{
-  if(!v)
-  {
-    throw String("значение не может быть равным нулю");
-  }
-}
-
 String TUtil::screen_mark_down(const String s)
 {
     String res = s;
@@ -155,12 +137,6 @@ void TUtil::mac_2_array(String mac, uint8_t *buf)
   {
     throw String("MAC адрес должен состоять из 6-ти байт");
   }
-}
-
-template<class T>
-T TUtil::percent_of(float pct, T val)
-{
-  return (pct * (float)val) / 100.0;
 }
 
 void TUtil::chk_nvs_key(const String& key)

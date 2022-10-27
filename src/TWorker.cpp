@@ -65,15 +65,6 @@ void TWorkerTaskLog::run(void)
 }
 
 ////////////////
-template <class ... Args>
-TWorkerTaskLogVariadic::TWorkerTaskLogVariadic(Args ... args)
-{
-    cb = [args...] (void)
-    {
-        Serial.printf(args...);
-    };
-}
-
 void TWorkerTaskLogVariadic::run(void)
 {
     cb();
@@ -160,12 +151,6 @@ void TWorker::send(TWorkerTaskBase *p)
     {
         xQueueSend(queue, &p, 0);
     }
-}
-
-template <class ... Args>
-const void TWorker::printf(Args ... args)
-{
-    send(new TWorkerTaskLogVariadic(args...));
 }
 
 const void TWorker::print(const String& text)

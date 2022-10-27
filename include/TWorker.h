@@ -56,6 +56,16 @@ public:
     void run(void);
 };
 
+template <class ... Args>
+TWorkerTaskLogVariadic::TWorkerTaskLogVariadic(Args ... args)
+{
+    cb = [args...] (void)
+    {
+        Serial.printf(args...);
+    };
+}
+
+////////////////
 class TVisitor
 {
 public:
@@ -84,9 +94,17 @@ public:
 
     // отправить объект задачи, созданный с помощью new:
     static void send(TWorkerTaskBase *p);
-    template <class ... Args>
-    static const void printf(Args ... args);
+
     static const void print(const String& text);
     static const void println(const String& text);
+
+    template <class ... Args>
+    static const void printf(Args ... args);
 };
+
+template <class ... Args>
+const void TWorker::printf(Args ... args)
+{
+    send(new TWorkerTaskLogVariadic(args...));
+}
 }

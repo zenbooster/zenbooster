@@ -1,12 +1,14 @@
 #pragma once
 #include "common.h"
 #include "TCalcFormula.h"
+#include <WiFiClient.h>
 #include <SSLClient.h>
 //#include <WiFiClientSecure.h>
 #include ".\\AsyncTelegram2.h"
 #ifdef PIN_BATTARY
 # include <Battery18650Stats.h>
 #endif
+#include <functional>
 
 #define BOT_TOKEN "" // zenbooster_device
 #define CHAT_ID 0
@@ -14,6 +16,7 @@
 namespace TgmBot
 {
 using namespace CalcFormula;
+using namespace std;
 
 typedef function<void(TCalcFormula *)> TCbChangeFunction;
 
