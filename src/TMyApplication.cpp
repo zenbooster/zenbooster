@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "TWiFiStuff.h"
 #include "TConf.h"
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 #include "TCalcFormula.h"
 #include <limits>
 #include <sstream>

@@ -1,6 +1,6 @@
 #include "TMedSession.h"
 #include "TMyApplication.h"
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 #include "TConf.h"
 #include "TUtil.h"
 #include "TWiFiStuff.h"

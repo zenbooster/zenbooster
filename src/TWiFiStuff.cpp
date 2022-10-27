@@ -43,7 +43,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
 {
   if(ref_cnt)
   {
-    throw String("Only one instance of TWiFiStuff allowed!");
+    throw String("Разрешён только один экземпляр TWiFiStuff!");
   }
   ref_cnt++;
 

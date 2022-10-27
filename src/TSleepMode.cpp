@@ -1,7 +1,7 @@
 #include "TSleepMode.h"
 #include "TConf.h"
 #include "TMyApplication.h"
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 
 namespace SleepMode
 {

@@ -4,8 +4,8 @@
 #include "common.h"
 #include "TUtil.h"
 #include "TNoise.h"
-#include "TWorker.h"
-#include "freertos\\task.h"
+#include "TWorker/TWorker.h"
+#include "freertos/task.h"
 #include <esp_spp_api.h>
 
 namespace BluetoothStuff
@@ -53,7 +53,7 @@ TBluetoothDataProcessor::TBluetoothDataProcessor():
   queue = xQueueCreate(64, sizeof(TTgamParsedValues*));
 
   if (queue == NULL) {
-    throw String("TBluetoothDataProcessor::TBluetoothDataProcessor(): error creating the queue");
+    throw String("TBluetoothDataProcessor::TBluetoothDataProcessor(): ошибка создания очереди");
   }
 
   xTaskCreatePinnedToCore(task, "TBluetoothDataProcessor::task", 2000, this,
@@ -101,7 +101,7 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     // Тут семафор не нужен, т.к. событие происходит до выхода из функции connect.
     TBluetoothStuff::is_connected = true;
     TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eConnect);
-    TWorker::println("Connected Succesfully!");
+    TWorker::println("Успешно подключились!");
   }
   else
   if (event == ESP_SPP_CLOSE_EVT)
@@ -150,7 +150,7 @@ void TBluetoothStuff::task(void *p)
       bool is_was_connected = pthis->SerialBT.connect(addr);
       if(!is_was_connected)
       {
-        TWorker::println("Failed to connect. Make sure remote device is available and in range.");
+        TWorker::println("Ошибка подключения. Убедитесь, что удалённое устройство включено и доступно.");
       }
     }
     vTaskDelay(100);
@@ -161,7 +161,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
 {
   if(ref_cnt)
   {
-    throw String("Only one instance of TBluetoothStuff allowed!");
+    throw String("Разрешён только один экземпляр TBluetoothStuff!");
   }
   ref_cnt++;
 
@@ -203,7 +203,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
     }
   );
   SerialBT.begin(dev_name, true);
-  TWorker::println("The device started in master mode, make sure remote BT device is on!");
+  TWorker::println("Устройство запущено в режиме мастера, убедитесь, что удалённое устройство включено!");
 
   //xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
   xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2200, this,

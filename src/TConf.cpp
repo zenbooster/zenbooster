@@ -1,6 +1,6 @@
 #include "TConf.h"
 #include "TMyApplication.h"
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 #include "TButtonIllumination.h"
 #include "TWiFiStuff.h"
 #include "TNoise.h"

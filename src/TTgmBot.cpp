@@ -7,7 +7,7 @@
 #include ".\\tg_certificate.h"
 #include "TUtil.h"
 #include "TMyApplication.h"
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 #include "TConf.h"
 #include <StreamString.h>
 #include "ArduinoJson.h"
@@ -461,7 +461,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
 {
   if(ref_cnt)
   {
-    throw "Only one instance of TTgmBot allowed!";
+    throw "Разрешён только один экземпляр TTgmBot!";
   }
   ref_cnt++;
 
@@ -472,12 +472,12 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   pbot->setUpdateTime(mtbs);
   pbot->setTelegramToken(BOT_TOKEN);
   
-  TWorker::print("\nTest Telegram connection... ");
+  TWorker::print("\nПроверяем Телеграм-соединение... ");
   pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
 
   queue = xQueueCreate(4, sizeof(String *));
   if (queue == NULL) {
-    throw String("TTgmBot::TTgmBot(..): error creating the queue");
+    throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
   }
 
   pbot->sendTo(CHAT_ID, (String("Бот @") + pbot->getBotName() + " в сети!\nНаберите \"help\" для справки.").c_str());

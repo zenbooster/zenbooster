@@ -1,4 +1,4 @@
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 
 namespace Worker
 {
@@ -8,70 +8,7 @@ SemaphoreHandle_t TWorker::xTermMutex;
 bool TWorker::is_terminate = false;
 QueueHandle_t TWorker::queue;
 
-////////////////
-TWorkerTaskBase::TWorkerTaskBase()
-{
-    //
-}
-
-TWorkerTaskBase::~TWorkerTaskBase()
-{
-    //
-}
-
-void TWorkerTaskBase::accept(TVisitor *v)
-{
-    v->visit(this);
-}
-
-////////////////
-TWorkerTaskTerminate::TWorkerTaskTerminate(TCbSleepFunction cb, bool is_reset):
-    cb(cb),
-    is_reset(is_reset)
-{
-    //
-}
-
-void TWorkerTaskTerminate::run(void)
-{
-    if(cb)
-    {
-        cb();
-    }
-
-    if(is_reset)
-    {
-        Serial.println("Перезагружаемся...");
-        Serial.flush();
-        esp_restart();
-    }
-    else
-    {
-        Serial.println("Идём баиньки...");
-        Serial.flush();
-        esp_deep_sleep_start();
-    }
-}
-
-////////////////
-TWorkerTaskLog::TWorkerTaskLog(const String& text):
-    text(text)
-{
-}
-
-void TWorkerTaskLog::run(void)
-{
-    Serial.print(text);
-}
-
-////////////////
-void TWorkerTaskLogVariadic::run(void)
-{
-    cb();
-}
-
-////////////////
-void TWorker::visit(TWorkerTaskBase *p)
+void TWorker::visit(TWorkerTaskAsyncBase *p)
 {
     //
 }
@@ -83,13 +20,12 @@ void TWorker::visit(TWorkerTaskTerminate *p)
     xSemaphoreGive(xTermMutex);
 }
 
-////////////////
 void TWorker::task(void *p)
 {
     TWorker *p_this = (TWorker *)p;
     for(;;)
     {
-        TWorkerTaskBase *p_wt = NULL;
+        TWorkerTaskAsyncBase *p_wt = NULL;
         bool res = xQueueReceive(queue, &p_wt, portMAX_DELAY);
 
         if(res)
@@ -106,9 +42,9 @@ TWorker::TWorker()
     p_instance = this;
     xTermMutex = xSemaphoreCreateMutex();
 
-    queue = xQueueCreate(4, sizeof(TWorkerTaskBase *));
+    queue = xQueueCreate(4, sizeof(TWorkerTaskAsyncBase *));
     if (queue == NULL) {
-        throw String("TWorker::TWorker(): error creating the queue");
+        throw String("TWorker::TWorker(): ошибка создания очереди");
     }
 
     //xTaskCreatePinnedToCore(task, "TWorker::task", 2500, this,
@@ -136,7 +72,7 @@ TWorker::~TWorker()
     vSemaphoreDelete(xTermMutex);
 }
 
-void TWorker::send(TWorkerTaskBase *p)
+void TWorker::send(TWorkerTaskAsyncBase *p)
 {
     // Если задача посылается из задачи выполняющейся в данный
     // момент. Например, если из TWorkerTaskTerminate вызывается

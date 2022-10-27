@@ -455,7 +455,7 @@ static const flex_int16_t yy_chk[41] =
 
 //#include <stdio.h>
 //#include <HardwareSerial.h>
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 
 #line 460 "src/lexer.cpp"
 #define YY_NO_UNISTD_H 1

@@ -1,6 +1,6 @@
 #include "TElementsDB.h"
 #include "TUtil.h"
-#include "TWorker.h"
+#include "TWorker/TWorker.h"
 
 namespace ElementsDB
 {
