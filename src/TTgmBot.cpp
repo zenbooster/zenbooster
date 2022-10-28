@@ -1,6 +1,7 @@
 #include <functional> 
 #include <cctype>
 #include <locale>
+#include <memory>
 #include <WiFi.h>
 #include <tcpip_adapter.h>
 #include "TTgmBot.h"
@@ -62,20 +63,15 @@ void TTgmBot::show_info(TBMessage& msg)
   pbot->sendMessage(msg, ("*Опции*:\n" + TConf::get_prefs()->get_values()).c_str());
 }
 
-String ip2str(ip4_addr_t& ip)
+static const shared_ptr<char> ip2str(ip4_addr_t& ip)
 {
-  char buf[IP4ADDR_STRLEN_MAX];
-  sprintf(buf, IPSTR, IP2STR(&ip));
-  return buf;
+  return TWorker::sprintf(IPSTR, IP2STR(&ip));
 }
 
 void TTgmBot::show_sysinfo(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
   
-  String s_idf_ver = esp_get_idf_version();
-  s_idf_ver.replace(".", "\\.");
-  s_idf_ver.replace("-", "\\-");
 #ifdef ESP_ARDUINO_VERSION_MAJOR
   String s_ard_ver = 
     String(ESP_ARDUINO_VERSION_MAJOR, 10) + "\\." + 
@@ -84,25 +80,35 @@ void TTgmBot::show_sysinfo(TBMessage& msg)
 #endif
   tcpip_adapter_ip_info_t ipInfo;
   tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipInfo);
-  String s_adapter_ip = TgmBot::ip2str(ipInfo.ip);
-  s_adapter_ip.replace(".", "\\.");
-  String s_adapter_gw = TgmBot::ip2str(ipInfo.gw);
-  s_adapter_gw.replace(".", "\\.");
 
-  pbot->sendMessage(msg, (
-    String("*Система*:\n") +
-    "*версия IDF*: " + s_idf_ver + "\n"
+  const char fmt[] = 
+    "*Система*:\n"
+    "*версия IDF*: %s\n"
   #ifdef ESP_ARDUINO_VERSION_MAJOR
-    "*версия Arduino*: " + s_ard_ver + "\n"
+    "*версия Arduino*: %s\n"
   #endif
-    "*прошивка*: " + TUtil::screen_mark_down(TMyApplication::get_version_string()) + "\n"
-    "*MAC адрес адаптера*: " + WiFi.macAddress() + "\n"
-    "*IP адрес адаптера*: " + s_adapter_ip + "\n"
-    "*IP адрес шлюза*: " + s_adapter_gw + "\n"
-    "*reset\\_reason*: " + esp_reset_reason() + "\n"
-    "*размер свободной кучи*: " + heap_caps_get_free_size(MALLOC_CAP_8BIT) + "\n"
-    "*максимальный размер свободного блока в куче*: " + heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) + "\n"
-    ).c_str());
+    "*прошивка*: %s\n"
+    "*MAC адрес адаптера*: %s\n"
+    "*IP адрес адаптера*: %s\n"
+    "*IP адрес шлюза*: %s\n"
+    "*reset\\_reason*: %d\n"
+    "*размер свободной кучи*: %lu\n"
+    "*максимальный размер свободного блока в куче*: %lu\n";
+
+  pbot->sendMessage(msg, TWorker::sprintf(
+    fmt,
+    TWorker::screen_mark_down(esp_get_idf_version()).get(),
+  #ifdef ESP_ARDUINO_VERSION_MAJOR
+    s_ard_ver.c_str(),
+  #endif
+    TWorker::screen_mark_down(TMyApplication::get_version_string().c_str()).get(),
+    WiFi.macAddress().c_str(),
+    TWorker::screen_mark_down(ip2str(ipInfo.ip)).get(),
+    TWorker::screen_mark_down(ip2str(ipInfo.gw)).get(),
+    esp_reset_reason(),
+    heap_caps_get_free_size(MALLOC_CAP_8BIT),
+    heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)
+    ).get());
 }
 
 void TTgmBot::send_config(TBMessage& msg)
@@ -111,7 +117,7 @@ void TTgmBot::send_config(TBMessage& msg)
   StreamString ss;
   serializeJson(doc, ss);
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, "`" + TUtil::screen_mark_down(ss) + "`");
+  pbot->sendMessage(msg, TWorker::sprintf("`%s`", TWorker::screen_mark_down(ss.c_str()).get()).get());
   //pbot->sendDocument(msg, ss, ss.length(), AsyncTelegram2::DocumentType::ZIP, "config");
 }
 
@@ -449,7 +455,7 @@ void TTgmBot::run(void)// *p)
 
 void TTgmBot::say_goodbye(void)
 {
-  send(TUtil::screen_mark_down(TWorker::sprintf("Бот @%s выключился!", pbot->getBotName())));
+  send(TUtil::screen_mark_down(TWorker::sprintf("Бот @%s выключился!", pbot->getBotName()).get()));
 }
 
 TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
@@ -480,7 +486,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
     throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
   }
 
-  pbot->sendTo(CHAT_ID, TWorker::sprintf("Бот @%s в сети!\nНаберите \"help\" для справки.", pbot->getBotName()).c_str());
+  pbot->sendTo(CHAT_ID, TWorker::sprintf("Бот @%s в сети!\nНаберите \"help\" для справки.", pbot->getBotName()).get());
 }
 
 TTgmBot::~TTgmBot()

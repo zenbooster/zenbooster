@@ -1,4 +1,5 @@
 #include "TWorker/TWorker.h"
+#include "TWorker/TWorkerTaskScreenMarkDown.h"
 
 namespace Worker
 {
@@ -118,5 +119,15 @@ const void TWorker::print(const String& text)
 const void TWorker::println(const String& text)
 {
     print(text + "\n");
+}
+
+const shared_ptr<char> TWorker::screen_mark_down(const char *s)
+{
+    return shared_ptr<char>(send(new TWorkerTaskScreenMarkDown(s)));
+}
+
+const shared_ptr<char> TWorker::screen_mark_down(const shared_ptr<char> s)
+{
+    return screen_mark_down(s.get());
 }
 }

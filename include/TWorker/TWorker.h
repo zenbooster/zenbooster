@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <memory>
 #include "TWorker/TWorkerTaskAsyncBase.h"
 #include "TWorker/TWorkerTaskSyncBase.h"
 #include "TWorker/TWorkerTaskSyncResBase.h"
@@ -34,7 +35,7 @@ public:
     static void send(TWorkerTaskSyncBase *p);
 
     template <class T>
-    static T send(TWorkerTaskSyncResBase<T> *p);
+    static const T send(TWorkerTaskSyncResBase<T> *p);
 
     static const void print(const String& text);
     static const void println(const String& text);
@@ -42,11 +43,14 @@ public:
     template <class ... Args>
     static const void printf(Args ... args);
     template <class ... Args>
-    static const String sprintf(Args ... args);
+    static const inline shared_ptr<char> sprintf(Args ... args);
+
+    static const shared_ptr<char> screen_mark_down(const char *s);
+    static const shared_ptr<char> screen_mark_down(const shared_ptr<char> s);
 };
 
 template <class T>
-T TWorker::send(TWorkerTaskSyncResBase<T> *p)
+const T TWorker::send(TWorkerTaskSyncResBase<T> *p)
 {
     T res;
 
@@ -78,8 +82,8 @@ const void TWorker::printf(Args ... args)
 }
 
 template <class ... Args>
-const String TWorker::sprintf(Args ... args)
+const shared_ptr<char> TWorker::sprintf(Args ... args)
 {
-    return send(new TWorkerTaskSprintf(args...));
+    return shared_ptr<char>(send(new TWorkerTaskSprintf(args...)));
 }
 }

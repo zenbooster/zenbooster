@@ -46,7 +46,7 @@ TButtonIllumination *TMyApplication::p_btn_il = NULL;
 #endif
 TMedSession *TMyApplication::p_med_session = NULL;
 
-String TMyApplication::get_version_string(void)
+const String TMyApplication::get_version_string(void)
 {
   return String(DEVICE_NAME_FULL) + ", версия прошивки " VERSION ", дата сборки " BUILD_TIMESTAMP;
 }

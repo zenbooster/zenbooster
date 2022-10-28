@@ -97,7 +97,7 @@ class TMyApplication
     TMyApplication();
     ~TMyApplication();
 
-    static String get_version_string(void);
+    static const String get_version_string(void);
     void run(void);
 };
 }

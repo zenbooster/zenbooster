@@ -8,7 +8,7 @@ using namespace std;
 
 typedef function<void(void)> TCbWorkerTaskSprintf;
 
-class TWorkerTaskSprintf: public TWorkerTaskSyncResBase<String>
+class TWorkerTaskSprintf: public TWorkerTaskSyncResBase<char *>
 {
 private:
     TCbWorkerTaskSprintf cb;
@@ -35,7 +35,7 @@ TWorkerTaskSprintf::TWorkerTaskSprintf(Args ... args)
         //if(!buf) return -sz;
         snprintf(buf, sz, args...);
         res = buf;
-        delete [] buf;
+        //delete [] buf;
     };
 }
 
