@@ -47,6 +47,8 @@ public:
 
     static const shared_ptr<char> screen_mark_down(const char *s);
     static const shared_ptr<char> screen_mark_down(const shared_ptr<char> s);
+    static const shared_ptr<char> cmd_sysinfo(void);
+    static const shared_ptr<char> cmd_getconf(void);
 };
 
 template <class T>
@@ -84,6 +86,6 @@ const void TWorker::printf(Args ... args)
 template <class ... Args>
 const shared_ptr<char> TWorker::sprintf(Args ... args)
 {
-    return shared_ptr<char>(send(new TWorkerTaskSprintf(args...)));
+    return send(new TWorkerTaskSprintf(args...));
 }
 }

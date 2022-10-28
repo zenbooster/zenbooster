@@ -1,5 +1,7 @@
 #include "TWorker/TWorker.h"
 #include "TWorker/TWorkerTaskScreenMarkDown.h"
+#include "TWorker/TWorkerTaskCmdSysInfo.h"
+#include "TWorker/TWorkerTaskCmdGetConf.h"
 
 namespace Worker
 {
@@ -48,8 +50,8 @@ TWorker::TWorker()
         throw String("TWorker::TWorker(): ошибка создания очереди");
     }
 
-    //xTaskCreatePinnedToCore(task, "TWorker::task", 2500, this,
-    xTaskCreatePinnedToCore(task, "TWorker::task", 2000, this,
+    xTaskCreatePinnedToCore(task, "TWorker::task", 2500, this,
+    //xTaskCreatePinnedToCore(task, "TWorker::task", 2000, this,
         (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
 }
 
@@ -129,5 +131,15 @@ const shared_ptr<char> TWorker::screen_mark_down(const char *s)
 const shared_ptr<char> TWorker::screen_mark_down(const shared_ptr<char> s)
 {
     return screen_mark_down(s.get());
+}
+
+const shared_ptr<char> TWorker::cmd_sysinfo(void)
+{
+    return send(new TWorkerTaskCmdSysInfo());
+}
+
+const shared_ptr<char> TWorker::cmd_getconf(void)
+{
+    return send(new TWorkerTaskCmdGetConf());
 }
 }

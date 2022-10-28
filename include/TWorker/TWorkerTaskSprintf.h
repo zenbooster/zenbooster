@@ -1,24 +1,17 @@
 #pragma once
 #include "TWorker/TWorkerTaskSyncResBase.h"
-#include <functional>
+#include "TUtil.h"
+#include <memory>
 
 namespace Worker
 {
-using namespace std;
+using namespace Util;
 
-typedef function<void(void)> TCbWorkerTaskSprintf;
-
-class TWorkerTaskSprintf: public TWorkerTaskSyncResBase<char *>
+class TWorkerTaskSprintf: public TWorkerTaskSyncResBase<shared_ptr<char>>
 {
-private:
-    TCbWorkerTaskSprintf cb;
-
 public:
     template <class ... Args>
     TWorkerTaskSprintf(Args ... args);
-    ~TWorkerTaskSprintf();
-
-    void run(void);
 };
 
 template <class ... Args>
@@ -26,7 +19,8 @@ TWorkerTaskSprintf::TWorkerTaskSprintf(Args ... args)
 {
     cb = [this, args...] (void)
     {
-        //Serial.printf(args...);
+        res = TUtil::sprintf(args...);
+        /*
         //String res;
         char *buf = 0;
         const size_t sz = snprintf(buf, 0, args...) + 1;
@@ -35,7 +29,7 @@ TWorkerTaskSprintf::TWorkerTaskSprintf(Args ... args)
         //if(!buf) return -sz;
         snprintf(buf, sz, args...);
         res = buf;
-        //delete [] buf;
+        */
     };
 }
 

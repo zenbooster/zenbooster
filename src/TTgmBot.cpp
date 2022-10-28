@@ -2,17 +2,13 @@
 #include <cctype>
 #include <locale>
 #include <memory>
-#include <WiFi.h>
-#include <tcpip_adapter.h>
 #include "TTgmBot.h"
 #include ".\\tg_certificate.h"
 #include "TUtil.h"
 #include "TMyApplication.h"
 #include "TWorker/TWorker.h"
 #include "TConf.h"
-#include <StreamString.h>
 #include "ArduinoJson.h"
-//#include "esp_arduino_version.h"
 
 namespace TgmBot
 {
@@ -63,62 +59,16 @@ void TTgmBot::show_info(TBMessage& msg)
   pbot->sendMessage(msg, ("*Опции*:\n" + TConf::get_prefs()->get_values()).c_str());
 }
 
-static const shared_ptr<char> ip2str(ip4_addr_t& ip)
-{
-  return TWorker::sprintf(IPSTR, IP2STR(&ip));
-}
-
 void TTgmBot::show_sysinfo(TBMessage& msg)
 {
   msg.isMarkdownEnabled = true;
-  
-#ifdef ESP_ARDUINO_VERSION_MAJOR
-  String s_ard_ver = 
-    String(ESP_ARDUINO_VERSION_MAJOR, 10) + "\\." + 
-    String(ESP_ARDUINO_VERSION_MINOR, 10) + "\\." +
-    String(ESP_ARDUINO_VERSION_PATCH, 10);
-#endif
-  tcpip_adapter_ip_info_t ipInfo;
-  tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipInfo);
-
-  const char fmt[] = 
-    "*Система*:\n"
-    "*версия IDF*: %s\n"
-  #ifdef ESP_ARDUINO_VERSION_MAJOR
-    "*версия Arduino*: %s\n"
-  #endif
-    "*прошивка*: %s\n"
-    "*MAC адрес адаптера*: %s\n"
-    "*IP адрес адаптера*: %s\n"
-    "*IP адрес шлюза*: %s\n"
-    "*reset\\_reason*: %d\n"
-    "*размер свободной кучи*: %lu\n"
-    "*максимальный размер свободного блока в куче*: %lu\n";
-
-  pbot->sendMessage(msg, TWorker::sprintf(
-    fmt,
-    TWorker::screen_mark_down(esp_get_idf_version()).get(),
-  #ifdef ESP_ARDUINO_VERSION_MAJOR
-    s_ard_ver.c_str(),
-  #endif
-    TWorker::screen_mark_down(TMyApplication::get_version_string().c_str()).get(),
-    WiFi.macAddress().c_str(),
-    TWorker::screen_mark_down(ip2str(ipInfo.ip)).get(),
-    TWorker::screen_mark_down(ip2str(ipInfo.gw)).get(),
-    esp_reset_reason(),
-    heap_caps_get_free_size(MALLOC_CAP_8BIT),
-    heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)
-    ).get());
+  pbot->sendMessage(msg, TWorker::cmd_sysinfo().get());
 }
 
 void TTgmBot::send_config(TBMessage& msg)
 {
-  DynamicJsonDocument doc = TConf::get_json();
-  StreamString ss;
-  serializeJson(doc, ss);
   msg.isMarkdownEnabled = true;
-  pbot->sendMessage(msg, TWorker::sprintf("`%s`", TWorker::screen_mark_down(ss.c_str()).get()).get());
-  //pbot->sendDocument(msg, ss, ss.length(), AsyncTelegram2::DocumentType::ZIP, "config");
+  pbot->sendMessage(msg, TWorker::cmd_getconf().get());
 }
 
 void TTgmBot::flush_message(void)
@@ -198,7 +148,6 @@ void TTgmBot::run(void)// *p)
   if (pbot->getNewMessage(msg))
   {
     // check what kind of message I received
-    String tgReply;
     MessageType msgType = msg.messageType;
 
     switch (msgType)
@@ -206,12 +155,12 @@ void TTgmBot::run(void)// *p)
       case MessageText:
       {
         // received a text message
-        String text = msg.text;
+        String& text = msg.text;
         //text = trim(text);
         text.trim();
         transform(text.begin(), text.end(), text.begin(), ::tolower);
 
-        TWorker::printf("Text message received: %s\n", text.c_str());
+        TWorker::printf("Получено текстовое сообщение: %s\n", text.c_str());
 
         int opt_len;
         bool is_get = (text[text.length()-1] == '?');
@@ -455,7 +404,7 @@ void TTgmBot::run(void)// *p)
 
 void TTgmBot::say_goodbye(void)
 {
-  send(TUtil::screen_mark_down(TWorker::sprintf("Бот @%s выключился!", pbot->getBotName()).get()));
+  send(TWorker::screen_mark_down(TWorker::sprintf("Бот @%s выключился!", pbot->getBotName())).get());
 }
 
 TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):

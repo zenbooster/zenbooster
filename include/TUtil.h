@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <functional>
+#include <memory>
 
 namespace Util
 {
@@ -29,9 +30,23 @@ class TUtil
         static T percent_of(float pct, T val);
 
         static String screen_mark_down(const String s);
+        static shared_ptr<char> screen_mark_down(const char *s);
+        static shared_ptr<char> screen_mark_down(const shared_ptr<char> s);
         static void mac_2_array(String mac, uint8_t *buf);
 
         static void chk_nvs_key(const String& key); // может бросить исключение
+
+        template <class ... Args>
+        static shared_ptr<char> sprintf(Args ... args)
+        {
+          char *buf = 0;
+          const size_t sz = snprintf(buf, 0, args...) + 1;
+          //if (nBufferLength == 1) return 0;
+          buf = new char[sz];
+          //if(!buf) return -sz;
+          snprintf(buf, sz, args...);
+          return shared_ptr<char>(buf);
+        }
 };
 
 template<class T>

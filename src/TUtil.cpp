@@ -71,6 +71,20 @@ String TUtil::screen_mark_down(const String s)
     return res;
 }
 
+shared_ptr<char> TUtil::screen_mark_down(const char *s)
+{
+  String t = screen_mark_down(String(s));
+  char *res = new char[t.length() + 1];
+  strcpy(res, t.c_str());
+
+  return shared_ptr<char>(res);
+}
+
+shared_ptr<char> TUtil::screen_mark_down(const shared_ptr<char> s)
+{
+  return screen_mark_down(s.get());
+}
+
 // take a hex string and convert it to a 32bit number (max 8 hex digits)
 uint32_t TUtil::hex2int(const char *hex, int len)
 {

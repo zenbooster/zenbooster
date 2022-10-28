@@ -1,14 +1,20 @@
 #pragma once
 #include "TWorker/TWorkerTaskSyncBase.h"
 #include "TWorker/TVisitor.h"
+#include <functional>
 
 namespace Worker
 {
+using namespace std;
+
+typedef function<void(void)> TCbWorkerTaskSyncResBase;
+
 template<class T>
 class TWorkerTaskSyncResBase: public TWorkerTaskSyncBase
 {
 protected:
     T res;
+    TCbWorkerTaskSyncResBase cb;
 
 public:
     TWorkerTaskSyncResBase() {};
@@ -18,7 +24,11 @@ public:
     {
         v->visit(this);
     };
-    virtual void run(void) = 0;
+
+    virtual void run(void)
+    {
+        cb();
+    }
 
     T dtor_result(void);
 };
