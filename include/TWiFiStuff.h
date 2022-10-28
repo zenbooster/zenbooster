@@ -3,6 +3,7 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include "TTgmBot.h"
+#include "TWorker/TWorkerTaskCmdSysInfo.h"
 
 namespace Conf {class TConf;}
 namespace MedSession {class TMedSession;}
@@ -29,6 +30,7 @@ class TWiFiStuff
 
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
+    friend class Worker::TWorkerTaskCmdSysInfo;
 
   public:
     TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula);

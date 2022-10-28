@@ -15,7 +15,7 @@ bool TSleepMode::is_graceful = true;
 void /*IRAM_ATTR*/ TSleepMode::isr_handle()
 {
     detachInterrupt(sleep_pin);
-    TWorker::printf("Нажата кнопка на пине GPIO_NUM_%d.\n", sleep_pin);
+    Serial.printf("Нажата кнопка на пине GPIO_NUM_%d.\n", sleep_pin);
 
     shutdown();
 }

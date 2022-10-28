@@ -3,6 +3,7 @@
 #include "TWorker/TWorkerTaskCmdSysInfo.h"
 #include "TMyApplication.h"
 #include "TUtil.h"
+#include "TWiFiStuff.h"
 #include <WiFi.h>
 //#include "esp_arduino_version.h"
 
@@ -36,6 +37,7 @@ TWorkerTaskCmdSysInfo::TWorkerTaskCmdSysInfo(void)
             "*версия Arduino*: %s\n"
         #endif
             "*прошивка*: %s\n"
+            "*дата \\/ время*: %s\n"
             "*MAC адрес адаптера*: %s\n"
             "*IP адрес адаптера*: %s\n"
             "*IP адрес шлюза*: %s\n"
@@ -50,6 +52,7 @@ TWorkerTaskCmdSysInfo::TWorkerTaskCmdSysInfo(void)
             s_ard_ver.c_str(),
         #endif
             TUtil::screen_mark_down(TMyApplication::get_version_string().c_str()).get(),
+            TUtil::screen_mark_down(TWiFiStuff::time_cli.getFormattedDate()).c_str(),
             WiFi.macAddress().c_str(),
             TUtil::screen_mark_down(ip2str(ipInfo.ip)).get(),
             TUtil::screen_mark_down(ip2str(ipInfo.gw)).get(),

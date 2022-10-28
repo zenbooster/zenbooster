@@ -112,7 +112,7 @@ bool TElementsDB::integrity_check(void)
             if(key.isEmpty())
             {
                 TWorker::printf(
-                    "\nTElementsDB::integrity_check(..): name_list не содержит ключа для id=%d!"
+                    "\nTElementsDB::integrity_check(..): name_list не содержит ключа для id=%" PRIu8 "!"
                     " Сбрасываем соответствующий бит в битовой карте.\n", id
                 );
                 write_bit(id, false);
@@ -123,7 +123,7 @@ bool TElementsDB::integrity_check(void)
                 if(get_value_id(key).isEmpty())
                 {
                     TWorker::printf(
-                        "\nTElementsDB::integrity_check(..): name не содержит ключа \"%s\" для id=%d!\n"
+                        "\nTElementsDB::integrity_check(..): name не содержит ключа \"%s\" для id=%" PRIu8 "!\n"
                         " Сбрасываем соответствующий бит в битовой карте.\n", key.c_str(), id
                     );
                     // При этом не трогаем пару id: key в name_list, т.к. в будущем её можно будет повторно использовать.
@@ -164,10 +164,10 @@ TElementsDB::~TElementsDB()
 void TElementsDB::write_bit(uint8_t n, bool is)
 {
     uint8_t chunk_num = n >> 3;
-    TWorker::printf("TElementsDB::write_bit(..): номер чанка: \"%d\".\n", chunk_num);
+    TWorker::printf("TElementsDB::write_bit(..): номер чанка: %" PRIu8 ".\n", chunk_num);
 
     uint8_t bit_num = n - (chunk_num << 3);
-    TWorker::printf("TElementsDB::write_bit(..): номер бита в чанке: \"%d\".\n", bit_num);
+    TWorker::printf("TElementsDB::write_bit(..): номер бита в чанке: %" PRIu8 ".\n", bit_num);
 
     String s_chunk_name = get_chunk_name(chunk_num);
     
@@ -242,7 +242,7 @@ void TElementsDB::assign(const String& key, const String& val)
 
                 write_bit(id, true);
 
-                TWorker::printf("TElementsDB::assign(..): id = %d\n", id);
+                TWorker::printf("TElementsDB::assign(..): id = %" PRIu16 "\n", id);
                 TWorker::println("TElementsDB::assign(..): записываем ссылку на элемент в список.");
                 prefs.begin(name_list.c_str(), false);
                 prefs.putString(String(id, 0x10).c_str(), key.c_str());

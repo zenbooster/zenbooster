@@ -40,6 +40,7 @@ public:
     static const void print(const String& text);
     static const void println(const String& text);
 
+    // Из ISR не вызывать, иначе WDT таймаут:
     template <class ... Args>
     static const void printf(Args ... args);
     template <class ... Args>

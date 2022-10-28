@@ -138,7 +138,7 @@ TConf::TConf()
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TWiFiStuff::time_cli.setTimeOffset(v * 3600);
-      TWiFiStuff::tgb_send(TUtil::screen_mark_down(TWiFiStuff::time_cli.getFormattedDate()));
+      //TWiFiStuff::tgb_send(TUtil::screen_mark_down(TWiFiStuff::time_cli.getFormattedDate()));
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
@@ -239,11 +239,14 @@ TConf::TConf()
   p_prefs->init_key("f", "формула", "samadhi", [this](const String& value, bool is_validate_only) -> void
   {
     String val = p_fdb->get_value(value);
-    
-    TCalcFormula *pcf = TCalcFormula::compile(val);
+
+    // При валидации не проверяем формулу, т.к. будет отдельно проверена каждая формула в базе.
+    //TCalcFormula *pcf = TCalcFormula::compile(val);
 
     if(!is_validate_only)
     {
+      TCalcFormula *pcf = TCalcFormula::compile(val);
+
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TMyApplication::update_calc_formula(pcf);
       TMedSession::formula_name = value;

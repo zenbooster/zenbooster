@@ -1,5 +1,5 @@
 #pragma once
-#include "TWorker/TWorkerTaskAsyncBase.h"
+#include "TWorker/TWorkerTaskSyncBase.h"
 #include <Arduino.h>
 #include <functional>
 
@@ -9,7 +9,7 @@ using namespace std;
 
 typedef function<void(void)> TCbWorkerTaskLogVariadic;
 
-class TWorkerTaskLogVariadic: public TWorkerTaskAsyncBase
+class TWorkerTaskLogVariadic: public TWorkerTaskSyncBase
 {
 private:
     TCbWorkerTaskLogVariadic cb;
