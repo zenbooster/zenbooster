@@ -56,7 +56,7 @@ class TMyApplication
 #ifdef PIN_BTN
     static TSleepMode *p_sleep_mode;
 #endif
-    static WiFiManager wifiManager;
+    static WiFiManager *p_wifi_manager;
 
     static int threshold;
     static int pre_threshold;

@@ -27,7 +27,7 @@ const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
 TConf *TMyApplication::p_conf = NULL;
 TWorker *TMyApplication::p_worker = NULL;
 TSleepMode *TMyApplication::p_sleep_mode = NULL;
-WiFiManager TMyApplication::wifiManager;
+WiFiManager *TMyApplication::p_wifi_manager = NULL;
 int TMyApplication::threshold;
 int TMyApplication::pre_threshold;
 TRingBufferInItem TMyApplication::ring_buffer_in[4] = {};
@@ -256,9 +256,10 @@ TMyApplication::TMyApplication()
   // инициализация WiFi:
   // Временно запретим wifi, т.к. есть проблемы сосуществования wifi и bluetooth на одном радио.
   // Ждём модуль bluetooth HC-06 - он должен рещить все проблемы.
-  wifiManager.setHostname(DEVICE_NAME);
-  //wifiManager.startConfigPortal(WIFI_SSID, WIFI_PASS);
-  wifiManager.autoConnect(WIFI_SSID, WIFI_PASS);
+  p_wifi_manager = new WiFiManager();
+  p_wifi_manager->setHostname(DEVICE_NAME);
+  //p_wifi_manager->startConfigPortal(WIFI_SSID, WIFI_PASS);
+  p_wifi_manager->autoConnect(WIFI_SSID, WIFI_PASS);
 
   p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, [](TCalcFormula *pcf) -> void
   {
@@ -291,6 +292,9 @@ TMyApplication::~TMyApplication()
 
   if(p_wifi_stuff)
     delete p_wifi_stuff;
+
+  if(p_wifi_manager)
+    delete p_wifi_manager;
 
   if(p_conf)
     delete p_conf;
