@@ -52,7 +52,7 @@ float TCalcFormula::evaluate(SExpression *e)
     }
 }
 
-TCalcFormula::TCalcFormula(String ex)
+TCalcFormula::TCalcFormula(String ex) throw(String)
 {
   reg_var("d", &delta);
   reg_var("t", &theta);
@@ -80,7 +80,7 @@ TCalcFormula::~TCalcFormula()
     deleteExpression(p_ast);
 }
 
-TCalcFormula *TCalcFormula::compile(const String& val)
+TCalcFormula *TCalcFormula::compile(const String& val) throw(String)
 {
     TCalcFormula *res = NULL;
 

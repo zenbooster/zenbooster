@@ -15,10 +15,10 @@ class TCalcFormula: public TRingBufferInItem
     static float evaluate(SExpression *e);
 
   public:
-    TCalcFormula(String ex);
+    TCalcFormula(String ex) throw(String);
     ~TCalcFormula();
 
-    static TCalcFormula *compile(const String& val);
+    static TCalcFormula *compile(const String& val) throw(String);
 
     float run(void);
 };
