@@ -1,16 +1,17 @@
-
 #include "TWorker/TWorker.h"
 #include "TWorker/TWorkerTaskCmdSysInfo.h"
 #include "TMyApplication.h"
 #include "TUtil.h"
 #include "TWiFiStuff.h"
 #include <WiFi.h>
+#include "TTaskObserver.h"
 //#include "esp_arduino_version.h"
 
 namespace Worker
 {
 using namespace MyApplication;
 using namespace Util;
+using namespace Task;
 
 const shared_ptr<char> TWorkerTaskCmdSysInfo::ip2str(ip4_addr_t& ip)
 {
@@ -43,7 +44,9 @@ TWorkerTaskCmdSysInfo::TWorkerTaskCmdSysInfo(void)
             "*IP адрес шлюза*: %s\n"
             "*reset\\_reason*: %d\n"
             "*размер свободной кучи*: %lu\n"
-            "*максимальный размер свободного блока в куче*: %lu\n";
+            "*максимальный размер свободного блока в куче*: %lu\n"
+            "\n*Максимум использования стека задачами*:\n"
+            "%s";
 
         res = TUtil::sprintf(
             fmt,
@@ -58,7 +61,8 @@ TWorkerTaskCmdSysInfo::TWorkerTaskCmdSysInfo(void)
             TUtil::screen_mark_down(ip2str(ipInfo.gw)).get(),
             esp_reset_reason(),
             heap_caps_get_free_size(MALLOC_CAP_8BIT),
-            heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)
+            heap_caps_get_largest_free_block(MALLOC_CAP_8BIT),
+            TTaskObserver::GetMaxStackSizeUsage().get()
         );
     };
 }

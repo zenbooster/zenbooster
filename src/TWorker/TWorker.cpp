@@ -1,3 +1,4 @@
+#include "common.h"
 #include "TWorker/TWorker.h"
 #include "TWorker/TWorkerTaskScreenMarkDown.h"
 #include "TWorker/TWorkerTaskCmdSysInfo.h"
@@ -53,7 +54,7 @@ TWorker::TWorker()
         throw String("TWorker::TWorker(): ошибка создания очереди");
     }
 
-    p_task = new TTask(task, "TWorker::task", 2500, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
+    p_task = new TTask(task, "TWorker", TWORKER_TASK_STACK_SIZE, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
 }
 
 TWorker::~TWorker()

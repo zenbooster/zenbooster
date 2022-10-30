@@ -1,3 +1,4 @@
+#include "common.h"
 #include "TWiFiStuff.h"
 #include "TConf.h"
 
@@ -46,7 +47,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
   pTgmBot = new TTgmBot(dev_name, cb_change_formula);
 
   xDtorMutex = xSemaphoreCreateMutex();
-  p_task = new TTask(task, "TWiFiStuff::task", 7500, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
+  p_task = new TTask(task, "TWiFiStuff", TWIFISTUFF_TASK_STACK_SIZE, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
 }
 
 TWiFiStuff::~TWiFiStuff()

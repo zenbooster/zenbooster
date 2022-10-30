@@ -18,7 +18,6 @@ protected:
 
 public:
     TWorkerTaskSyncResBase() {};
-    //virtual ~TWorkerTaskSyncResBase();
 
     virtual void accept(TVisitor *v)
     {

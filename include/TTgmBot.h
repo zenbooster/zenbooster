@@ -11,8 +11,8 @@
 #endif
 #include <functional>
 
-#define BOT_TOKEN "5684634931:AAHMl2G06Wdgt6w0qJ7c3gxcElX59IHyPRY" // zenbooster_device
-#define CHAT_ID 443232875
+#define BOT_TOKEN "" // zenbooster_device
+#define CHAT_ID 0
 
 namespace TgmBot
 {

@@ -137,7 +137,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
   SerialBT.begin(dev_name, true);
   TWorker::println("Устройство запущено в режиме мастера, убедитесь, что удалённое устройство включено!");
 
-  p_task = new TTask(task, "TBluetoothStuff::task", 2200, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 1);
+  p_task = new TTask(task, "TBluetoothStuff", TBLUETOOTHSTUFF_TASK_STACK_SIZE, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 1);
 }
 
 TBluetoothStuff::~TBluetoothStuff()

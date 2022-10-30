@@ -10,7 +10,6 @@ typedef void(*TCbTaskFunction)(void *);
 class TTask
 {
 private:
-    //const String name;
     const size_t sz_stack;
     TaskHandle_t h_task;
 
@@ -35,6 +34,7 @@ public:
     ~TTask();
 
     TaskHandle_t get_handle();
+    char *get_name();
     size_t GetMaxStackSizeUsage(void);
 };
 }
