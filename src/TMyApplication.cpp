@@ -162,6 +162,16 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
           }
         }
       }
+      else
+      {
+        if(!p_med_session)
+        {
+          p_med_session = new TMedSession();
+      #ifdef PIN_BTN
+        TButtonIllumination::on_msession_connect();
+      #endif
+        }
+      }
 
     #ifdef PIN_BTN
       TButtonIllumination::on_msession_data();
