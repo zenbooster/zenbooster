@@ -164,12 +164,11 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       }
       else
       {
+        // Если при подключенной гарнитуре
+        // меняем ups с true на false:
         if(!p_med_session)
         {
-          p_med_session = new TMedSession();
-      #ifdef PIN_BTN
-        TButtonIllumination::on_msession_connect();
-      #endif
+          callback(p_tpv, TCallbackEvent::eConnect);
         }
       }
 
