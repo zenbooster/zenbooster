@@ -1,5 +1,7 @@
 #pragma once
 #include <Arduino.h>
+#include "TSingleton.h"
+#include "TTask.h"
 #include <BluetoothSerial.h>
 #include "TTgamPacketParser.h"
 
@@ -9,6 +11,8 @@ namespace Conf {class TConf;}
 namespace BluetoothStuff
 {
 using namespace std;
+using namespace Singleton;
+using namespace Task;
 using namespace TgamPacketParser;
 using namespace MyApplication;
 
@@ -23,12 +27,10 @@ typedef void (*tpfn_callback)(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
 class TBluetoothDataProcessor;
 
-class TBluetoothStuff
+class TBluetoothStuff: public TSingleton<TBluetoothStuff>
 {
   private:
-    static int ref_cnt;
-    //static String dev_name;
-    static TaskHandle_t h_task;
+    static TTask *p_task;
     static tpfn_callback pfn_callback;
 
     BluetoothSerial SerialBT;
@@ -43,6 +45,7 @@ class TBluetoothStuff
     static TTgamPacketParser *p_tpp;
     static TBluetoothDataProcessor *dp;
 
+    const char *get_class_name();
     static void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
     static void task(void *p);
 

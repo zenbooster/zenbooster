@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <memory>
+#include "TSingleton.h"
+#include "TTask.h"
 #include "TWorker/TWorkerTaskAsyncBase.h"
 #include "TWorker/TWorkerTaskSyncBase.h"
 #include "TWorker/TWorkerTaskSyncResBase.h"
@@ -12,14 +14,18 @@
 
 namespace Worker
 {
-class TWorker: public TVisitor
+using namespace Singleton;
+using namespace Task;
+
+class TWorker: public TSingleton<TWorker>, public TVisitor
 {
 private:
-    static TWorker *p_instance;
-    static TaskHandle_t h_task;
+    static TTask *p_task;
     static SemaphoreHandle_t xTermMutex;
     static bool is_terminate; // reset или shutdown
     static QueueHandle_t queue;
+
+    const char *get_class_name();
 
     void visit(TWorkerTaskAsyncBase *p);
 	void visit(TWorkerTaskTerminate *p);
@@ -60,9 +66,9 @@ const T TWorker::send(TWorkerTaskSyncResBase<T> *p)
     // Если задача посылается из задачи выполняющейся в данный
     // момент. Например, если из TWorkerTaskTerminate вызывается
     // колбек, использующий TWorker::printf, делаем такую проверку:
-    if(xTaskGetCurrentTaskHandle() == h_task)
+    if(xTaskGetCurrentTaskHandle() == p_task->get_handle())
     {
-        p->accept(p_instance);
+        p->accept((TVisitor*)get_instance());
         p->run();
         p->release();
         xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);

@@ -5,20 +5,20 @@ namespace WiFiStuff
 {
 using namespace MyApplication;
 
-int TWiFiStuff::ref_cnt = 0;
-//String TWiFiStuff::dev_name;
-TaskHandle_t TWiFiStuff::h_task = NULL;
+TTask *TWiFiStuff::p_task = NULL;
 SemaphoreHandle_t TWiFiStuff::xDtorMutex = NULL;
 TaskHandle_t TWiFiStuff::h_dtor_task = NULL;
 WiFiUDP TWiFiStuff::ntp_udp;
 NTPClient TWiFiStuff::time_cli(ntp_udp);
 TTgmBot *TWiFiStuff::pTgmBot = NULL;
 
+const char *TWiFiStuff::get_class_name()
+{
+    return "TWiFiStuff";
+}
+
 void TWiFiStuff::task(void *p)
 {
-  //TWiFiStuff *pthis = static_cast<TWiFiStuff *>(p);
-  //TTgmBot *pTgmBot = TWiFiStuff::pTgmBot;
-
   for(;;)
   {
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
@@ -41,21 +41,12 @@ void TWiFiStuff::task(void *p)
 
 TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula)
 {
-  if(ref_cnt)
-  {
-    throw String("Разрешён только один экземпляр TWiFiStuff!");
-  }
-  ref_cnt++;
-
-  //TWiFiStuff::dev_name = dev_name;
   time_cli.begin();
 
   pTgmBot = new TTgmBot(dev_name, cb_change_formula);
 
   xDtorMutex = xSemaphoreCreateMutex();
-  xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 8000, this,
-  //xTaskCreatePinnedToCore(task, "TWiFiStuff::task", 7500, this,
-      (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
+  p_task = new TTask(task, "TWiFiStuff::task", 7500, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
 }
 
 TWiFiStuff::~TWiFiStuff()
@@ -72,9 +63,9 @@ TWiFiStuff::~TWiFiStuff()
   xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
 
   // Мы всё сделали для того, чтобы сообщение ушло. Теперь можно удалить задачу:
-  if(h_task)
+  if(p_task)
   {
-    vTaskDelete(h_task);
+    delete p_task;
   }
 
   vSemaphoreDelete(xDtorMutex);
@@ -83,8 +74,6 @@ TWiFiStuff::~TWiFiStuff()
   {
     delete pTgmBot;
   }
-
-  --ref_cnt;
 }
 
 void TWiFiStuff::tgb_send(const String& m, bool isMarkdownEnabled)

@@ -12,8 +12,14 @@ namespace Noise
 {
 numeric TNoise::MAX_NOISE_LEVEL = 0.1;
 numeric TNoise::level = TNoise::MAX_NOISE_LEVEL;
+
+const char *TNoise::get_class_name()
+{
+  return "TNoise";
+}
+
 #ifdef SOUND_I2S
-TaskHandle_t TNoise::h_task = NULL;
+TTask *TNoise::p_task = NULL;
 #endif
 
 #ifdef SOUND_DAC
@@ -49,7 +55,6 @@ void TNoise::task_i2s(void *p)
       *pb++ = val;
     }
     
-    //i2s_write_bytes((i2s_port_t)i2s_num, (const char *)&buf, sizeof(buf), 100);
     size_t bytes_written;
     i2s_write((i2s_port_t)i2s_num, (const char *)&buf, sizeof(buf), &bytes_written, 100);
     yield();
@@ -114,8 +119,7 @@ TNoise::TNoise()
   //set sample rates of i2s to sample rate of wav file
   i2s_set_sample_rates((i2s_port_t)i2s_num, SAMPLE_RATE_I2S); 
 
-  xTaskCreatePinnedToCore(task_i2s, "TNoise::task_i2s", 1200, this,
-    (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
+  p_task = new TTask(task_i2s, "TNoise::task_i2s", 1200, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
 #endif
 }
 
@@ -128,9 +132,9 @@ TNoise::~TNoise()
 #endif
 
 #ifdef SOUND_I2S
-  if(h_task)
+  if(p_task)
   {
-    vTaskDelete(h_task);
+    delete p_task;
   }
   i2s_driver_uninstall((i2s_port_t)i2s_num);
   digitalWrite(PIN_I2S_SD, LOW);

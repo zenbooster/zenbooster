@@ -1,5 +1,7 @@
 #pragma once
 #include <Arduino.h>
+#include "TSingleton.h"
+#include "TTask.h"
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include "TTgmBot.h"
@@ -10,21 +12,26 @@ namespace MedSession {class TMedSession;}
 
 namespace WiFiStuff
 {
+using namespace Singleton;
+using namespace Task;
 using namespace Conf;
 using namespace TgmBot;
 using namespace MedSession;
 
-class TWiFiStuff
+class TWiFiStuff: public TSingleton<TWiFiStuff>
 {
   private:
-    static int ref_cnt;
+    //static int ref_cnt;
     //static String dev_name;
-    static TaskHandle_t h_task;
+    //static TaskHandle_t h_task;
+    static TTask *p_task;
     static SemaphoreHandle_t xDtorMutex;
     static TaskHandle_t h_dtor_task;
     static WiFiUDP ntp_udp;
     static NTPClient time_cli;
     static TTgmBot *pTgmBot;
+
+    const char *get_class_name();
 
     static void task(void *p);
 

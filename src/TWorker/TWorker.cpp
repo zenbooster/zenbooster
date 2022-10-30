@@ -5,11 +5,15 @@
 
 namespace Worker
 {
-TWorker *TWorker::p_instance = NULL;
-TaskHandle_t TWorker::h_task;
+TTask *TWorker::p_task = NULL;
 SemaphoreHandle_t TWorker::xTermMutex;
 bool TWorker::is_terminate = false;
 QueueHandle_t TWorker::queue;
+
+const char *TWorker::get_class_name()
+{
+    return "TWorker";
+}
 
 void TWorker::visit(TWorkerTaskAsyncBase *p)
 {
@@ -42,7 +46,6 @@ void TWorker::task(void *p)
 
 TWorker::TWorker()
 {
-    p_instance = this;
     xTermMutex = xSemaphoreCreateMutex();
 
     queue = xQueueCreate(4, sizeof(TWorkerTaskAsyncBase *));
@@ -50,9 +53,7 @@ TWorker::TWorker()
         throw String("TWorker::TWorker(): ошибка создания очереди");
     }
 
-    xTaskCreatePinnedToCore(task, "TWorker::task", 2500, this,
-    //xTaskCreatePinnedToCore(task, "TWorker::task", 2000, this,
-        (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 2);
+    p_task = new TTask(task, "TWorker::task", 2500, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
 }
 
 TWorker::~TWorker()
@@ -62,9 +63,9 @@ TWorker::~TWorker()
     bool is = is_terminate;
     xSemaphoreGive(xTermMutex);
 
-    if(!is && h_task)
+    if(!is && p_task)
     {
-        vTaskDelete(h_task);
+        delete p_task;
     }
 
     if(queue)
@@ -80,9 +81,9 @@ void TWorker::send(TWorkerTaskAsyncBase *p)
     // Если задача посылается из задачи выполняющейся в данный
     // момент. Например, если из TWorkerTaskTerminate вызывается
     // колбек, использующий TWorker::printf, делаем такую проверку:
-    if(xTaskGetCurrentTaskHandle() == h_task)
+    if(xTaskGetCurrentTaskHandle() == p_task->get_handle())
     {
-        p->accept(p_instance);
+        p->accept((TVisitor*)get_instance());
         p->run();
         delete p;
     }
@@ -97,9 +98,9 @@ void TWorker::send(TWorkerTaskSyncBase *p)
     // Если задача посылается из задачи выполняющейся в данный
     // момент. Например, если из TWorkerTaskTerminate вызывается
     // колбек, использующий TWorker::printf, делаем такую проверку:
-    if(xTaskGetCurrentTaskHandle() == h_task)
+    if(xTaskGetCurrentTaskHandle() == p_task->get_handle())
     {
-        p->accept(p_instance);
+        p->accept((TVisitor*)get_instance());
         p->run();
         p->release();
         xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); // просто очищаем уведомление (сработает ?)

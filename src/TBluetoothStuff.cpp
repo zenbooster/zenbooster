@@ -5,6 +5,7 @@
 #include "TUtil.h"
 #include "TNoise.h"
 #include "TWorker/TWorker.h"
+#include "TWorker/TWorkerTaskProcessTgam.h"
 #include "freertos/task.h"
 #include <esp_spp_api.h>
 
@@ -17,78 +18,18 @@ using namespace Util;
 using namespace Noise;
 using namespace Worker;
 
-class TBluetoothDataProcessor
-{
-  private:
-    QueueHandle_t queue;
-    TaskHandle_t h_task;
-
-    static void task(void *p);
-
-  public:
-    TBluetoothDataProcessor();
-    ~TBluetoothDataProcessor();
-
-    void send(const TTgamParsedValues& tpv);
-};
-
-void TBluetoothDataProcessor::task(void *p)
-{
-  TBluetoothDataProcessor *p_this = static_cast<TBluetoothDataProcessor *>(p);
-
-  for(;;)
-  {
-    TTgamParsedValues *p;
-    if(pdTRUE == xQueueReceive(p_this->queue, &p, portMAX_DELAY))
-    {
-      TBluetoothStuff::pfn_callback(p, TCallbackEvent::eData);
-      delete p;
-    }
-  }
-}
-
-TBluetoothDataProcessor::TBluetoothDataProcessor():
-  h_task(NULL)
-{
-  queue = xQueueCreate(64, sizeof(TTgamParsedValues*));
-
-  if (queue == NULL) {
-    throw String("TBluetoothDataProcessor::TBluetoothDataProcessor(): ошибка создания очереди");
-  }
-
-  xTaskCreatePinnedToCore(task, "TBluetoothDataProcessor::task", 2000, this,
-      (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 1);
-}
-
-TBluetoothDataProcessor::~TBluetoothDataProcessor()
-{
-  if(h_task)
-  {
-    vTaskDelete(h_task);
-  }
-
-  if(queue)
-  {
-    vQueueDelete(queue);
-  }
-}
-
-void TBluetoothDataProcessor::send(const TTgamParsedValues& tpv)
-{
-    TTgamParsedValues *p = new TTgamParsedValues(tpv);
-    xQueueSend(queue, &p, 0);
-}
-
-int TBluetoothStuff::ref_cnt = 0;
-//String TBluetoothStuff::dev_name;
-TaskHandle_t TBluetoothStuff::h_task = NULL;
+TTask *TBluetoothStuff::p_task = NULL;
 // используется в т.ч. для инициализации "mil":
 SemaphoreHandle_t TBluetoothStuff::xConnSemaphore = NULL;
 bool TBluetoothStuff::is_connected = false;
 tpfn_callback TBluetoothStuff::pfn_callback = NULL;
 uint8_t TBluetoothStuff::address[6] = {};
 TTgamPacketParser *TBluetoothStuff::p_tpp = NULL;
-TBluetoothDataProcessor *TBluetoothStuff::dp = NULL;
+
+const char *TBluetoothStuff::get_class_name()
+{
+  return "TBluetoothStuff";
+}
 
 void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
@@ -97,7 +38,6 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
     uint32_t handle = param->open.handle;
     TWorker::printf("callback: ESP_SPP_OPEN_EVT, handle=%u\n", handle);
 
-    dp = new TBluetoothDataProcessor();
     // Тут семафор не нужен, т.к. событие происходит до выхода из функции connect.
     TBluetoothStuff::is_connected = true;
     TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eConnect);
@@ -118,8 +58,6 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
       digitalWrite(LED_BUILTIN, LOW);
     }
 
-    delete dp;
-    dp = NULL;
     // А вот тут кое-кто может проверять состояние xConnSemaphore, по этому используем семафор.
     TBluetoothStuff::pfn_callback(NULL, TCallbackEvent::eDisconnect);
     xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
@@ -159,13 +97,6 @@ void TBluetoothStuff::task(void *p)
 
 TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
 {
-  if(ref_cnt)
-  {
-    throw String("Разрешён только один экземпляр TBluetoothStuff!");
-  }
-  ref_cnt++;
-
-  //TBluetoothStuff::dev_name = dev_name;
   TBluetoothStuff::pfn_callback = pfn_callback;
   p_tpp = NULL;
 
@@ -178,7 +109,8 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
     &SerialBT, 
     [](const TTgamParsedValues& tpv) -> void
     {
-      dp->send(tpv);
+      TWorkerTaskProcessTgam *pwt = new TWorkerTaskProcessTgam(TBluetoothStuff::pfn_callback, tpv);
+      TWorker::send(pwt);
     }
   );
 
@@ -187,7 +119,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
   SerialBT.onData(
     [](const uint8_t *buffer, size_t size) -> void
     {
-      if (dp)
+      //if (dp)
       {
         const uint8_t *data = buffer;
         const uint8_t *p_end = data + size;
@@ -205,9 +137,7 @@ TBluetoothStuff::TBluetoothStuff(String dev_name, tpfn_callback pfn_callback)
   SerialBT.begin(dev_name, true);
   TWorker::println("Устройство запущено в режиме мастера, убедитесь, что удалённое устройство включено!");
 
-  //xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 1900, this,
-  xTaskCreatePinnedToCore(task, "TBluetoothStuff::task", 2200, this,
-      (tskIDLE_PRIORITY + 2), &h_task, portNUM_PROCESSORS - 1);
+  p_task = new TTask(task, "TBluetoothStuff::task", 2200, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 1);
 }
 
 TBluetoothStuff::~TBluetoothStuff()
@@ -225,15 +155,14 @@ TBluetoothStuff::~TBluetoothStuff()
     SerialBT.disconnect();
   }
 
-  if(h_task)
+  if(p_task)
   {
-    vTaskDelete(h_task);
+    delete p_task;
   }
 
   if(p_tpp)
       delete p_tpp;
 
   vSemaphoreDelete(xConnSemaphore);
-  --ref_cnt;
 }
 }

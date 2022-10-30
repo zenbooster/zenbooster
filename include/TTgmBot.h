@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "TSingleton.h"
 #include "TCalcFormula.h"
 #include <WiFiClient.h>
 #include <SSLClient.h>
@@ -10,17 +11,18 @@
 #endif
 #include <functional>
 
-#define BOT_TOKEN "" // zenbooster_device
-#define CHAT_ID 0
+#define BOT_TOKEN "5684634931:AAHMl2G06Wdgt6w0qJ7c3gxcElX59IHyPRY" // zenbooster_device
+#define CHAT_ID 443232875
 
 namespace TgmBot
 {
+using namespace Singleton;
 using namespace CalcFormula;
 using namespace std;
 
 typedef function<void(TCalcFormula *)> TCbChangeFunction;
 
-class TTgmBot
+class TTgmBot: public TSingleton<TTgmBot>
 {
   private:
     //const unsigned long mtbs = 250; // mean time between scan messages
@@ -33,9 +35,10 @@ class TTgmBot
   #ifdef PIN_BATTARY
     Battery18650Stats battery;
   #endif
-    static int ref_cnt;
     TCbChangeFunction cb_change_formula;
     QueueHandle_t queue;
+
+    const char *get_class_name();
 
     void show_help(TBMessage& msg);
     void show_info(TBMessage& msg);

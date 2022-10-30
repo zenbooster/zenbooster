@@ -17,7 +17,10 @@ using namespace MyApplication;
 using namespace Worker;
 using namespace Conf;
 
-int TTgmBot::ref_cnt = 0;
+const char *TTgmBot::get_class_name()
+{
+  return "TTgmBot";
+}
 
 void TTgmBot::show_help(TBMessage& msg)
 {
@@ -414,12 +417,6 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
 #endif
   , cb_change_formula(cb_change_formula)
 {
-  if(ref_cnt)
-  {
-    throw "Разрешён только один экземпляр TTgmBot!";
-  }
-  ref_cnt++;
-
   pcli = new SSLClient(wfcli, TAs, (size_t)TAs_NUM, A0, 1, SSLClient::SSL_ERROR);
   //pcli = new WiFiClientSecure();
   //pcli->setCACert(telegram_cert);
@@ -453,7 +450,6 @@ TTgmBot::~TTgmBot()
   {
     delete pcli;
   }
-  --ref_cnt;
 }
 
 void TTgmBot::send(const String& m, bool isMarkdownEnabled)
