@@ -14,6 +14,7 @@ namespace common {
 /*#if !(defined(SOUND_DAC) || defined(SOUND_I2S))
 #   error Какой способ вывода звука будет использоваться? Нужно указать один из макросов, SOUND_DAC или SOUND_I2S!
 #endif*/
+
 #define TWORKER_TASK_STACK_SIZE 2300
 #define TWIFISTUFF_TASK_STACK_SIZE 7400
 #define TBLUETOOTHSTUFF_TASK_STACK_SIZE 1000
