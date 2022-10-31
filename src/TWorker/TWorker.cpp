@@ -7,25 +7,12 @@
 namespace Worker
 {
 TTask *TWorker::p_task = NULL;
-SemaphoreHandle_t TWorker::xTermMutex;
-bool TWorker::is_terminate = false;
+TWorkerVisitor TWorker::worker_visitor;
 QueueHandle_t TWorker::queue;
 
 const char *TWorker::get_class_name()
 {
     return "TWorker";
-}
-
-void TWorker::visit(TWorkerTaskAsyncBase *p)
-{
-    //
-}
-
-void TWorker::visit(TWorkerTaskTerminate *p)
-{
-    xSemaphoreTake(xTermMutex, portMAX_DELAY);
-    is_terminate = true;
-    xSemaphoreGive(xTermMutex);
 }
 
 void TWorker::task(void *p)
@@ -38,7 +25,7 @@ void TWorker::task(void *p)
 
         if(res)
         {
-            p_wt->accept(p_this);
+            p_wt->accept(&worker_visitor);
             p_wt->run();
             p_wt->release();
         }
@@ -47,8 +34,6 @@ void TWorker::task(void *p)
 
 TWorker::TWorker()
 {
-    xTermMutex = xSemaphoreCreateMutex();
-
     queue = xQueueCreate(4, sizeof(TWorkerTaskAsyncBase *));
     if (queue == NULL) {
         throw String("TWorker::TWorker(): ошибка создания очереди");
@@ -60,11 +45,7 @@ TWorker::TWorker()
 TWorker::~TWorker()
 {
     // Если мы не в состоянии завершения работы:
-    xSemaphoreTake(xTermMutex, portMAX_DELAY);
-    bool is = is_terminate;
-    xSemaphoreGive(xTermMutex);
-
-    if(!is && p_task)
+    if(!worker_visitor.is_terminated() && p_task)
     {
         delete p_task;
     }
@@ -73,8 +54,6 @@ TWorker::~TWorker()
     {
         vQueueDelete(queue);
     }
-
-    vSemaphoreDelete(xTermMutex);
 }
 
 void TWorker::send(TWorkerTaskAsyncBase *p)

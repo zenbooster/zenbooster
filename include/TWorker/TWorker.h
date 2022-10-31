@@ -10,25 +10,21 @@
 #include "TWorker/TWorkerTaskLog.h"
 #include "TWorker/TWorkerTaskLogVariadic.h"
 #include "TWorker/TWorkerTaskSprintf.h"
-#include "TWorker/TVisitor.h"
+#include "TWorker/TWorkerVisitor.h"
 
 namespace Worker
 {
 using namespace Singleton;
 using namespace Task;
 
-class TWorker: public TSingleton<TWorker>, public TVisitor
+class TWorker: public TSingleton<TWorker>
 {
 private:
     static TTask *p_task;
-    static SemaphoreHandle_t xTermMutex;
-    static bool is_terminate; // reset или shutdown
+    static TWorkerVisitor worker_visitor;
     static QueueHandle_t queue;
 
     const char *get_class_name();
-
-    void visit(TWorkerTaskAsyncBase *p);
-	void visit(TWorkerTaskTerminate *p);
 
     static void task(void *p);
 
