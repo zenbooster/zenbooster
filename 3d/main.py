@@ -57,15 +57,19 @@ p_mod = p_mod.down(8.4+1.7/2 + 2.5)
 stuffing += p_mod
 
 btn = metric_screw(30, 1, 10.5, True).down(10.5)
-btn += cylinder(r=30/2 - 1, h=15.5).down(15.5)
-hex = linear_extrude(ngon(r=40.4/2, n=6), (0, 0, 5), True).rotateZ(deg(90))
+#btn += cylinder(r=30/2 - 1, h=15.5).down(15.5)
+btn += cylinder(r=27.5/2, h=17.5).down(17.5)
+hex = linear_extrude(ngon(r=39.0/2, n=6), (0, 0, 3.8), True).rotateZ(deg(90))
 btn += hex.down(10.5/2)
 h=4.5
-btn += cylinder(r=35/2, h=h).chamfer(1, refs=[point3(0, 0, h)])
-btn -= cylinder(r=22.9/2, h=0.5).up(4.5-0.5)
-btn += cylinder(r=16.5/2, h=0.5).up(4.5-0.5)
+btn += cylinder(r=34.1/2, h=h).chamfer(0.3, refs=[point3(0, 0, h)])
+d = 0.05
+btn -= cylinder(r=17.0/2 + 3.0, h=d).up(4.5-d)
+btn += cylinder(r=17.0/2, h=d).up(4.5-d)
+d = 0.1
+btn -= cylinder(r=17.0/2 - 1.0, h=d).up(4.5-d)
 
-btn = btn.forw(21).up(14)
+btn = btn.forw(22).up(14)
 #model = btn + lid
 model = btn + case + stuffing.left(5)
 display(model)
