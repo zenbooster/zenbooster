@@ -2,8 +2,10 @@
 #coding: utf-8
 
 from zencad import *
+from metric import *
 
 case = from_brep('./res/1590bb_open.brep').rotateX(deg(90)).up(10)
+lid = from_brep('./res/1590bb_lid.brep').rotateX(deg(90)).up(10)
 bread_board = from_brep('./res/bread-board-4x6cm.brep').up(30).left(20).back(1.62/2)
 pin_f = from_brep("./res/pin-f-2.54.brep")
 pin_m = from_brep("./res/pin-m-2.54.brep").rotateX(deg(-90)).up(8.4+1.62/2)
@@ -50,9 +52,22 @@ p_mod += clemma2.forw(2.54*7).left(2.54*2)
 p_mod = p_mod.rotateZ(deg(-90))
 p_mod = p_mod.left(0.7)
 p_mod = p_mod.back(4.3)
-#p_mod = p_mod.down(8.4+2.5)
 p_mod = p_mod.down(8.4+1.7/2 + 2.5)
 
-model = p_mod + case + stuffing
+stuffing += p_mod
+
+btn = metric_screw(30, 1, 10.5, True).down(10.5)
+btn += cylinder(r=30/2 - 1, h=15.5).down(15.5)
+hex = linear_extrude(ngon(r=40.4/2, n=6), (0, 0, 5), True).rotateZ(deg(90))
+btn += hex.down(10.5/2)
+h=4.5
+btn += cylinder(r=35/2, h=h).chamfer(1, refs=[point3(0, 0, h)])
+btn -= cylinder(r=22.9/2, h=0.5).up(4.5-0.5)
+btn += cylinder(r=16.5/2, h=0.5).up(4.5-0.5)
+
+btn = btn.forw(21).up(14)
+#model = btn + lid
+model = btn + case + stuffing.left(5)
 display(model)
+display(lid, color = (0.5, 0.5, 0.5, 0.5))
 show()
