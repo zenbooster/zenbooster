@@ -4,6 +4,9 @@ ESP-WROOM-32 DAC output:
 
 TTGO-T-Energy-T18-v3 I2S output:
 <img align="left" src="https://github.com/zenbooster/zenbooster/blob/main/doc/t18-v3.jpg?raw=true">
+
+3D модель:
+<img align="left" src="https://github.com/zenbooster/zenbooster/blob/main/doc/3d.jpg?raw=true">
 <!--
 👋
 **zenbooster/zenbooster** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
