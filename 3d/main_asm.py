@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 #coding: utf-8
 from zencad import *
+import zencad.assemble
 from metric import *
 
-#is_bboxes = False
 is_bboxes = True
 
 ##[ загрузка моделей ]##########
@@ -18,10 +18,11 @@ clemma6 = from_brep('./res/KF128-2.54-6P.brep')
 d = 0
 brick = box(120-d, 30, 95-d, True).moveY(-(30 - 6)/2)
 ##[ периферийная плата ]########
+asm_p_mod = zencad.assemble.unit()
 brd = (bread_board ^ box(21, 1.62, 53, True).left(2.54/2)).right(2.54/2).rotateX(deg(90))
-obj_p_mod = brd
+asm_p_mod.add(brd).set_color(0.5, 0.65, 0.5)
 cl6 = clemma6.up(1.62/2+0.1).rotateZ(deg(-90)).forw(2.54*7).left(2.54*2)
-obj_p_mod += cl6
+asm_p_mod.add(cl6).set_color(0, 0.5, 0)
 
 bb = brd + cl6
 
@@ -34,7 +35,7 @@ for i in range(20):
     pm20 = pm20.forw(2.54)
 
 bb += p_mod
-obj_p_mod += p_mod
+asm_p_mod.add(p_mod).set_color(0, 0, 0)
 
 p_mod = nullshape()
 pm7 = pm.left(2.54 * 2)
@@ -43,55 +44,53 @@ for i in range(7):
     pm7 = pm7.forw(2.54)
 
 bb += p_mod
-obj_p_mod += p_mod
+asm_p_mod.add(p_mod).set_color(0, 0, 0)
 
 if is_bboxes:
-    obj_p_mod += bb.bbox().shape()
+    asm_p_mod.add(bb.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
 
-obj_p_mod = obj_p_mod.transform(rotateZ(deg(-90)) * down(8.4+1.7/2 + 2.5) * left(0.7) * back(-4.3))
-
+asm_p_mod.relocate(rotateZ(deg(-90)) * down(8.4+1.7/2 + 2.5) * left(0.7) * back(-4.3))
 ##[ плата усилителя ]###########
+asm_amp = zencad.assemble.unit()
 amp = from_brep('./res/max98357a-adafruit.brep')
-obj_amp = amp
+asm_amp.add(amp)
 
 pf = pin_f.moveX(2.54*3).moveY(-7.3).down(2.55)
-p_mod = nullshape()
+p_mod = pf # nullshape()
 for i in range(7):
     p_mod += pf
     pf = pf.moveX(-2.54)
-obj_amp += p_mod
+asm_amp.add(p_mod)
 
 pincon = from_brep('./res/2-Pin-connector.brep').rotateZ(deg(180)).rotateY(deg(180)).forw(6.3)
-obj_amp += pincon
+asm_amp.add(pincon)
 if is_bboxes:
-    obj_amp += amp.bbox().shape()
-    obj_amp += p_mod.bbox().shape()
-    obj_amp += pincon.bbox().shape()
+    asm_amp.add(amp.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+    asm_amp.add(p_mod.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+    asm_amp.add(pincon.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
 
-obj_amp = obj_amp.transform(forw(0.4+2.54*5) * left(4.5+2.54*3))
-
+asm_amp.relocate(forw(0.4+2.54*5) * left(4.5+2.54*3))
 ##[ TTGO T18v3 ]################
+asm_t18 = zencad.assemble.unit()
 t18 = from_brep('./res/ttgo-t-energy-t18-v2.brep').right(5.0).back(20)
-obj_t18 = t18
+asm_t18.add(t18)
 
 pf = pin_f.moveX(0.45 - 2.54*8).moveY(-6.85).down(2.55)
 p_mod = nullshape()
 for i in range(20):
     p_mod += pf
     pf = pf.moveX(2.54)
-obj_t18 += p_mod
+asm_t18.add(p_mod)
 
 if is_bboxes:
-    obj_t18 += t18.bbox().shape()
-    obj_t18 += p_mod.bbox().shape()
-
+    asm_t18.add(t18.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+    asm_t18.add(p_mod.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
 ##[ соединённые платы ]#########
-obj_stuff = obj_p_mod
-obj_stuff += obj_amp
-obj_stuff += obj_t18
-obj_stuff = obj_stuff.transform(rotateX(deg(-90)) * down(10) * left(11))
-
+asm_stuff = zencad.assemble.unit()
+asm_stuff.relocate(rotateX(deg(-90)) * down(10) * left(11))
 ##[ кнопка ]####################
+asm_btn = zencad.assemble.unit()
+
 btn = metric_screw(30, 1, 10.5, True).down(10.5)
 btn += cylinder(r=27.5/2, h=17.5).down(17.5)
 hex = linear_extrude(ngon(r=39.0/2, n=6), (0, 0, 3.8), True).rotateZ(deg(90))
@@ -104,28 +103,30 @@ btn += cylinder(r=17.0/2, h=d).up(4.5-d)
 d = 0.1
 btn -= cylinder(r=17.0/2 - 1.0, h=d).up(4.5-d)
 
-obj_btn = btn
+asm_btn.add(btn)
 d = 0.05
-obj_btn += (cylinder(r=17.0/2 + 3.0, h=d) - cylinder(r=17.0/2, h=d)).up(4.5-d)
+asm_btn.add((cylinder(r=17.0/2 + 3.0, h=d) - cylinder(r=17.0/2, h=d)).up(4.5-d)).set_color(1.0, 1.0, 1.0)
 
 if is_bboxes:
-    obj_btn += cylinder(r=(btn.bbox().xmax - btn.bbox().xmin)/2, h=22).mirrorXY()
+    asm_btn.add(cylinder(r=(btn.bbox().xmax - btn.bbox().xmin)/2, h=22).mirrorXY()).set_color(1.0, 1.0, 0.5, 0.75)
 
-obj_btn = obj_btn.transform(rotateX(deg(-90)) * forw(22) * up(14-10))
-
+asm_btn.relocate(rotateX(deg(-90)) * forw(22) * up(14-10))
 ##[ корпус ]####################
-t = brick
-obj_case = case
-#obj_case += lid
+asm_case = zencad.assemble.unit()
+asm_case.add(case)
+asm_case.add(lid).set_color(0.5, 0.5, 0.5, 0.5)
+t = brick ^ case
 brick -= case
+#brick -= t
 brick -= lid
+asm_case.add(brick.right(150)).set_color(1.0, 1.0, 0.5, 0)
 ################################
-obj_case += obj_stuff
-obj_case += obj_btn
+asm_stuff.link(asm_t18)
+asm_stuff.link(asm_p_mod)
+asm_stuff.link(asm_amp)
+asm_case.link(asm_stuff)
+asm_case.link(asm_btn)
 
-brick -= obj_case
-brick -= t.moveY(14)
-obj_case += brick.right(150)
-obj_case = obj_case.transform(rotateX(deg(90)) * up(10))
-disp(obj_case)
+asm_case.relocate(rotateX(deg(90)) * up(10))
+disp(asm_case)
 show()
