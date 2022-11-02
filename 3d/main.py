@@ -4,6 +4,8 @@ from zencad import *
 import zencad.assemble
 from metric import *
 
+is_bboxes = True
+
 ##[ загрузка моделей ]##########
 bread_board = from_brep('./res/bread-board-4x6cm.brep').up(30).left(20).back(1.62/2)
 pin_f = from_brep("./res/pin-f-2.54.brep")
@@ -12,8 +14,12 @@ clemma6 = from_brep('./res/KF128-2.54-6P.brep')
 
 ##[ периферийная плата ]########
 asm_p_mod = zencad.assemble.unit()
-asm_p_mod.add((bread_board ^ box(21, 1.62, 53, True).left(2.54/2)).right(2.54/2).rotateX(deg(90))).set_color(0.5, 0.65, 0.5)
-asm_p_mod.add(clemma6.up(1.62/2+0.1).rotateZ(deg(-90)).forw(2.54*7).left(2.54*2)).set_color(0, 0.5, 0)
+brd = (bread_board ^ box(21, 1.62, 53, True).left(2.54/2)).right(2.54/2).rotateX(deg(90))
+asm_p_mod.add(brd).set_color(0.5, 0.65, 0.5)
+cl6 = clemma6.up(1.62/2+0.1).rotateZ(deg(-90)).forw(2.54*7).left(2.54*2)
+asm_p_mod.add(cl6).set_color(0, 0.5, 0)
+
+bb = brd + cl6
 
 p_mod = nullshape()
 pm = pin_m.back(2.54/2)
@@ -23,6 +29,7 @@ for i in range(20):
     p_mod += pm20
     pm20 = pm20.forw(2.54)
 
+bb += p_mod
 asm_p_mod.add(p_mod).set_color(0, 0, 0)
 
 p_mod = nullshape()
@@ -31,11 +38,17 @@ for i in range(7):
     p_mod += pm7
     pm7 = pm7.forw(2.54)
 
+bb += p_mod
 asm_p_mod.add(p_mod).set_color(0, 0, 0)
+
+if is_bboxes:
+    asm_p_mod.add(bb.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+
 asm_p_mod.relocate(rotateZ(deg(-90)) * down(8.4+1.7/2 + 2.5) * left(0.7) * back(-4.3))
 ##[ плата усилителя ]###########
 asm_amp = zencad.assemble.unit()
-asm_amp.add(from_brep('./res/max98357a-adafruit.brep'))
+amp = from_brep('./res/max98357a-adafruit.brep')
+asm_amp.add(amp)
 
 pf = pin_f.moveX(2.54*3).moveY(-7.3).down(2.55)
 p_mod = pf # nullshape()
@@ -44,11 +57,18 @@ for i in range(7):
     pf = pf.moveX(-2.54)
 asm_amp.add(p_mod)
 
-asm_amp.add(from_brep('./res/2-Pin-connector.brep').rotateZ(deg(180)).rotateY(deg(180)).forw(6.3))
+pincon = from_brep('./res/2-Pin-connector.brep').rotateZ(deg(180)).rotateY(deg(180)).forw(6.3)
+asm_amp.add(pincon)
+if is_bboxes:
+    asm_amp.add(amp.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+    asm_amp.add(p_mod.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+    asm_amp.add(pincon.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+
 asm_amp.relocate(forw(0.4+2.54*5) * left(4.5+2.54*3))
 ##[ TTGO T18v3 ]################
 asm_t18 = zencad.assemble.unit()
-asm_t18.add(from_brep('./res/ttgo-t-energy-t18-v2.brep').right(5.0).back(20))
+t18 = from_brep('./res/ttgo-t-energy-t18-v2.brep').right(5.0).back(20)
+asm_t18.add(t18)
 
 pf = pin_f.moveX(0.45 - 2.54*8).moveY(-6.85).down(2.55)
 p_mod = nullshape()
@@ -56,6 +76,10 @@ for i in range(20):
     p_mod += pf
     pf = pf.moveX(2.54)
 asm_t18.add(p_mod)
+
+if is_bboxes:
+    asm_t18.add(t18.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
+    asm_t18.add(p_mod.bbox().shape()).set_color(1.0, 1.0, 0.5, 0.75)
 ##[ соединённые платы ]#########
 asm_stuff = zencad.assemble.unit()
 asm_stuff.relocate(rotateX(deg(-90)) * down(10) * left(11))
