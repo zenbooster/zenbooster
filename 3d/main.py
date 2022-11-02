@@ -7,11 +7,16 @@ from metric import *
 is_bboxes = True
 
 ##[ загрузка моделей ]##########
+case = from_brep('./res/1590bb_open.brep')
+lid = from_brep('./res/1590bb_lid.brep')
 bread_board = from_brep('./res/bread-board-4x6cm.brep').up(30).left(20).back(1.62/2)
 pin_f = from_brep("./res/pin-f-2.54.brep")
 pin_m = from_brep("./res/pin-m-2.54.brep").rotateX(deg(-90)).up(8.4+1.62/2)
 clemma6 = from_brep('./res/KF128-2.54-6P.brep')
 
+#d = 5.5
+d = 0
+brick = box(120-d, 30, 95-d, True).moveY(-(30 - 6)/2)
 ##[ периферийная плата ]########
 asm_p_mod = zencad.assemble.unit()
 brd = (bread_board ^ box(21, 1.62, 53, True).left(2.54/2)).right(2.54/2).rotateX(deg(90))
@@ -101,13 +106,20 @@ btn -= cylinder(r=17.0/2 - 1.0, h=d).up(4.5-d)
 asm_btn.add(btn)
 d = 0.05
 asm_btn.add((cylinder(r=17.0/2 + 3.0, h=d) - cylinder(r=17.0/2, h=d)).up(4.5-d)).set_color(1.0, 1.0, 1.0)
+
+if is_bboxes:
+    asm_btn.add(cylinder(r=(btn.bbox().xmax - btn.bbox().xmin)/2, h=22).mirrorXY()).set_color(1.0, 1.0, 0.5, 0.75)
+
 asm_btn.relocate(rotateX(deg(-90)) * forw(22) * up(14-10))
 ##[ корпус ]####################
-case = from_brep('./res/1590bb_open.brep')
-lid = from_brep('./res/1590bb_lid.brep')
 asm_case = zencad.assemble.unit()
 asm_case.add(case)
 asm_case.add(lid).set_color(0.5, 0.5, 0.5, 0.5)
+t = brick ^ case
+brick -= case
+#brick -= t
+brick -= lid
+asm_case.add(brick.right(150)).set_color(1.0, 1.0, 0.5, 0)
 ################################
 asm_stuff.link(asm_t18)
 asm_stuff.link(asm_p_mod)
