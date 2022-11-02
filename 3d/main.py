@@ -76,7 +76,7 @@ btn -= cylinder(r=17.0/2 - 1.0, h=d).up(4.5-d)
 
 asm_btn.add(btn)
 d = 0.05
-asm_btn.add((cylinder(r=17.0/2 + 3.0, h=d) - cylinder(r=17.0/2, h=d)).up(4.5-d)).set_color(0.25, 0.25, 1.0)
+asm_btn.add((cylinder(r=17.0/2 + 3.0, h=d) - cylinder(r=17.0/2, h=d)).up(4.5-d)).set_color(1.0, 1.0, 1.0)
 asm_btn.relocate(rotateX(deg(-90)) * forw(22) * up(14-10))
 ##[ корпус ]####################
 case = from_brep('./res/1590bb_open.brep')
