@@ -7,13 +7,17 @@ k_tol = 0.1
 
 def get_bbox(o):
     bb = o.bbox()
+
     d = bb.xmax - bb.xmin
     x = (d + k_tol) / d
     d = bb.ymax - bb.ymin
     y = (d + k_tol) / d
     d = bb.zmax - bb.zmin
     z = (d + k_tol) / d
+
+    #return bb.shape().scale(1 + k_tol)
     return bb.shape().scaleXYZ(x, y, z)
+    #return box(x, y, z, center=True)
 
 def get_case(is_bboxes):
     global case, lid, bread_board, pin_f, pin_m, clemma6, pincon, t18
@@ -24,7 +28,7 @@ def get_case(is_bboxes):
     cl6 = clemma6.up(1.62/2+0.1).rotateZ(deg(-90)).forw(2.54*7).left(2.54*2)
     obj_p_mod += cl6
 
-    bb = brd + cl6
+    #bb = brd + cl6
 
     p_mod = nullshape()
     pm = pin_m.back(2.54/2)
@@ -34,7 +38,7 @@ def get_case(is_bboxes):
         p_mod += pm20
         pm20 = pm20.forw(2.54)
 
-    bb += p_mod
+    #bb += p_mod
     obj_p_mod += p_mod
 
     p_mod = nullshape()
@@ -43,11 +47,11 @@ def get_case(is_bboxes):
         p_mod += pm7
         pm7 = pm7.forw(2.54)
 
-    bb += p_mod
+    #bb += p_mod
     obj_p_mod += p_mod
 
     if is_bboxes:
-        obj_p_mod += get_bbox(bb)
+        obj_p_mod = get_bbox(obj_p_mod)
 
     obj_p_mod = obj_p_mod.transform(rotateZ(deg(-90)) * down(8.4+1.7/2 + 2.5) * left(0.7) * back(-4.3))
 
@@ -64,7 +68,7 @@ def get_case(is_bboxes):
 
     obj_amp += pincon
     if is_bboxes:
-        obj_amp += get_bbox(amp)
+        obj_amp = get_bbox(amp)
         obj_amp += get_bbox(p_mod)
         obj_amp += get_bbox(pincon)
 
@@ -81,7 +85,7 @@ def get_case(is_bboxes):
     obj_t18 += p_mod
 
     if is_bboxes:
-        obj_t18 += get_bbox(t18)
+        obj_t18 = get_bbox(t18)
         obj_t18 += get_bbox(p_mod)
 
     ##[ соединённые платы ]#########
@@ -92,23 +96,27 @@ def get_case(is_bboxes):
 
     ##[ кнопка ]####################
     btn = metric_screw(30, 1, 10.5, True).down(10.5)
-    btn += cylinder(r=27.5/2, h=17.5).down(17.5)
-    hex = linear_extrude(ngon(r=39.0/2, n=6), (0, 0, 3.8), True).rotateZ(deg(90))
-    btn += hex.down(10.5/2)
+    t = cylinder(r=27.5/2, h=17.5, center=True).down(17.5/2)
+    btn += t
+    hex = linear_extrude(ngon(r=39.0/2, n=6), (0, 0, 3.8), True).rotateZ(deg(90)).down(3.8)
+
+    btn += hex
     h=4.5
-    btn += cylinder(r=34.1/2, h=h).chamfer(0.3, refs=[point3(0, 0, h)])
+    btn += cylinder(r=34.1/2, h=h, center=True).up(h/2).chamfer(0.3, refs=[point3(0, 0, h)])
     d = 0.05
-    btn -= cylinder(r=17.0/2 + 3.0, h=d*2).up(4.5-d*2)
-    btn += cylinder(r=17.0/2, h=d).up(4.5-d)
+    btn -= cylinder(r=17.0/2 + 3.0, h=d*2, center=True).up(d + 4.5-d*2)
+    btn += cylinder(r=17.0/2, h=d, center=True).up(d/2 + 4.5-d)
     d = 0.1
-    btn -= cylinder(r=17.0/2 - 1.0, h=d).up(4.5-d)
+    btn -= cylinder(r=17.0/2 - 1.0, h=d, center=True).up(d/2 + 4.5-d)
 
     obj_btn = btn
     d = 0.05
-    obj_btn += (cylinder(r=17.0/2 + 3.0, h=d) - cylinder(r=17.0/2, h=d)).up(4.5-d)
-
+    obj_btn += (cylinder(r=17.0/2 + 3.0, h=d, center=True) - cylinder(r=17.0/2, h=d, center=True)).up(d/2 + 4.5-d)
+    
     if is_bboxes:
-        obj_btn += cylinder(r=(get_bbox(btn).bbox().xmax - btn.bbox().xmin)/2, h=22).mirrorXY()
+        bb = get_bbox(t)
+        bb += get_bbox(cylinder(r=39.0/2, h=3.8, center=True).rotateZ(deg(90)).down(3.8))
+        obj_btn = bb
 
     obj_btn = obj_btn.transform(rotateX(deg(-90)) * forw(22) * up(14-10))
 
@@ -158,9 +166,11 @@ m = brick - t.moveY(h)
 m += (brick - t.moveY(-(29.75-h))).mirrorXZ().mirrorXY().moveZ(100).moveY(-29.75+4)
 m = m.transform(rotateX(deg(90)) * up(10))
 disp(m, (1, 0.75, 0.5))
-#m = brick - t.moveY(-(29.75-h))
-#m = m.transform(rotateX(deg(90)) * up(10))
-#disp(m, (0.75, 1, 0.5, 0.5))
-lid = lid.transform(rotateX(deg(90)) * up(10))
-disp(lid, (0.5, 0.5, 0.5, 0.75))
+'''
+m = brick - t.moveY(-(29.75-h))
+m = m.transform(rotateX(deg(90)) * up(10))
+disp(m, (0.75, 1, 0.5, 0.5))
+'''
+#lid = lid.transform(rotateX(deg(90)) * up(10))
+#disp(lid, (0.5, 0.5, 0.5, 0.75))
 show()
