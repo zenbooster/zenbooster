@@ -130,10 +130,9 @@ bool TTgmBot::ProcessQueue(void)
   {
     msg.chatId = CHAT_ID;
     msg.isMarkdownEnabled = true;
-    pbot->sendMessage(msg, *p_m);
+    pbot->sendMessage(msg, p_m->c_str(), nullptr, true);
     delete p_m;
     msg.isMarkdownEnabled = false;
-    flush_message();
   }
   return res;
 }
@@ -145,7 +144,13 @@ void TTgmBot::run(void)// *p)
   TFormulaDB *p_fdb = TConf::get_fdb();
   TBMessage msg;
 
-  ProcessQueue();
+  do
+  {
+    if(ProcessQueue())
+    {
+      continue;
+    }
+  } while(false);
 
   // if there is an incoming message...
   if (pbot->getNewMessage(msg))

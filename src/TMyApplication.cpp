@@ -98,7 +98,8 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
     }
 
     case TCallbackEvent::eDisconnect:
-      TWorker::printf("TMyApplication::callback: TCallbackEvent::eDisconnect\n");
+      //TWorker::printf("TMyApplication::callback: TCallbackEvent::eDisconnect\n");
+      Serial.printf("TMyApplication::callback: TCallbackEvent::eDisconnect\n");
       if(p_med_session)
       {
         delete p_med_session;
@@ -177,7 +178,8 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
     #endif
       if(TButtonIllumination::is_poor_signal_indicated)
       {
-        return;
+        //return;
+        break;
       }
 
       p_med_session->calc_next(med);

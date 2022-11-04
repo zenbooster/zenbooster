@@ -70,7 +70,7 @@ TWiFiStuff::~TWiFiStuff()
   }
 
   vSemaphoreDelete(xDtorMutex);
-  
+
   if(pTgmBot)
   {
     delete pTgmBot;

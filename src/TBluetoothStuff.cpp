@@ -47,7 +47,9 @@ void TBluetoothStuff::callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *par
   if (event == ESP_SPP_CLOSE_EVT)
   {
     uint32_t handle = param->close.handle;
-    TWorker::printf("callback: ESP_SPP_CLOSE_EVT, handle=%u\n", handle);
+    // Обработчик закрытия может быть вызван в тот момент, когда будет выполняться
+    // задача TWorkerTaskTerminate, по этому вызываем через Serial:
+    Serial.printf("callback: ESP_SPP_CLOSE_EVT, handle=%u\n", handle);
 
     // В данный момент никто не может изменять is_connected, по этому и семафор не нужен.
     if(TBluetoothStuff::is_connected) // были подключены, а теперь отключились
@@ -146,7 +148,14 @@ TBluetoothStuff::~TBluetoothStuff()
 
   xSemaphoreTake(xConnSemaphore, portMAX_DELAY);
   is_conn = is_connected;
+  //xSemaphoreGive(xConnSemaphore);
+
+  if(p_task)
+  {
+    delete p_task;
+  }
   xSemaphoreGive(xConnSemaphore);
+
   // Если соединение было установлено, разрываем
   // его, и ждём, когда отработают обработчики:
   if(is_conn)
@@ -155,14 +164,9 @@ TBluetoothStuff::~TBluetoothStuff()
     SerialBT.disconnect();
   }
 
-  if(p_task)
-  {
-    delete p_task;
-  }
-
   if(p_tpp)
       delete p_tpp;
-
+  
   vSemaphoreDelete(xConnSemaphore);
 }
 }
