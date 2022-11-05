@@ -39,16 +39,18 @@ TNoise *TMyApplication::p_noise = NULL;
 TBluetoothStuff *TMyApplication::p_bluetooth_stuff = NULL;
 TWiFiStuff *TMyApplication::p_wifi_stuff = NULL;
 TCalcFormula *TMyApplication::p_calc_formula = NULL;
-bool TMyApplication::is_log_data_to_bot = false;
+int TMyApplication::i_log_data_to_bot = 0;
 bool TMyApplication::is_use_poor_signal = false;
 #ifdef PIN_BTN
 TButtonIllumination *TMyApplication::p_btn_il = NULL;
 #endif
 TMedSession *TMyApplication::p_med_session = NULL;
+String TMyApplication::s_log_data;
+int TMyApplication::i_log_data = 0;
 
 const String TMyApplication::get_version_string(void)
 {
-  return String(DEVICE_NAME_FULL) + ", версия прошивки " VERSION ", дата сборки " BUILD_TIMESTAMP;
+  return "\n" + String(DEVICE_NAME_FULL) + ", версия прошивки " VERSION ", дата сборки " BUILD_TIMESTAMP;
 }
 
 int TMyApplication::calc_formula_meditation()
@@ -129,11 +131,21 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
       TWorker::println(s);
 
       xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
-      bool is_log = is_log_data_to_bot;
+      bool is_log = i_log_data_to_bot;
       xSemaphoreGiveRecursive(TConf::xOptRcMutex);
       if(is_log)
       {
-        TWiFiStuff::tgb_send("`" + s + "`");
+        if(i_log_data++ >= i_log_data_to_bot)
+        {
+          TWiFiStuff::tgb_send(s_log_data);
+          s_log_data = "";
+          i_log_data = 0;
+        }
+        else
+        {
+          s_log_data += "`" + s + "`\n";
+        }
+        //TWiFiStuff::tgb_send("`" + s + "`");
       }
 
       // подсветка:

@@ -125,12 +125,17 @@ bool TTgmBot::ProcessQueue(void)
   TBMessage msg;
   String *p_m = NULL;
 
-  res = xQueueReceive(queue, &p_m, 10);//portMAX_DELAY)
+  res = xQueueReceive(queue, &p_m, 0);
   if(res)
   {
     msg.chatId = CHAT_ID;
     msg.isMarkdownEnabled = true;
-    pbot->sendMessage(msg, p_m->c_str(), nullptr, true);
+
+    for(; !pbot->sendMessage(msg, p_m->c_str(), nullptr, true);)
+    {
+      vTaskDelay(250);
+    }
+
     delete p_m;
     msg.isMarkdownEnabled = false;
   }
@@ -144,13 +149,10 @@ void TTgmBot::run(void)// *p)
   TFormulaDB *p_fdb = TConf::get_fdb();
   TBMessage msg;
 
-  do
+  // Пока очередь не пуста:
+  for(; ProcessQueue();)
   {
-    if(ProcessQueue())
-    {
-      continue;
-    }
-  } while(false);
+  }
 
   // if there is an incoming message...
   if (pbot->getNewMessage(msg))
@@ -432,7 +434,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   TWorker::print("\nПроверяем Телеграм-соединение... ");
   pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
 
-  queue = xQueueCreate(4, sizeof(String *));
+  queue = xQueueCreate(8, sizeof(String *));
   if (queue == NULL) {
     throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
   }

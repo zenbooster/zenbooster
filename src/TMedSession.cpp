@@ -40,7 +40,8 @@ TMedSession::TMedSession():
 
 TMedSession::~TMedSession()
 {
-    TWorker::println("TMedSession::~TMedSession()");
+    //TWorker::println("TMedSession::~TMedSession()");
+    Serial.println("TMedSession::~TMedSession()");
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     if(is_minsessec)
     {

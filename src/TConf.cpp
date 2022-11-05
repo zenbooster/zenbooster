@@ -255,17 +255,27 @@ TConf::TConf()
     }
   });
 
-  p_prefs->init_key("ld", "log data \\- отправлять уровни ритмов, приходящих от гарнитуры \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
   {
-    TUtil::chk_value_is_bool(value);
-
-    if(!is_validate_only)
+    static const String s_cond = "'ldc = 0, или " + String(BOT_CMD_LDC_MIN) + " <= ldc <= " + String(BOT_CMD_LDC_MAX) + "'";
+    p_prefs->init_key("ldc", "log data count\\- отправлять уровни ритмов, приходящих от гарнитуры по " + String(TUtil::screen_mark_down(s_cond.c_str()).get()) + " строк", "0",
+      [](const String& value, bool is_validate_only) -> void
     {
-      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TMyApplication::is_log_data_to_bot = (value == "true");
-      xSemaphoreGiveRecursive(xOptRcMutex);
-    }
-  });
+      TUtil::chk_value_is_number(value);
+      int v = atoi(value.c_str());
+      TUtil::chk_value_is_positive(v);
+      if (v && (v < BOT_CMD_LDC_MIN || v > BOT_CMD_LDC_MAX))
+      {
+        throw String("Должно выполняться условие: ") + s_cond;
+      }
+
+      if(!is_validate_only)
+      {
+        xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+        TMyApplication::i_log_data_to_bot = v;
+        xSemaphoreGiveRecursive(xOptRcMutex);
+      }
+    });
+  }
 
   p_prefs->init_key("ups", "use poor signal \\- использовать признак POOR\\_SIGNAL от гарнитуры \\(bool\\)", "true", [](const String& value, bool is_validate_only) -> void
   {

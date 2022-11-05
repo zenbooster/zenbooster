@@ -77,13 +77,15 @@ class TMyApplication
     static TWiFiStuff *p_wifi_stuff;
     static TCalcFormula *p_calc_formula;
     
-    static bool is_log_data_to_bot;
+    static int i_log_data_to_bot;
 
     static bool is_use_poor_signal;
 #ifdef PIN_BTN
     static TButtonIllumination *p_btn_il;
 #endif
     static TMedSession *p_med_session;
+    static String s_log_data;
+    static int i_log_data;
 
     static int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);

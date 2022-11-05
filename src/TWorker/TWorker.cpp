@@ -17,7 +17,6 @@ const char *TWorker::get_class_name()
 
 void TWorker::task(void *p)
 {
-    TWorker *p_this = (TWorker *)p;
     for(;;)
     {
         TWorkerTaskAsyncBase *p_wt = NULL;
