@@ -123,20 +123,21 @@ bool TTgmBot::ProcessQueue(void)
 {
   bool res;
   TBMessage msg;
-  String *p_m = NULL;
+  //String *p_m = NULL;
+  char *p = NULL;
 
-  res = xQueueReceive(queue, &p_m, 0);
+  res = xQueueReceive(queue, &p, 0);
   if(res)
   {
     msg.chatId = CHAT_ID;
     msg.isMarkdownEnabled = true;
 
-    for(; !pbot->sendMessage(msg, p_m->c_str(), nullptr, true);)
+    for(; !pbot->sendMessage(msg, p, nullptr, true);)
     {
       vTaskDelay(250);
     }
 
-    delete p_m;
+    delete p;
     msg.isMarkdownEnabled = false;
   }
   return res;
@@ -434,7 +435,8 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   TWorker::print("\nПроверяем Телеграм-соединение... ");
   pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
 
-  queue = xQueueCreate(8, sizeof(String *));
+  //queue = xQueueCreate(8, sizeof(String *));
+  queue = xQueueCreate(8, sizeof(char *));
   if (queue == NULL) {
     throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
   }
@@ -463,7 +465,9 @@ void TTgmBot::send(const String& m, bool isMarkdownEnabled)
 {
   if(pbot)
   {
-    String *p = new String(m);
+    //String *p = new String(m);
+    char *p = new char[m.length() + 1];
+    strcpy(p, m.c_str());
     xQueueSend(queue, &p, 0);
   }
 }

@@ -256,14 +256,14 @@ TConf::TConf()
   });
 
   {
-    static const String s_cond = "'ldc = 0, или " + String(BOT_CMD_LDC_MIN) + " <= ldc <= " + String(BOT_CMD_LDC_MAX) + "'";
-    p_prefs->init_key("ldc", "log data count\\- отправлять уровни ритмов, приходящих от гарнитуры по " + String(TUtil::screen_mark_down(s_cond.c_str()).get()) + " строк", "0",
+    static const String s_cond = "'0 <= ldc <= " + String(BOT_CMD_LDC_MAX) + "'";
+    p_prefs->init_key("ldc", "log data count \\- отправлять уровни ритмов, приходящих от гарнитуры по " + String(TUtil::screen_mark_down(s_cond.c_str()).get()) + " строк", "0",
       [](const String& value, bool is_validate_only) -> void
     {
       TUtil::chk_value_is_number(value);
       int v = atoi(value.c_str());
       TUtil::chk_value_is_positive(v);
-      if (v && (v < BOT_CMD_LDC_MIN || v > BOT_CMD_LDC_MAX))
+      if (v && (v > BOT_CMD_LDC_MAX))
       {
         throw String("Должно выполняться условие: ") + s_cond;
       }

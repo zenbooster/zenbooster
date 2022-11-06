@@ -22,7 +22,6 @@ namespace common {
 //#define TBLUETOOTHSTUFF_TASK_STACK_SIZE 2500
 #define TNOISE_TASK_STACK_SIZE 1000
 
-#define BOT_CMD_LDC_MIN 1
 #define BOT_CMD_LDC_MAX 16
 
 #if defined(SOUND_DAC) || defined(SOUND_I2S)
