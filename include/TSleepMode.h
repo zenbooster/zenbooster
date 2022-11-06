@@ -22,10 +22,12 @@ class TSleepMode
         static TCbSleepFunction cb;
         static SemaphoreHandle_t xGrMutex;
         static bool is_graceful;
+        static int64_t first_press_time;
 
     #ifdef PIN_BTN
         static const uint8_t sleep_pin = PIN_BTN;
 
+        static void say_button_pressed();
         static void IRAM_ATTR isr_handle();
     #endif
 

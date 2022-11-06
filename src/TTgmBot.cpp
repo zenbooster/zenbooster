@@ -123,7 +123,6 @@ bool TTgmBot::ProcessQueue(void)
 {
   bool res;
   TBMessage msg;
-  //String *p_m = NULL;
   char *p = NULL;
 
   res = xQueueReceive(queue, &p, 0);
@@ -143,7 +142,7 @@ bool TTgmBot::ProcessQueue(void)
   return res;
 }
 
-void TTgmBot::run(void)// *p)
+void TTgmBot::run(void)
 {
   // a variable to store telegram message data
   TPrefs *p_prefs = TConf::get_prefs();
@@ -167,7 +166,7 @@ void TTgmBot::run(void)// *p)
       {
         // received a text message
         String& text = msg.text;
-        //text = trim(text);
+
         text.trim();
         transform(text.begin(), text.end(), text.begin(), ::tolower);
 
@@ -361,7 +360,6 @@ void TTgmBot::run(void)// *p)
           opt_len = pos_set;
         }
 
-        //string opt = text.substr(0, opt_len);
         String opt = text.substring(0, opt_len);
         opt.trim();
 
@@ -398,7 +396,6 @@ void TTgmBot::run(void)// *p)
           #ifdef SOUND_DAC
             timer_start(TIMER_GROUP_0, TIMER_0);
           #endif
-              //pbot->sendMessage(msg, "Ошибка: " + e +  "!");
               send(TUtil::screen_mark_down("Ошибка: " + e +  "!"));
             }
           }
@@ -435,7 +432,6 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   TWorker::print("\nПроверяем Телеграм-соединение... ");
   pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
 
-  //queue = xQueueCreate(8, sizeof(String *));
   queue = xQueueCreate(8, sizeof(char *));
   if (queue == NULL) {
     throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
@@ -465,7 +461,6 @@ void TTgmBot::send(const String& m, bool isMarkdownEnabled)
 {
   if(pbot)
   {
-    //String *p = new String(m);
     char *p = new char[m.length() + 1];
     strcpy(p, m.c_str());
     xQueueSend(queue, &p, 0);
