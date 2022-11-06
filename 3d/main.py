@@ -3,17 +3,20 @@
 from zencad import *
 from metric import *
 
-k_tol = 0.1
+#is_asm = False
+is_asm = True
+is_sq = False
+k_tol = 0.5
 
 def get_bbox(o):
     bb = o.bbox()
 
     d = bb.xmax - bb.xmin
-    x = (d + k_tol) / d
+    x = (d + k_tol*2) / d
     d = bb.ymax - bb.ymin
-    y = (d + k_tol) / d
+    y = (d + k_tol*2) / d
     d = bb.zmax - bb.zmin
-    z = (d + k_tol) / d
+    z = (d + k_tol*2) / d
 
     #return bb.shape().scale(1 + k_tol)
     return bb.shape().scaleXYZ(x, y, z)
@@ -114,11 +117,51 @@ def get_case(is_bboxes):
     obj_btn += (cylinder(r=17.0/2 + 3.0, h=d, center=True) - cylinder(r=17.0/2, h=d, center=True)).up(d/2 + 4.5-d)
     
     if is_bboxes:
-        bb = get_bbox(t)
-        bb += get_bbox(cylinder(r=39.0/2, h=3.8, center=True).rotateZ(deg(90)).down(3.8))
+        if is_sq:
+            bb = get_bbox(t)
+            bb += get_bbox(cylinder(r=39.0/2, h=3.8, center=True).rotateZ(deg(90)).down(3.8))
+        else:
+            bb = cylinder(r=27.5/2 + k_tol, h=17.5 + k_tol, center=True).down(17.5/2).rotateZ(deg(90)).down(3.8)
+            bb += cylinder(r=39.0/2 + k_tol, h=3.8 + k_tol, center=True).rotateZ(deg(90)).down(3.8)
         obj_btn = bb
 
     obj_btn = obj_btn.transform(rotateX(deg(-90)) * forw(22) * up(14-10))
+    
+    ##[ динамик ]###################
+    spk = cylinder(r=23/2, h=7, center=True).up(7/2).fillet(2, [(23,23,0)])
+    spk += cylinder(r=32/2, h=3.5, center=True).up(3.5/2).fillet(1).up(7)
+    spk += cylinder(r=35/2, h=7.5, center=True).up(7.5/2).fillet(2, [(35,35,0)]).up(10.5)
+    spk += cylinder(r=41/2, h=3.5, center=True).up(3.5/2).fillet(1).up(18)
+    spk -= sphere(41).up(21.5+41-4.5)
+    spk += sphere(20/2).up(21.5+20/2-20)
+    spk += box(23, 3, 8, True).back((23+3)/2).up(8/2)
+    spk = spk.down(1)
+    obj_spk = spk
+
+    if is_bboxes:
+        if is_sq:
+            bb = get_bbox(spk) + box(26, 26, 10, True).up(21.5 + 10/2)
+        else:
+            #bb = cylinder(r=39/2 + k_tol, h=10, center=True).up(10/2).fillet(1).up(18)
+            #bb += cylinder(r=41/2 + k_tol, h=3.5, center=True).up(3.5/2+18).fillet(1).up(18)
+            #bb += cylinder(r=35.0/2, h=7.5, center=True).up(7.5/2+10.5)
+            bb = cylinder(r=23/2+k_tol, h=7, center=True).up(7/2).fillet(2, [(23,23,0)])
+            bb += cylinder(r=32/2+k_tol, h=3.5, center=True).up(3.5/2).fillet(1).up(7)
+            #bb += cylinder(r=35/2+k_tol, h=7.5, center=True).up(7.5/2).fillet(2, [(35,35,0)]).up(10.5)
+            #bb += cylinder(r=41/2+k_tol, h=3.5, center=True).up(3.5/2).fillet(1).up(18)
+            t=2
+            bb += cylinder(r=41/2+k_tol, h=11-t, center=True).up((11-t)/2).up(10.5+t)
+            bb += cylinder(r=35/2+k_tol, h=12, center=True).up(12/2).up(15)
+            bb += box(23+k_tol, 3+k_tol, 8+k_tol, True).back((23+3)/2).up(8/2)
+            bb = bb.down(1)
+
+        obj_spk = bb
+
+    obj_spk = obj_spk.transform(rotateX(deg(-90)) * forw(22+1) * down(21.5+2) * right((35+40)/2 - 1))
+    
+    ##[ дополнительные вырезы ]#####
+    #if is_bboxes:
+    #obj_spk += box()
 
     ##[ корпус ]####################
     obj_case = case
@@ -126,6 +169,7 @@ def get_case(is_bboxes):
     ################################
     obj_case += obj_stuff
     obj_case += obj_btn
+    obj_case += obj_spk
     
     return obj_case
 
@@ -162,15 +206,18 @@ brick -= (get_case(True) + lid)
 h=16.7
 obj_case = obj_case.transform(rotateX(deg(90)) * up(10))
 disp(obj_case)
-m = brick - t.moveY(h)
-m += (brick - t.moveY(-(29.75-h))).mirrorXZ().mirrorXY().moveZ(100).moveY(-29.75+4)
+#m = (brick - t.moveY(h)).moveZ(-100)
+m = (brick - t.moveY(h))
+if not is_asm:
+    m += (brick - t.moveY(-(29.75-h))).mirrorXZ().mirrorXY().moveZ(100).moveY(-29.75+4)
 m = m.transform(rotateX(deg(90)) * up(10))
 disp(m, (1, 0.75, 0.5))
-'''
-m = brick - t.moveY(-(29.75-h))
-m = m.transform(rotateX(deg(90)) * up(10))
-disp(m, (0.75, 1, 0.5, 0.5))
-'''
-#lid = lid.transform(rotateX(deg(90)) * up(10))
+
+if is_asm:
+    m = brick - t.moveY(-(29.75-h))
+    m = m.transform(rotateX(deg(90)) * up(10))
+    disp(m, (0.75, 1, 0.5, 0.5))
+
+lid = lid.transform(rotateX(deg(90)) * up(10))
 #disp(lid, (0.5, 0.5, 0.5, 0.75))
 show()
