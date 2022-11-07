@@ -142,13 +142,8 @@ def get_case(is_bboxes):
         if is_sq:
             bb = get_bbox(spk) + box(26, 26, 10, True).up(21.5 + 10/2)
         else:
-            #bb = cylinder(r=39/2 + k_tol, h=10, center=True).up(10/2).fillet(1).up(18)
-            #bb += cylinder(r=41/2 + k_tol, h=3.5, center=True).up(3.5/2+18).fillet(1).up(18)
-            #bb += cylinder(r=35.0/2, h=7.5, center=True).up(7.5/2+10.5)
-            bb = cylinder(r=23/2+k_tol, h=7, center=True).up(7/2).fillet(2, [(23,23,0)])
+            bb = cylinder(r=23/2+k_tol, h=7+k_tol, center=True).up((7+k_tol)/2-k_tol).fillet(2, [(23,23,0)])
             bb += cylinder(r=32/2+k_tol, h=3.5, center=True).up(3.5/2).fillet(1).up(7)
-            #bb += cylinder(r=35/2+k_tol, h=7.5, center=True).up(7.5/2).fillet(2, [(35,35,0)]).up(10.5)
-            #bb += cylinder(r=41/2+k_tol, h=3.5, center=True).up(3.5/2).fillet(1).up(18)
             t=2
             bb += cylinder(r=41/2+k_tol, h=11-t, center=True).up((11-t)/2).up(10.5+t)
             bb += cylinder(r=35/2+k_tol, h=12, center=True).up(12/2).up(15)
