@@ -98,7 +98,7 @@ TCalcFormula *TCalcFormula::compile(const String& val) throw(String)
       delete res;
       throw e;
     }
-    catch(std::bad_alloc)
+    catch(std::bad_alloc& )
     {
       throw String("ошибка выделения памяти для TCalcFormula");
     }
