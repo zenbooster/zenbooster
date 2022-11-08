@@ -55,6 +55,20 @@ TMedSession::~TMedSession()
             ) + 
             "`"
         );
+        
+        /*TWiFiStuff::tgb_send(
+            TUtil::sprintf("*Отчёт по сессии:*\n`%s'",
+                TUtil::screen_mark_down(
+                    TUtil::sprintf(
+                        "Формула: %s = %s\n"
+                        "Порог: %d\n"
+                        "Предпорог: %d\n"
+                        "%s",
+                        formula_name.c_str(), formula_text.c_str(), tr, pretr, gen_report().c_str()
+                    )
+                ).get()
+            )
+        );*/
     }
     xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 }

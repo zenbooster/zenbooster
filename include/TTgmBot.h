@@ -55,7 +55,17 @@ class TTgmBot: public TSingleton<TTgmBot>
     ~TTgmBot();
 
     void run(void);
-    void send(const String& m, bool isMarkdownEnabled = true);
+    void send(const char *m, bool isMarkdownEnabled = true);
+    inline void send(const std::shared_ptr<char> m, bool isMarkdownEnabled = true)
+    {
+      send(m.get(), isMarkdownEnabled);
+    }
+
+    inline void send(const String& m, bool isMarkdownEnabled = true)
+    {
+      send(m.c_str(), isMarkdownEnabled);
+    }
+
     void say_goodbye(void);
 };
 }

@@ -77,7 +77,7 @@ TWiFiStuff::~TWiFiStuff()
   }
 }
 
-void TWiFiStuff::tgb_send(const String& m, bool isMarkdownEnabled)
+void TWiFiStuff::tgb_send(const char *m, bool isMarkdownEnabled)
 {
   if(pTgmBot)
   {

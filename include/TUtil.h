@@ -29,9 +29,12 @@ class TUtil
         template<class T>
         static T percent_of(float pct, T val);
 
-        static String screen_mark_down(const String s);
+        static String screen_mark_down(const String& s);
         static shared_ptr<char> screen_mark_down(const char *s);
-        static shared_ptr<char> screen_mark_down(const shared_ptr<char> s);
+        static inline shared_ptr<char> screen_mark_down(const shared_ptr<char> s)
+        {
+          return screen_mark_down(s.get());
+        }
         static void mac_2_array(String mac, uint8_t *buf);
 
         static void chk_nvs_key(const String& key); // может бросить исключение

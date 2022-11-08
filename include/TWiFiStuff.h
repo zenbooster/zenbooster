@@ -43,6 +43,14 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula);
     ~TWiFiStuff();
 
-    static void tgb_send(const String& m, bool isMarkdownEnabled = true);
+    static void tgb_send(const char *m, bool isMarkdownEnabled = true);
+    static inline void tgb_send(const String& m, bool isMarkdownEnabled = true)
+    {
+      tgb_send(m.c_str(), isMarkdownEnabled);
+    }
+    static inline void tgb_send(const std::shared_ptr<char> m, bool isMarkdownEnabled = true)
+    {
+      tgb_send(m.get(), isMarkdownEnabled);
+    }
 };
 }

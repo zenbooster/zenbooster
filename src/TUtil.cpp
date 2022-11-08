@@ -46,7 +46,7 @@ void TUtil::chk_value_is_bool(const String& v)
   }
 }
 
-String TUtil::screen_mark_down(const String s)
+String TUtil::screen_mark_down(const String& s)
 {
     String res = s;
     char c2r[] = "\\`~!@#$%^&*()-_=+[{]}|;:'\",<.>/?";
@@ -78,11 +78,6 @@ shared_ptr<char> TUtil::screen_mark_down(const char *s)
   strcpy(res, t.c_str());
 
   return shared_ptr<char>(res);
-}
-
-shared_ptr<char> TUtil::screen_mark_down(const shared_ptr<char> s)
-{
-  return screen_mark_down(s.get());
 }
 
 // take a hex string and convert it to a 32bit number (max 8 hex digits)

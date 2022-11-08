@@ -68,7 +68,7 @@ void TWorker::send(TWorkerTaskAsyncBase *p)
     }
     else
     {
-        xQueueSend(queue, &p, 0);
+        xQueueSend(queue, &p, portMAX_DELAY);
     }
 }
 
@@ -87,7 +87,7 @@ void TWorker::send(TWorkerTaskSyncBase *p)
     }
     else
     {
-        xQueueSend(queue, &p, 0);
+        xQueueSend(queue, &p, portMAX_DELAY);
         xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
         delete p;
     }

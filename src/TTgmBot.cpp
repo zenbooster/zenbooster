@@ -180,239 +180,242 @@ void TTgmBot::run(void)
         const char *s_cmd;
         bool is_no_args;
 
-        if(!(is_get ^ is_set)) // если не опция:
-        { // команды общего назначения:
-          if(text == "help" || text == "/start")
-          {
-            show_help(msg);
-            break;
-          }
-          else
-          if(text == "info")
-          {
-            show_info(msg);
-            break;
-          }
-          else
-          if(text == "sysinfo")
-          {
-            show_sysinfo(msg);
-            break;
-          }
-          else
-        #ifdef PIN_BATTARY
-          if(text == "charge")
-          {
-            msg.isMarkdownEnabled = true;
-            String s = TUtil::screen_mark_down(
-              "Напряжение: " + String(battery.getBatteryVolts()) + " в.\n"
-              "Уровень заряда: " + String(battery.getBatteryChargeLevel()) + "%\n"
-              "Уровень заряда (по таблице): " + battery.getBatteryChargeLevel(true) + "%\n");
-
-            pbot->sendMessage(msg, s.c_str());
-            break;
-          }
-          else
-        #endif
-          if(text == "reset")
-          {
-            pbot->sendMessage(msg, (dev_name + " будет перезагружен...").c_str());
-            // Wait until bot synced with telegram to prevent cyclic reboot
-            flush_message();
-            TSleepMode::reset();
-            break;
-          }
-          else
-          if(text == "shutdown")
-          {
-            pbot->sendMessage(msg, (dev_name + " будет выключен...").c_str());
-            // Wait until bot synced with telegram to prevent cyclic reboot
-            flush_message();
-            TSleepMode::shutdown();
-            break;
-          }
-          else // команды для работы с конфигурационным JSON:
-          if(text == "getconf")
-          {
-            send_config(msg);
-            break;
-          }
-          else
-          if(cmd_conf_1_arg("vdtconf", text, &TConf::validate_json, msg))
-          {
-            break;
-          }
-          else
-          if(cmd_conf_1_arg("addconf", text, &TConf::add_json, msg))
-          {
-            break;
-          }
-          else
-          if(cmd_conf_1_arg("setconf", text, &TConf::set_json, msg))
-          {
-            break;
-          }
-          else // команды для работы с базой формул:
-          if(s_cmd = "fassign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
-          {
-            if(is_no_args)
+        do // fake loop
+        {
+          if(!(is_get ^ is_set)) // если не опция:
+          { // команды общего назначения:
+            if(text == "help" || text == "/start")
             {
-              pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
+              show_help(msg);
               break;
-            }
-
-            String e_desc;
-            String args = text.substring(strlen(s_cmd));
-            args.trim();
-
-            int pos = args.indexOf(' ');
-            bool is_add_or_ed = pos != -1;
-
-            String key = is_add_or_ed ? args.substring(0, pos) : args;
-            key.trim();
-            bool is_has_value;
-            try
-            {
-              is_has_value = p_fdb->has_value(key);
-            }
-            catch(const String& e)
-            {
-              String m = "Ошибка: " + e + "!";
-              pbot->sendMessage(msg, m);
-              break;
-            }
-
-            if(is_add_or_ed)
-            {
-              String val = args.substring(pos + 1);
-              val.trim();
-
-              pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
-
-              {
-                TCalcFormula *pcf;
-                try
-                {
-                  pcf = TCalcFormula::compile(val);
-
-                  p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
-
-                  if(is_has_value && ((*p_prefs)["f"] == key)) // Если изменили существующую формулу и она выбрана как текущая
-                  {
-                    cb_change_formula(pcf);
-                  }
-                  else
-                  {
-                    delete pcf;
-                  }
-                }
-                catch(String& e)
-                {
-                  e_desc = e;
-                }
-              }
             }
             else
+            if(text == "info")
             {
-              pbot->sendMessage(msg, String("Удаление ") + args);
-              if(is_has_value && ((*p_prefs)["f"] == key)) // Если удаляем существующую формулу и она выбрана как текущая
+              show_info(msg);
+              break;
+            }
+            else
+            if(text == "sysinfo")
+            {
+              show_sysinfo(msg);
+              break;
+            }
+            else
+          #ifdef PIN_BATTARY
+            if(text == "charge")
+            {
+              msg.isMarkdownEnabled = true;
+              String s = TUtil::screen_mark_down(
+                "Напряжение: " + String(battery.getBatteryVolts()) + " в.\n"
+                "Уровень заряда: " + String(battery.getBatteryChargeLevel()) + "%\n"
+                "Уровень заряда (по таблице): " + battery.getBatteryChargeLevel(true) + "%\n");
+
+              pbot->sendMessage(msg, s.c_str());
+              break;
+            }
+            else
+          #endif
+            if(text == "reset")
+            {
+              pbot->sendMessage(msg, (dev_name + " будет перезагружен...").c_str());
+              // Wait until bot synced with telegram to prevent cyclic reboot
+              flush_message();
+              TSleepMode::reset();
+              break;
+            }
+            else
+            if(text == "shutdown")
+            {
+              pbot->sendMessage(msg, (dev_name + " будет выключен...").c_str());
+              // Wait until bot synced with telegram to prevent cyclic reboot
+              flush_message();
+              TSleepMode::shutdown();
+              break;
+            }
+            else // команды для работы с конфигурационным JSON:
+            if(text == "getconf")
+            {
+              send_config(msg);
+              break;
+            }
+            else
+            if(cmd_conf_1_arg("vdtconf", text, &TConf::validate_json, msg))
+            {
+              break;
+            }
+            else
+            if(cmd_conf_1_arg("addconf", text, &TConf::add_json, msg))
+            {
+              break;
+            }
+            else
+            if(cmd_conf_1_arg("setconf", text, &TConf::set_json, msg))
+            {
+              break;
+            }
+            else // команды для работы с базой формул:
+            if(s_cmd = "fassign", is_no_args = (text == s_cmd), (is_no_args || text.startsWith(String(s_cmd) + " ")))
+            {
+              if(is_no_args)
               {
-                e_desc = "нельзя удалить формулу, которая выбрана как текущая";
+                pbot->sendMessage(msg, "Ошибка: требуется указать параметры!");
+                break;
+              }
+
+              String e_desc;
+              String args = text.substring(strlen(s_cmd));
+              args.trim();
+
+              int pos = args.indexOf(' ');
+              bool is_add_or_ed = pos != -1;
+
+              String key = is_add_or_ed ? args.substring(0, pos) : args;
+              key.trim();
+              bool is_has_value;
+              try
+              {
+                is_has_value = p_fdb->has_value(key);
+              }
+              catch(const String& e)
+              {
+                String m = "Ошибка: " + e + "!";
+                pbot->sendMessage(msg, m);
+                break;
+              }
+
+              if(is_add_or_ed)
+              {
+                String val = args.substring(pos + 1);
+                val.trim();
+
+                pbot->sendMessage(msg, String(is_has_value ? "Измен" : "Добавл") + "ение " + key + " = " + val);
+
+                {
+                  TCalcFormula *pcf;
+                  try
+                  {
+                    pcf = TCalcFormula::compile(val);
+
+                    p_fdb->assign(key, val); // добавляем её в базу (или изменяем уже имеющуюся).
+
+                    if(is_has_value && ((*p_prefs)["f"] == key)) // Если изменили существующую формулу и она выбрана как текущая
+                    {
+                      cb_change_formula(pcf);
+                    }
+                    else
+                    {
+                      delete pcf;
+                    }
+                  }
+                  catch(String& e)
+                  {
+                    e_desc = e;
+                  }
+                }
               }
               else
               {
-                try
+                pbot->sendMessage(msg, String("Удаление ") + args);
+                if(is_has_value && ((*p_prefs)["f"] == key)) // Если удаляем существующую формулу и она выбрана как текущая
                 {
-                  p_fdb->assign(args);
+                  e_desc = "нельзя удалить формулу, которая выбрана как текущая";
                 }
-                catch(const String& e)
+                else
                 {
-                  e_desc = e;
+                  try
+                  {
+                    p_fdb->assign(args);
+                  }
+                  catch(const String& e)
+                  {
+                    e_desc = e;
+                  }
                 }
               }
-            }
-            pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
-            break;
-          } // f_assign
-          else
-          if(text == "flist")
-          {
-            msg.isMarkdownEnabled = true;
-            String sck = (*p_prefs)["f"]; // ключ - имя текущей формулы
-            String s_list = p_fdb->list(&sck);
-            pbot->sendMessage(msg, String("*Список формул*:\n") + (s_list.length() ? s_list : "\\(пусто\\)"));
-            break;
-          }
-          else
-          {
-            pbot->sendMessage(msg, "Ошибка синтаксиса!");
-            show_help(msg);
-            break;
-          }
-        }
-
-        if(is_get)
-        {
-          opt_len = text.length()-1;
-        }
-        else
-        {
-          opt_len = pos_set;
-        }
-
-        String opt = text.substring(0, opt_len);
-        opt.trim();
-
-        if(!p_prefs->contains(opt))
-        {
-          pbot->sendMessage(msg, (opt + " не является опцией!").c_str());
-          break;
-        }
-
-        if(is_get)
-        {
-          pbot->sendMessage(msg, (opt + " = " + (*p_prefs)[opt]).c_str());
-        }
-        else
-        {
-          String value = text.substring(pos_set + 1);
-          {
-            value.trim();
-            try
+              pbot->sendMessage(msg, String(e_desc.isEmpty() ? "Ok" : "Ошибка: ") + e_desc + "!");
+              break;
+            } // f_assign
+            else
+            if(text == "flist")
             {
-          // Здесь можно завести колбэки OnSetValueBegin / OnSetValueEnd, чтобы вызывать функции таймера в них...
-          #ifdef SOUND_DAC
-            timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
-          #endif
-              p_prefs->set_value(opt, value);
-          #ifdef SOUND_DAC
-            timer_start(TIMER_GROUP_0, TIMER_0);
-          #endif
-              //pbot->sendMessage(msg, "Ok!");
-              send("Ok\\!");
+              msg.isMarkdownEnabled = true;
+              String sck = (*p_prefs)["f"]; // ключ - имя текущей формулы
+              String s_list = p_fdb->list(&sck);
+              pbot->sendMessage(msg, String("*Список формул*:\n") + (s_list.length() ? s_list : "\\(пусто\\)"));
+              break;
             }
-            catch(String& e)
+            else
             {
-          #ifdef SOUND_DAC
-            timer_start(TIMER_GROUP_0, TIMER_0);
-          #endif
-              send(TUtil::screen_mark_down("Ошибка: " + e +  "!"));
+              pbot->sendMessage(msg, "Ошибка синтаксиса!");
+              show_help(msg);
+              break;
             }
           }
-        }
+
+          if(is_get)
+          {
+            opt_len = text.length()-1;
+          }
+          else
+          {
+            opt_len = pos_set;
+          }
+
+          String opt = text.substring(0, opt_len);
+          opt.trim();
+
+          if(!p_prefs->contains(opt))
+          {
+            pbot->sendMessage(msg, (opt + " не является опцией!").c_str());
+            break;
+          }
+
+          if(is_get)
+          {
+            pbot->sendMessage(msg, (opt + " = " + (*p_prefs)[opt]).c_str());
+          }
+          else
+          {
+            String value = text.substring(pos_set + 1);
+            {
+              value.trim();
+              try
+              {
+            // Здесь можно завести колбэки OnSetValueBegin / OnSetValueEnd, чтобы вызывать функции таймера в них...
+            #ifdef SOUND_DAC
+              timer_pause(TIMER_GROUP_0, TIMER_0); // без этого уходит в перезагрузку при вызове dac_output_voltage из обработчика таймера
+            #endif
+                p_prefs->set_value(opt, value);
+            #ifdef SOUND_DAC
+              timer_start(TIMER_GROUP_0, TIMER_0);
+            #endif
+                send("Ok\\!");
+              }
+              catch(String& e)
+              {
+            #ifdef SOUND_DAC
+              timer_start(TIMER_GROUP_0, TIMER_0);
+            #endif
+                send(TUtil::screen_mark_down(("Ошибка: " + e +  "!")));
+              }
+            }
+          }
+        } while(false);
+
+        flush_message();
         break;
-      }
+      } // case MessageText:
 
       default:
         break;
     }
-    flush_message();
   }
 }
 
 void TTgmBot::say_goodbye(void)
 {
-  send(TWorker::screen_mark_down(TWorker::sprintf("Бот @%s выключился!", pbot->getBotName())).get());
+  send(TWorker::screen_mark_down(TWorker::sprintf("Бот @%s выключился!", pbot->getBotName())));
 }
 
 TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
@@ -432,7 +435,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   TWorker::print("\nПроверяем Телеграм-соединение... ");
   pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
 
-  queue = xQueueCreate(8, sizeof(char *));
+  queue = xQueueCreate(4, sizeof(char *));
   if (queue == NULL) {
     throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
   }
@@ -457,13 +460,13 @@ TTgmBot::~TTgmBot()
   }
 }
 
-void TTgmBot::send(const String& m, bool isMarkdownEnabled)
+void TTgmBot::send(const char *m, bool isMarkdownEnabled)
 {
   if(pbot)
   {
-    char *p = new char[m.length() + 1];
-    strcpy(p, m.c_str());
-    xQueueSend(queue, &p, 0);
+    char *p = new char[strlen(m) + 1];
+    strcpy(p, m);
+    xQueueSend(queue, &p, portMAX_DELAY);
   }
 }
 }
