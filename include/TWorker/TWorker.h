@@ -39,12 +39,12 @@ public:
     template <class T>
     static const T send(TWorkerTaskSyncResBase<T> *p);
 
-    static const void print(const String& text);
-    static const void println(const String& text);
+    static void print(const String& text);
+    static void println(const String& text);
 
     // Из ISR не вызывать, иначе WDT таймаут:
     template <class ... Args>
-    static const void printf(Args ... args);
+    static void printf(Args ... args);
     template <class ... Args>
     static const inline shared_ptr<char> sprintf(Args ... args);
 
@@ -81,7 +81,7 @@ const T TWorker::send(TWorkerTaskSyncResBase<T> *p)
 }
 
 template <class ... Args>
-const void TWorker::printf(Args ... args)
+void TWorker::printf(Args ... args)
 {
     send(new TWorkerTaskLogVariadic(args...));
 }

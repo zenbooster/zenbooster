@@ -1,6 +1,7 @@
 #pragma once
 #include "TWorker/TWorkerTaskSyncResBase.h"
-#include <tcpip_adapter.h>
+//#include <tcpip_adapter.h>
+#include <esp_netif.h>
 #include <memory>
 
 namespace Worker

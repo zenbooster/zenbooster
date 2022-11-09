@@ -93,12 +93,12 @@ void TWorker::send(TWorkerTaskSyncBase *p)
     }
 }
 
-const void TWorker::print(const String& text)
+void TWorker::print(const String& text)
 {
     send(new TWorkerTaskLog(text));
 }
 
-const void TWorker::println(const String& text)
+void TWorker::println(const String& text)
 {
     print(text + "\n");
 }
