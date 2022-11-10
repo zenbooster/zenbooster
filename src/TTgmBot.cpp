@@ -17,6 +17,9 @@ using namespace MyApplication;
 using namespace Worker;
 using namespace Conf;
 
+String TTgmBot::token = "";
+uint64_t TTgmBot::chat_id = 0;
+
 const char *TTgmBot::get_class_name()
 {
   return "TTgmBot";
@@ -128,7 +131,7 @@ bool TTgmBot::ProcessQueue(void)
   res = xQueueReceive(queue, &p, 0);
   if(res)
   {
-    msg.chatId = CHAT_ID;
+    msg.chatId = chat_id;
     msg.isMarkdownEnabled = true;
 
     for(; !pbot->sendMessage(msg, p, nullptr, true);)
@@ -430,7 +433,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   //pcli->setCACert(telegram_cert);
   pbot = new AsyncTelegram2(*pcli);
   pbot->setUpdateTime(mtbs);
-  pbot->setTelegramToken(BOT_TOKEN);
+  pbot->setTelegramToken(token.c_str());
   
   TWorker::print("\nПроверяем Телеграм-соединение... ");
   pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
@@ -440,7 +443,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
     throw String("TTgmBot::TTgmBot(..): ошибка создания очереди");
   }
 
-  pbot->sendTo(CHAT_ID, TWorker::sprintf("Бот @%s в сети!\nНаберите \"help\" для справки.", pbot->getBotName()).get());
+  pbot->sendTo(chat_id, TWorker::sprintf("Бот @%s в сети!\nНаберите \"help\" для справки.", pbot->getBotName()).get());
 }
 
 TTgmBot::~TTgmBot()

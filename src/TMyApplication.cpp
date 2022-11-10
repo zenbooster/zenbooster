@@ -6,6 +6,7 @@
 #include "TCalcFormula.h"
 #include <limits>
 #include <sstream>
+#include <iostream>
 #include <exception>
 #include "common.h"
 #include "TUtil.h"
@@ -13,6 +14,7 @@
 # include "TNoise.h"
 #endif
 #include "TMyApplication.h"
+#include <string>
 
 namespace MyApplication
 {
@@ -23,11 +25,13 @@ using namespace Util;
 const char *TMyApplication::DEVICE_NAME_FULL = "zenbooster device";
 const char *TMyApplication::DEVICE_NAME = "zenbooster-dev";
 const char *TMyApplication::WIFI_SSID = DEVICE_NAME;
-const char *TMyApplication::WIFI_PASS = "zbdzbdzbd";
+const char *TMyApplication::WIFI_PASS = "humananddevice";
 TConf *TMyApplication::p_conf = NULL;
 TWorker *TMyApplication::p_worker = NULL;
 TSleepMode *TMyApplication::p_sleep_mode = NULL;
 WiFiManager *TMyApplication::p_wifi_manager = NULL;
+WiFiManagerParameter TMyApplication::tgm_bot_token;
+WiFiManagerParameter TMyApplication::tgm_chat_id;
 int TMyApplication::threshold;
 int TMyApplication::pre_threshold;
 TRingBufferInItem TMyApplication::ring_buffer_in[4] = {};
@@ -282,6 +286,33 @@ TMyApplication::TMyApplication()
   p_wifi_manager = new WiFiManager();
   p_wifi_manager->setHostname(DEVICE_NAME);
   //p_wifi_manager->startConfigPortal(WIFI_SSID, WIFI_PASS);
+  {
+    Preferences prefs;
+    prefs.begin("wifi-man-par", false);
+    TTgmBot::token = prefs.getString("tgm_bot_token", "");
+    TTgmBot::chat_id = prefs.getULong64("tgm_chat_id", 0);
+    prefs.end();
+    new (&tgm_bot_token) WiFiManagerParameter("tgm_bot_token", "токен телеграм-бота", TTgmBot::token.c_str(), 64);
+    new (&tgm_chat_id) WiFiManagerParameter("tgm_chat_id", "идентификатор телеграм-пользователя", String(TTgmBot::chat_id).c_str(), 20);
+    p_wifi_manager->addParameter(&tgm_bot_token);
+    p_wifi_manager->addParameter(&tgm_chat_id);
+    p_wifi_manager->setSaveConfigCallback(
+      [this]()
+      {
+        Preferences prefs;
+
+        prefs.begin("wifi-man-par", false);
+        const char *token = tgm_bot_token.getValue();
+        TTgmBot::token = token;
+        String s_chat_id = tgm_chat_id.getValue();
+        std::istringstream ss(s_chat_id.c_str());
+        ss >> TTgmBot::chat_id;
+        prefs.putString("tgm_bot_token", token);
+        prefs.putULong64("tgm_chat_id", TTgmBot::chat_id);
+        prefs.end();
+      }
+    );
+  }
   p_wifi_manager->autoConnect(WIFI_SSID, WIFI_PASS);
 
   p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, [](TCalcFormula *pcf) -> void

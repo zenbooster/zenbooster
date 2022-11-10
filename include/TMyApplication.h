@@ -57,6 +57,8 @@ class TMyApplication
     static TSleepMode *p_sleep_mode;
 #endif
     static WiFiManager *p_wifi_manager;
+    static WiFiManagerParameter tgm_bot_token;
+    static WiFiManagerParameter tgm_chat_id;
 
     static int threshold;
     static int pre_threshold;
