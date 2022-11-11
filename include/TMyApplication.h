@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "TSingleton.h"
 #include "WiFiManager.h"
 #ifdef PIN_BTN
 # include "TSleepMode.h"
@@ -43,7 +44,7 @@ using namespace ButtonIllumination;
   int meditation;
 };*/
 
-class TMyApplication
+class TMyApplication: public TSingleton<TMyApplication>
 {
   private:
     static const char *DEVICE_NAME_FULL;

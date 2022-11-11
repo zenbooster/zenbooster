@@ -134,6 +134,8 @@ bool TTgmBot::ProcessQueue(void)
     msg.chatId = chat_id;
     msg.isMarkdownEnabled = true;
 
+    // Как выяснилось, если вернёт false, сообщение всё равно может отправиться,
+    // по этому, при плохой связи, может произойти двойная отправка.
     for(; !pbot->sendMessage(msg, p, nullptr, true);)
     {
       vTaskDelay(250);
