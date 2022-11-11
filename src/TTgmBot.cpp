@@ -135,7 +135,8 @@ bool TTgmBot::ProcessQueue(void)
     msg.isMarkdownEnabled = true;
 
     // Как выяснилось, если вернёт false, сообщение всё равно может отправиться,
-    // по этому, при плохой связи, может произойти двойная отправка.
+    // по этому, при плохой связи, может произойти двойная отправка. Что бы этого
+    // не происходило, если ProcessQueue вернёт true, надо будет вызвать flush_message.
     for(; !pbot->sendMessage(msg, p, nullptr, true);)
     {
       vTaskDelay(250);
@@ -153,10 +154,12 @@ void TTgmBot::run(void)
   TPrefs *p_prefs = TConf::get_prefs();
   TFormulaDB *p_fdb = TConf::get_fdb();
   TBMessage msg;
+  bool is_flush = false;
 
   // Пока очередь не пуста:
   for(; ProcessQueue();)
   {
+    is_flush = true;
   }
 
   // if there is an incoming message...
@@ -408,13 +411,18 @@ void TTgmBot::run(void)
           }
         } while(false);
 
-        flush_message();
+        is_flush = true;
         break;
       } // case MessageText:
 
       default:
         break;
     }
+  }
+
+  if(is_flush)
+  {
+    flush_message();
   }
 }
 
