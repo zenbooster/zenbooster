@@ -33,9 +33,19 @@ void TUtil::chk_value_is_numeric(const String& v)
   }
 }
 
+bool TUtil::is_false(const String& s)
+{
+  return (s == "false") || (s == "0");
+}
+
+bool TUtil::is_true(const String& s)
+{
+  return (s == "true") || (s == "1");
+}
+
 bool TUtil::is_bool(const String& s)
 {
-  return (s == "true") || (s == "false");
+  return is_false(s) || is_true(s);
 }
 
 void TUtil::chk_value_is_bool(const String& v)

@@ -21,6 +21,8 @@ class TUtil
         static void chk_value_is_number(const String& v);
         static void chk_value_is_numeric(const String& v);
         static void chk_value_is_bool(const String& v);
+        static bool is_false(const String& s);
+        static bool is_true(const String& s);
 
         template<class T>
         static void chk_value_is_positive(T v);

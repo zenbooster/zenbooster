@@ -68,7 +68,7 @@ TConf::TConf()
     }
     else
     {
-      if(value == "false" && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED)
+      if(TUtil::is_false(value) && wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED)
       {
         TWorker::printf("Согласно настройкам, засыпаем по возобновлении питания...\n");
         pinMode(14, OUTPUT); // после загрузки, и после перехода в сон, именно на этом пине может остаться маленькое напряжение,
@@ -124,7 +124,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(TSleepMode::xGrMutex, portMAX_DELAY);
-      TSleepMode::is_graceful = (value == "true");
+      TSleepMode::is_graceful = TUtil::is_true(value);
       xSemaphoreGiveRecursive(TSleepMode::xGrMutex);
     }
   });
@@ -221,7 +221,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TButtonIllumination::is_blink_on_packets = (value == "true");
+      TButtonIllumination::is_blink_on_packets = TUtil::is_true(value);
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
@@ -284,7 +284,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TMyApplication::is_use_poor_signal = (value == "true");
+      TMyApplication::is_use_poor_signal = TUtil::is_true(value);
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
