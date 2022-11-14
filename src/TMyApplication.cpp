@@ -285,7 +285,6 @@ TMyApplication::TMyApplication()
   // Ждём модуль bluetooth HC-06 - он должен рещить все проблемы.
   p_wifi_manager = new WiFiManager();
   p_wifi_manager->setHostname(DEVICE_NAME);
-  //p_wifi_manager->startConfigPortal(WIFI_SSID, WIFI_PASS);
   {
     Preferences prefs;
     prefs.begin("wifi-man-par", false);
@@ -314,6 +313,7 @@ TMyApplication::TMyApplication()
     );
   }
   p_wifi_manager->autoConnect(WIFI_SSID, WIFI_PASS);
+  //p_wifi_manager->startConfigPortal(WIFI_SSID, WIFI_PASS);
 
   p_wifi_stuff = new TWiFiStuff(DEVICE_NAME, [](TCalcFormula *pcf) -> void
   {
