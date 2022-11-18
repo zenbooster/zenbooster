@@ -303,6 +303,66 @@ TConf::TConf()
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
+
+  p_prefs->init_key("mqtt", "режим регистратора MQTT \\(bool\\)", "false", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_bool(value);
+
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      TMyApplication::is_mqtt = TUtil::is_true(value);
+      xSemaphoreGiveRecursive(xOptRcMutex);
+    }
+  });
+
+  p_prefs->init_key("mqtt_server", "MQTT сервер", "mqtt.example.com", [this](const String& value, bool is_validate_only) -> void
+  {
+    //
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      TMyApplication::mqtt_server = value;
+      xSemaphoreGiveRecursive(xOptRcMutex);
+    }
+  });
+
+  p_prefs->init_key("mqtt_port", "MQTT порт", "8883", [](const String& value, bool is_validate_only) -> void
+  {
+    TUtil::chk_value_is_number(value);
+    int v = atoi(value.c_str());
+    TUtil::chk_value_is_positive(v);
+    TUtil::chk_value_is_not_zero(v);
+    
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      TMyApplication::mqtt_port = v;
+      xSemaphoreGiveRecursive(xOptRcMutex);
+    }
+  });
+
+  p_prefs->init_key("mqtt_user", "MQTT пользователь", "user", [this](const String& value, bool is_validate_only) -> void
+  {
+    //
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      TMyApplication::mqtt_user = value;
+      xSemaphoreGiveRecursive(xOptRcMutex);
+    }
+  });
+
+  p_prefs->init_key("mqtt_pass", "MQTT пароль", "pass", [this](const String& value, bool is_validate_only) -> void
+  {
+    //
+    if(!is_validate_only)
+    {
+      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      TMyApplication::mqtt_pass = value;
+      xSemaphoreGiveRecursive(xOptRcMutex);
+    }
+  });
 }
 
 TPrefs *TConf::get_prefs()

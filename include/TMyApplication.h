@@ -90,6 +90,12 @@ class TMyApplication: public TSingleton<TMyApplication>
     static String s_log_data;
     static int i_log_data;
 
+    static bool is_mqtt;
+    static String mqtt_server;
+    static uint16_t mqtt_port;
+    static String mqtt_user;
+    static String mqtt_pass;
+
     static int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);
     static void callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt);

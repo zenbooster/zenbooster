@@ -85,7 +85,8 @@ String TPrefs::get_desc(void)
     String k =  iter->first;
     TPrefValue v = iter->second;
 
-    String line = "*" + k + "* \\- " + v.desc + "\n";
+    //String line = String("*") + TWorker::screen_mark_down(k.c_str()).get() + "* \\- " + v.desc + "\n";
+    String line = TWorker::sprintf("*%s* \\- `%s`\n", TWorker::screen_mark_down(k.c_str()).get(), v.desc.c_str()).get();
     res += line;
   }
   return res;
@@ -101,7 +102,8 @@ String TPrefs::get_values(void)
     TPrefValue v = iter->second;
     String s = v.value;
 
-    String line = "*" + k + "* \\= `" + s + "`\n";
+    //String line = String("*") + TWorker::screen_mark_down(k.c_str()).get() + "* \\= `" + s + "`\n";
+    String line = TWorker::sprintf("*%s* \\= `%s`\n", TWorker::screen_mark_down(k.c_str()).get(), s.c_str()).get();
     res += line;
   }
   return res;

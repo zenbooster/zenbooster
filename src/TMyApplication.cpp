@@ -51,6 +51,12 @@ TButtonIllumination *TMyApplication::p_btn_il = NULL;
 TMedSession *TMyApplication::p_med_session = NULL;
 String TMyApplication::s_log_data;
 int TMyApplication::i_log_data = 0;
+// MQTT:
+bool TMyApplication::is_mqtt = false;
+String TMyApplication::mqtt_server;
+uint16_t TMyApplication::mqtt_port;
+String TMyApplication::mqtt_user;
+String TMyApplication::mqtt_pass;
 
 const String TMyApplication::get_version_string(void)
 {
