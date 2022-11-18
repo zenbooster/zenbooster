@@ -5,6 +5,7 @@
 #include "TWiFiStuff.h"
 #include "TNoise.h"
 #include "TCalcFormula.h"
+#include "TMQTTClient.h"
 #include "TUtil.h"
 
 namespace Conf
@@ -14,6 +15,7 @@ using namespace Worker;
 using namespace ButtonIllumination;
 using namespace WiFiStuff;
 using namespace Noise;
+using namespace MQTTClient;
 using namespace Util;
 
 SemaphoreHandle_t TConf::xOptRcMutex;
@@ -322,7 +324,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TMyApplication::mqtt_server = value;
+      TMQTTClient::server = value;
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
@@ -337,7 +339,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TMyApplication::mqtt_port = v;
+      TMQTTClient::port = v;
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
@@ -348,7 +350,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TMyApplication::mqtt_user = value;
+      TMQTTClient::user = value;
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
@@ -359,7 +361,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TMyApplication::mqtt_pass = value;
+      TMQTTClient::pass = value;
       xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });

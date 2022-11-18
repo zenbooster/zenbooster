@@ -52,5 +52,7 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     {
       tgb_send(m.get(), isMarkdownEnabled);
     }
+
+    static unsigned long getEpochTime();
 };
 }

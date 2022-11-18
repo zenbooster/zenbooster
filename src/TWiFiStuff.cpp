@@ -84,4 +84,9 @@ void TWiFiStuff::tgb_send(const char *m, bool isMarkdownEnabled)
     pTgmBot->send(m, isMarkdownEnabled);
   }
 }
+
+unsigned long TWiFiStuff::getEpochTime()
+{
+  return time_cli.getEpochTime();
+}
 }
