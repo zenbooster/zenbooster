@@ -1,6 +1,7 @@
 #include "common.h"
 #include "TWiFiStuff.h"
 #include "TConf.h"
+#include "TMqttClient.h"
 
 namespace WiFiStuff
 {
@@ -12,6 +13,8 @@ TaskHandle_t TWiFiStuff::h_dtor_task = NULL;
 WiFiUDP TWiFiStuff::ntp_udp;
 NTPClient TWiFiStuff::time_cli(ntp_udp);
 TTgmBot *TWiFiStuff::pTgmBot = NULL;
+bool TWiFiStuff::is_mqtt = false;
+TMQTTClient *TWiFiStuff::p_mqtt = NULL;
 
 const char *TWiFiStuff::get_class_name()
 {
@@ -20,6 +23,7 @@ const char *TWiFiStuff::get_class_name()
 
 void TWiFiStuff::task(void *p)
 {
+  static unsigned long old_sec = getEpochTime();
   for(;;)
   {
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
@@ -28,6 +32,16 @@ void TWiFiStuff::task(void *p)
 
     if (pTgmBot)
       pTgmBot->run();
+    
+    if(p_mqtt)
+    {
+      unsigned long sec = getEpochTime();
+      if(sec > old_sec)
+      {
+        p_mqtt->run();
+        old_sec = sec;
+      }
+    }
 
     xSemaphoreTake(xDtorMutex, portMAX_DELAY);
     if(h_dtor_task)
@@ -45,6 +59,9 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
   time_cli.begin();
 
   pTgmBot = new TTgmBot(dev_name, cb_change_formula);
+
+  time_cli.update();
+  p_mqtt = new TMQTTClient();
 
   xDtorMutex = xSemaphoreCreateMutex();
   p_task = new TTask(task, "TWiFiStuff", TWIFISTUFF_TASK_STACK_SIZE, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);

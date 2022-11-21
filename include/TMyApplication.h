@@ -17,7 +17,6 @@ namespace MedSession {class TMedSession;}
 namespace Noise {class TNoise;}
 namespace WiFiStuff {class TWiFiStuff;}
 namespace CalcFormula {class TCalcFormula;}
-namespace MQTTClient {class TMQTTClient;}
 
 namespace MyApplication
 {
@@ -29,7 +28,6 @@ using namespace Noise;
 using namespace BluetoothStuff;
 using namespace WiFiStuff;
 using namespace CalcFormula;
-using namespace MQTTClient;
 
 using namespace Worker;
 #ifdef PIN_BTN
@@ -91,9 +89,6 @@ class TMyApplication: public TSingleton<TMyApplication>
     static TMedSession *p_med_session;
     static String s_log_data;
     static int i_log_data;
-
-    static bool is_mqtt;
-    static TMQTTClient *p_mqtt;
 
     static int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);

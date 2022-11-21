@@ -1,8 +1,6 @@
 #pragma once
-//#include <PubSubClient.h>
 #include <WiFiClient.h>
-//#include <SSLClient.h>
-#include <ArduinoBearSSL.h>
+#include <SSLClient.h>
 #include <ArduinoMqttClient.h>
 #include "TSingleton.h"
 
@@ -19,18 +17,19 @@ private:
     static uint16_t port;
     static String user;
     static String pass;
-    static const char cert[];
 
     friend class Conf::TConf;
 
     static WiFiClient wf_cli;
-    //static SSLClient *p_ssl_cli;
-    static BearSSLClient *p_ssl_cli;
-    //static PubSubClient *p_mqtt_cli;
+    static SSLClient *p_ssl_cli;
     static MqttClient *p_mqtt_cli;
+    static String s_dev_id;
 
 public:
     TMQTTClient();
     ~TMQTTClient();
+
+    void connect();
+    void run(void);
 };
 }

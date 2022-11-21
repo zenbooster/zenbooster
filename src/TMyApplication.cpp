@@ -13,7 +13,6 @@
 #ifdef SOUND
 # include "TNoise.h"
 #endif
-#include "TMqttClient.h"
 #include "TMyApplication.h"
 #include <string>
 
@@ -52,8 +51,6 @@ TButtonIllumination *TMyApplication::p_btn_il = NULL;
 TMedSession *TMyApplication::p_med_session = NULL;
 String TMyApplication::s_log_data;
 int TMyApplication::i_log_data = 0;
-bool TMyApplication::is_mqtt = false;
-TMQTTClient *TMyApplication::p_mqtt = NULL;
 
 const String TMyApplication::get_version_string(void)
 {
@@ -322,7 +319,6 @@ TMyApplication::TMyApplication()
   {
     update_calc_formula(pcf);
   });
-  p_mqtt = new TMQTTClient();
   p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, callback);
 #ifdef SOUND
   p_noise = new TNoise();

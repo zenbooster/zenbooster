@@ -9,6 +9,7 @@
 
 namespace Conf {class TConf;}
 namespace MedSession {class TMedSession;}
+namespace MQTTClient {class TMQTTClient;}
 
 namespace WiFiStuff
 {
@@ -17,6 +18,7 @@ using namespace Task;
 using namespace Conf;
 using namespace TgmBot;
 using namespace MedSession;
+using namespace MQTTClient;
 
 class TWiFiStuff: public TSingleton<TWiFiStuff>
 {
@@ -30,6 +32,9 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     static WiFiUDP ntp_udp;
     static NTPClient time_cli;
     static TTgmBot *pTgmBot;
+
+    static bool is_mqtt;
+    static TMQTTClient *p_mqtt;
 
     const char *get_class_name();
 

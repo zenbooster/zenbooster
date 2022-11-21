@@ -444,7 +444,7 @@ TTgmBot::TTgmBot(String dev_name, TCbChangeFunction cb_change_formula):
   pbot = new AsyncTelegram2(*pcli);
   pbot->setUpdateTime(mtbs);
   pbot->setTelegramToken(token.c_str());
-  
+
   TWorker::print("\nПроверяем Телеграм-соединение... ");
   pbot->begin() ? TWorker::println("Ok!") : TWorker::println("Ошибка!");
 
