@@ -30,8 +30,8 @@ TMedSession::TMedSession():
     TWorker::println("TMedSession::TMedSession()");
     is_minsessec = false;
     sess_beg = TWiFiStuff::time_cli.getEpochTime();
-    // по хорошему, если порог или предпорог поменялись пока сессия была открыта,
-    // надо её закрыть, применить изменения порогов и затем снова открыть сессию...
+    // по хорошему, если порог или предпорог поменялись пока сеанс был открыт,
+    // надо его закрыть, применить изменения порогов и затем снова открыть...
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     tr = TMyApplication::threshold;
     pretr = TMyApplication::pre_threshold;
@@ -46,7 +46,7 @@ TMedSession::~TMedSession()
     if(is_minsessec)
     {
         TWiFiStuff::tgb_send(
-            "*Отчёт по сессии:*\n`" + 
+            "*Отчёт по сеансу:*\n`" + 
             TUtil::screen_mark_down(
             "Формула: " + formula_name + " = " + formula_text + "\n"
             "Порог: " + String(tr) + "\n"
@@ -57,7 +57,7 @@ TMedSession::~TMedSession()
         );
         
         /*TWiFiStuff::tgb_send(
-            TUtil::sprintf("*Отчёт по сессии:*\n`%s'",
+            TUtil::sprintf("*Отчёт по сеансу:*\n`%s'",
                 TUtil::screen_mark_down(
                     TUtil::sprintf(
                         "Формула: %s = %s\n"
@@ -87,7 +87,7 @@ void TMedSession::calc_next(int32_t med)
 
         if(is_minsessec)
         {
-            TWorker::println("TMedSession::calc_next(..): По окончании сессии будет сформирован отчёт.");
+            TWorker::println("TMedSession::calc_next(..): По окончании сеанса будет сформирован отчёт.");
         }
     }
 
@@ -122,8 +122,8 @@ void TMedSession::calc_next(int32_t med)
 String TMedSession::gen_report(void) const
 {
     String res = 
-        "Начало сессии: " + TWiFiStuff::time_cli.getFormattedDate(sess_beg) + "\n"
-        "Продолжительность сессии: " + String(sess_time_sec) + " с.\n"
+        "Начало сеанса: " + TWiFiStuff::time_cli.getFormattedDate(sess_beg) + "\n"
+        "Продолжительность сеанса: " + String(sess_time_sec) + " с.\n"
         "Общая продолжительность медитации (ОПМ): " + String(med_tot_time_sec) + " с. (" + String((med_tot_time_sec * 100) / sess_time_sec) + "%)\n"
         "Общее количество непрерывных медитаций: " + String(med_sd_count) + "\n"
         "Максимальная продолжительность непрерывной медитации: " + String(med_msd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_msd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"

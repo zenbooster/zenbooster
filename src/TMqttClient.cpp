@@ -25,14 +25,14 @@ TTask *TMQTTClient::p_conn_task = NULL;
 
 void TMQTTClient::conn_task(void *p)
 {
-    Serial.print("Attempting to MQTT broker...");
+    TWorker::println("Начинаем подключение к брокеру MQTT.");
     if(p_mqtt_cli->connect(server.c_str(), port))
     {
-        Serial.println("Ok!");
+        TWorker::println("Подключение к брокеру MQTT прошло успешно!");
     }
     else
     {
-        Serial.println(TWorker::sprintf("Err (%d)!", p_mqtt_cli->connectError()).get());
+        TWorker::println(TWorker::sprintf("Подключение к брокеру MQTT завершилось с ошибкой (%d)!", p_mqtt_cli->connectError()).get());
     }
 
     TTask *t = p_conn_task;
@@ -101,26 +101,26 @@ bool TMQTTClient::ProcessQueue(void)
         String part = (*p)["topic"];
         topic += part;
 
-        Serial.printf("Sending message (%s)...", topic.c_str());
+        TWorker::printf("Sending message (%s)...", topic.c_str());
         if(!p_mqtt_cli->beginMessage(topic))
         {
-            Serial.println("Err (beginMessage)!");
+            TWorker::println("Err (beginMessage)!");
             res = false;
             break;
         }
         if(!p_mqtt_cli->print(ss))
         {
-            Serial.println("Err (print)!");
+            TWorker::println("Err (print)!");
             res = false;
             break;
         }
         if(!p_mqtt_cli->endMessage())
         {
-            Serial.println("Err (endMessage)!");
+            TWorker::println("Err (endMessage)!");
             res = false;
             break;
         }
-        Serial.println("Ok!");
+        TWorker::println("Ok!");
         // теперь можно извлечь сообщение:
         res = xQueueReceive(queue, &p, 0);
         delete p;

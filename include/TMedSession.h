@@ -23,7 +23,7 @@ class TMedSession
         static String formula_name;
         static String formula_text;
 
-        uint16_t sess_time_sec; // продолжительность сессии в секундах
+        uint16_t sess_time_sec; // продолжительность сеанса в секундах
         uint16_t med_tot_time_sec; // общая (суммарная) продолжительность медитации
         uint16_t med_sd_time_sec; // solid time - текущая продолжительность непрерывной медитации
         uint16_t med_sd_count; // общее количество непрерывных медитаций
