@@ -312,9 +312,9 @@ TConf::TConf()
 
     if(!is_validate_only)
     {
-      xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
+      //xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
       TWiFiStuff::is_mqtt = TUtil::is_true(value);
-      xSemaphoreGiveRecursive(xOptRcMutex);
+      //xSemaphoreGiveRecursive(xOptRcMutex);
     }
   });
 

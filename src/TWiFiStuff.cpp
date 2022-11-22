@@ -32,6 +32,10 @@ void TWiFiStuff::task(void *p)
     if (pTgmBot)
       pTgmBot->run();
     
+    // если пользак бота сменит опцию mqtt, при
+    // необходимости создадим или уничтожим объект:
+    set_mqtt_active(is_mqtt);
+    
     if(p_mqtt)
     {
       p_mqtt->run();
@@ -106,8 +110,31 @@ bool TWiFiStuff::is_mqtt_active()
   return is_mqtt;// && p_mqtt->is_connected();
 }
 
+void TWiFiStuff::set_mqtt_active(bool is)
+{
+  if(is)
+  {
+    if(!p_mqtt)
+    {
+      p_mqtt = new TMQTTClient();
+    }
+  }
+  else
+  {
+    if(p_mqtt)
+    {
+      TMQTTClient *p = p_mqtt;
+      p_mqtt = NULL;
+      delete p;
+    }
+  }
+}
+
 void TWiFiStuff::mqtt_send(const char *topic, const DynamicJsonDocument *p)
 {
-  p_mqtt->send(topic, p);
+  if(p_mqtt)
+  {
+    p_mqtt->send(topic, p);
+  }
 }
 }

@@ -38,6 +38,8 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
 
     static void task(void *p);
 
+    static void set_mqtt_active(bool is);
+
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
     friend class Worker::TWorkerTaskCmdSysInfo;
