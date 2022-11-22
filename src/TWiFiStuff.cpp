@@ -23,7 +23,6 @@ const char *TWiFiStuff::get_class_name()
 
 void TWiFiStuff::task(void *p)
 {
-  static unsigned long old_sec = getEpochTime();
   for(;;)
   {
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
@@ -35,12 +34,7 @@ void TWiFiStuff::task(void *p)
     
     if(p_mqtt)
     {
-      unsigned long sec = getEpochTime();
-      if(sec - old_sec >= 3)
-      {
-        p_mqtt->run();
-        old_sec = sec;
-      }
+      p_mqtt->run();
     }
 
     xSemaphoreTake(xDtorMutex, portMAX_DELAY);

@@ -2,10 +2,12 @@
 #include <time.h>
 #include "TTgamPacketParser.h"
 #include "TUtil.h"
+#include "TWiFiStuff.h"
 
 namespace TgamPacketParser
 {
 using namespace std;
+using namespace WiFiStuff;
 
 TTgamPacketParser::TTgamPacketParser(BluetoothSerial *p, tpfn_data_callback data_callback):
   p_serial(p),
@@ -132,7 +134,7 @@ void TTgamPacketParser::parse_payload(void)
       time_t now;
       time(&now);
 
-      tpv.time = now;
+      tpv.time = TWiFiStuff::getEpochTime();
       tpv.delta = int_from_12bit(data);
       tpv.theta = int_from_12bit(data + 3);
       tpv.alpha_lo = int_from_12bit(data + 6);
