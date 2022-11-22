@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <WString.h>
 #include <functional>
+#include <ArduinoJson.h>
 
 namespace WiFiStuff {class TWiFiStuff;}
 namespace Conf {class TConf;}
@@ -32,6 +33,8 @@ class TMedSession
         uint32_t max_med_val; // максимальное значение уровня медитации
         double avg_med_val; // среднее значение уровня медитации
 
+        String gen_report(DynamicJsonDocument *p_doc) const;
+
         friend class Conf::TConf;
 
     public:
@@ -39,6 +42,5 @@ class TMedSession
         ~TMedSession();
 
         void calc_next(int32_t med);
-        String gen_report(void) const;
 };
 }

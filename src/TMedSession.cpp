@@ -45,17 +45,24 @@ TMedSession::~TMedSession()
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     if(is_minsessec)
     {
+        DynamicJsonDocument *p_doc = NULL;
+
+        if(TWiFiStuff::is_mqtt_active())
+        {
+            p_doc = new DynamicJsonDocument(1024);
+        }
+
         TWiFiStuff::tgb_send(
             "*Отчёт по сеансу:*\n`" + 
             TUtil::screen_mark_down(
             "Формула: " + formula_name + " = " + formula_text + "\n"
             "Порог: " + String(tr) + "\n"
             "Предпорог: " + String(pretr) + "\n" +
-            gen_report()
+            gen_report(p_doc)
             ) + 
             "`"
         );
-        
+
         /*TWiFiStuff::tgb_send(
             TUtil::sprintf("*Отчёт по сеансу:*\n`%s'",
                 TUtil::screen_mark_down(
@@ -69,6 +76,11 @@ TMedSession::~TMedSession()
                 ).get()
             )
         );*/
+
+        if(p_doc)
+        {
+            TWiFiStuff::mqtt_send("session", p_doc);
+        }
     }
     xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 }
@@ -119,17 +131,44 @@ void TMedSession::calc_next(int32_t med)
     avg_med_val += (med - avg_med_val) / sess_time_sec;
 }
 
-String TMedSession::gen_report(void) const
+String TMedSession::gen_report(DynamicJsonDocument *p_doc) const
 {
+    String duration(sess_time_sec);
+    String tdm_sec(med_tot_time_sec);
+    String tdm_pc((med_tot_time_sec * 100) / sess_time_sec);
+    String tncm(med_sd_count);
+    String mdcm_sec(med_msd_time_sec);
+    String mdcm_pc(med_tot_time_sec ? (med_msd_time_sec * 100) / med_tot_time_sec : 0);
+    String adcm_sec(med_asd_time_sec);
+    String adcm_pc(med_tot_time_sec ? (med_asd_time_sec * 100) / med_tot_time_sec : 0);
+    String mml(max_med_val);
+    String aml(avg_med_val, 1);
+
     String res = 
         "Начало сеанса: " + TWiFiStuff::time_cli.getFormattedDate(sess_beg) + "\n"
-        "Продолжительность сеанса: " + String(sess_time_sec) + " с.\n"
-        "Общая продолжительность медитации (ОПМ): " + String(med_tot_time_sec) + " с. (" + String((med_tot_time_sec * 100) / sess_time_sec) + "%)\n"
-        "Общее количество непрерывных медитаций: " + String(med_sd_count) + "\n"
-        "Максимальная продолжительность непрерывной медитации: " + String(med_msd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_msd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"
-        "Средняя продолжительность непрерывной медитации: " + String(med_asd_time_sec) + " с. (" + String(med_tot_time_sec ? (med_asd_time_sec * 100) / med_tot_time_sec : 0) + "% ОПМ)\n"
-        "Максимальное значение уровня медитации: " + String(max_med_val) + "\n"
-        "Среднее значение уровня медитации: " + String(avg_med_val, 1);
+        "Продолжительность сеанса: " + duration + " с.\n"
+        "Общая продолжительность медитации (ОПМ): " + tdm_sec + " с. (" + tdm_pc + "%)\n"
+        "Общее количество непрерывных медитаций: " + tncm + "\n"
+        "Максимальная продолжительность непрерывной медитации: " + mdcm_sec + " с. (" + mdcm_pc + "% ОПМ)\n"
+        "Средняя продолжительность непрерывной медитации: " + adcm_sec + " с. (" + adcm_pc + "% ОПМ)\n"
+        "Максимальное значение уровня медитации: " + mml + "\n"
+        "Среднее значение уровня медитации: " + aml;
+
+    if(p_doc)
+    {
+        DynamicJsonDocument& doc = *p_doc;
+        doc["start"] = sess_beg;
+        doc["duration"] = duration;
+        doc["tdm_sec"] = tdm_sec;
+        doc["tdm_pc"] = tdm_pc;
+        doc["tncm"] = tncm;
+        doc["mdcm_sec"] = mdcm_sec;
+        doc["mdcm_pc"] = mdcm_pc;
+        doc["adcm_sec"] = adcm_sec;
+        doc["adcm_pc"] = adcm_pc;
+        doc["mml"] = mml;
+        doc["aml"] = aml;
+    }
 
     return res;
 }
