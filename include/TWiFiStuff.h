@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "TSingleton.h"
 #include "TTask.h"
 #include <WiFiUdp.h>
@@ -24,7 +25,6 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
 {
   private:
     static TTask *p_task;
-    static TTask *p_mqtt_conn_task;
     static SemaphoreHandle_t xDtorMutex;
     static TaskHandle_t h_dtor_task;
     static WiFiUDP ntp_udp;
@@ -37,7 +37,6 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     const char *get_class_name();
 
     static void task(void *p);
-    static void mqtt_conn_task(void *p);
 
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
@@ -58,5 +57,8 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     }
 
     static unsigned long getEpochTime();
+
+    static bool is_mqtt_active();
+    static void mqtt_send(const char *topic, const DynamicJsonDocument *p);
 };
 }

@@ -23,7 +23,7 @@ enum TCallbackEvent
   eData
 };
 
-typedef void (*tpfn_callback)(const TTgamParsedValues *p_tpv, TCallbackEvent evt);
+typedef void (*tpfn_callback)(TTgamParsedValues *p_tpv, TCallbackEvent evt);
 
 class TBluetoothDataProcessor;
 

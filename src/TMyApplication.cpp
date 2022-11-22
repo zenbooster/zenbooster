@@ -83,7 +83,7 @@ int TMyApplication::int_from_12bit(const uint8_t *buf)
   return (*buf << 16) + (buf[1] << 8) + buf[2];
 }
 
-void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt)
+void TMyApplication::callback(TTgamParsedValues *p_tpv, TCallbackEvent evt)
 {
   switch(evt)
   {
@@ -130,7 +130,14 @@ void TMyApplication::callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt
 
       int med = calc_formula_meditation();
       ring_buffer_in_index = (ring_buffer_in_index + 1) & 3;
-      
+  
+      if(TWiFiStuff::is_mqtt_active())
+      {
+        DynamicJsonDocument doc = p_tpv->get_json();
+        doc["f"] = med;
+        TWiFiStuff::mqtt_send("eeg_power", &doc);
+      }
+
       String s = p_tpv->serialize() + "; --> f=" + med;
       TWorker::println(s);
 

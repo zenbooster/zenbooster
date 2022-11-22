@@ -8,7 +8,6 @@ namespace WiFiStuff
 using namespace MyApplication;
 
 TTask *TWiFiStuff::p_task = NULL;
-TTask *TWiFiStuff::p_mqtt_conn_task = NULL;
 SemaphoreHandle_t TWiFiStuff::xDtorMutex = NULL;
 TaskHandle_t TWiFiStuff::h_dtor_task = NULL;
 WiFiUDP TWiFiStuff::ntp_udp;
@@ -55,11 +54,6 @@ void TWiFiStuff::task(void *p)
   }
 }
 
-void TWiFiStuff::mqtt_conn_task(void *p)
-{
-  //
-}
-
 TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula)
 {
   time_cli.begin();
@@ -67,7 +61,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
   pTgmBot = new TTgmBot(dev_name, cb_change_formula);
 
   time_cli.update();
-  p_mqtt = NULL;//new TMQTTClient();
+  p_mqtt = new TMQTTClient();
 
   xDtorMutex = xSemaphoreCreateMutex();
   p_task = new TTask(task, "TWiFiStuff", TWIFISTUFF_TASK_STACK_SIZE, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
@@ -111,5 +105,15 @@ void TWiFiStuff::tgb_send(const char *m, bool isMarkdownEnabled)
 unsigned long TWiFiStuff::getEpochTime()
 {
   return time_cli.getEpochTime();
+}
+
+bool TWiFiStuff::is_mqtt_active()
+{
+  return is_mqtt;// && p_mqtt->is_connected();
+}
+
+void TWiFiStuff::mqtt_send(const char *topic, const DynamicJsonDocument *p)
+{
+  p_mqtt->send(topic, p);
 }
 }

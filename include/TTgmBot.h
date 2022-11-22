@@ -58,6 +58,7 @@ class TTgmBot: public TSingleton<TTgmBot>
     ~TTgmBot();
 
     void run(void);
+    // isMarkdownEnabled - ещё не реализовано...
     void send(const char *m, bool isMarkdownEnabled = true);
     inline void send(const std::shared_ptr<char> m, bool isMarkdownEnabled = true)
     {

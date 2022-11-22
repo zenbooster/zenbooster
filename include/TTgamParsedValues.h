@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "TRingBufferInItem.h"
 #include "TTgamParsedValues.h"
 
@@ -17,6 +18,7 @@ struct TTgamParsedValues: public TRingBufferInItem
   bool is_has_eeg_power;
 
   const String serialize(void) const;
+  DynamicJsonDocument get_json(void);
 
   private:
     static void add_string(String& dst, const String& src);

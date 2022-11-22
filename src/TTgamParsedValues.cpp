@@ -38,4 +38,37 @@ namespace TgamParsedValues
 
         return res;
     }
+
+    DynamicJsonDocument TTgamParsedValues::get_json(void)
+    {
+        DynamicJsonDocument res(256);
+
+        res["time"] = time;
+
+        if(is_has_batt)
+        {
+            res["batt"] = batt;
+        }
+
+        if(is_has_poor)
+        {
+            res["poor"] = poor;
+        }
+
+        if(is_has_eeg_power)
+        {
+            res["d"] = delta;
+            res["t"] = theta;
+            res["al"] = alpha_lo;
+            res["ah"] = alpha_hi;
+            res["bl"] = beta_lo;
+            res["bh"] = beta_hi;
+            res["gl"] = gamma_lo;
+            res["gm"] = gamma_md;
+            res["em"] = esense_med;
+            res["ea"] = esense_att;
+        }
+
+        return res;
+    }
 }

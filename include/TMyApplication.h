@@ -92,7 +92,7 @@ class TMyApplication: public TSingleton<TMyApplication>
 
     static int calc_formula_meditation();
     static int int_from_12bit(const uint8_t *buf);
-    static void callback(const TTgamParsedValues *p_tpv, TCallbackEvent evt);
+    static void callback(TTgamParsedValues *p_tpv, TCallbackEvent evt);
     static void update_calc_formula(TCalcFormula *pcf);
 
     friend class Conf::TConf;
