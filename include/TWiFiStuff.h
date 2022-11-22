@@ -25,7 +25,7 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
 {
   private:
     static TTask *p_task;
-    static SemaphoreHandle_t xDtorMutex;
+    static SemaphoreHandle_t x_dtor_mutex;
     static TaskHandle_t h_dtor_task;
     static WiFiUDP ntp_udp;
     static NTPClient time_cli;
@@ -33,6 +33,7 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
 
     static bool is_mqtt;
     static TMQTTClient *p_mqtt;
+    static SemaphoreHandle_t x_mqtt_send_mutex;
 
     const char *get_class_name();
 

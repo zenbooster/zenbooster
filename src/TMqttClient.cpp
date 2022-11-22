@@ -60,6 +60,11 @@ TMQTTClient::TMQTTClient()
 
 TMQTTClient::~TMQTTClient()
 {
+    if(queue)
+    {
+        vQueueDelete(queue);
+    }
+
     if(p_mqtt_cli)
     {
         delete p_mqtt_cli;
