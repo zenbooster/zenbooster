@@ -1,11 +1,10 @@
 #pragma once
 #include <Arduino.h>
+#include <functional>
 
 namespace Task
 {
 using namespace std;
-
-typedef void(*TCbTaskFunction)(void *);
 
 class TTask
 {
@@ -15,7 +14,7 @@ private:
 
 public:
     TTask(
-        TCbTaskFunction cb,
+        TaskFunction_t cb,
         const char *name,
         const size_t sz_stack,
         void *p_par,
@@ -23,7 +22,7 @@ public:
     );
 
     TTask(
-        TCbTaskFunction cb,
+        TaskFunction_t cb,
         const char *name,
         const size_t sz_stack,
         void *p_par,

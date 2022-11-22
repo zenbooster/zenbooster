@@ -25,13 +25,11 @@ TMQTTClient::TMQTTClient()
     esp_efuse_mac_get_default(chipid);
     s_dev_id = TWorker::sprintf("zenbooster/%02x:%02x:%02x:%02x:%02x:%02x", chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]).get();
 
-    p_ssl_cli = new SSLClient(wf_cli, TAs, (size_t)TAs_NUM, A0, 1, SSLClient::SSL_WARN);
+    p_ssl_cli = new SSLClient(wf_cli, TAs, (size_t)TAs_NUM, A0, 1, SSLClient::SSL_ERROR);
     p_mqtt_cli = new MqttClient(p_ssl_cli);
 
     p_mqtt_cli->setId(s_dev_id.c_str());
     p_mqtt_cli->setUsernamePassword(user, pass);
-
-    connect();
 }
 
 TMQTTClient::~TMQTTClient()
@@ -50,13 +48,14 @@ TMQTTClient::~TMQTTClient()
 void TMQTTClient::connect()
 {
     Serial.print("Attempting to MQTT broker...");
-    while (!p_mqtt_cli->connect(server.c_str(), port))
+    if(p_mqtt_cli->connect(server.c_str(), port))
     {
-        Serial.print(".");
-        Serial.println(p_mqtt_cli->connectError());
-        delay(250);
+        Serial.println("Ok!");
     }
-    Serial.println("Ok!");
+    else
+    {
+        Serial.println(TWorker::sprintf("Err (%d)!", p_mqtt_cli->connectError()).get());
+    }
 }
 
 void TMQTTClient::run(void)
@@ -67,27 +66,30 @@ void TMQTTClient::run(void)
     {
         connect();
     }
-
-    do
+    
+    if(p_mqtt_cli->connected())
     {
-        String topic = "devices/" + s_dev_id + "/debug";
-        Serial.printf("Sending message (%s)...", topic.c_str());
-        if(!p_mqtt_cli->beginMessage(topic))
+        do
         {
-            Serial.println("Err (beginMessage)!");
-            break;
-        }
-        if(!p_mqtt_cli->print("debug"))
-        {
-            Serial.println("Err (print)!");
-            break;
-        }
-        if(!p_mqtt_cli->endMessage())
-        {
-            Serial.println("Err (endMessage)!");
-            break;
-        }
-        Serial.println("Ok!");
-    } while(false);
+            String topic = "devices/" + s_dev_id + "/debug";
+            Serial.printf("Sending message (%s)...", topic.c_str());
+            if(!p_mqtt_cli->beginMessage(topic))
+            {
+                Serial.println("Err (beginMessage)!");
+                break;
+            }
+            if(!p_mqtt_cli->print("debug"))
+            {
+                Serial.println("Err (print)!");
+                break;
+            }
+            if(!p_mqtt_cli->endMessage())
+            {
+                Serial.println("Err (endMessage)!");
+                break;
+            }
+            Serial.println("Ok!");
+        } while(false);
+    }
 }
 }

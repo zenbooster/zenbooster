@@ -3,14 +3,14 @@
 
 namespace Task
 {
-TTask::TTask(TCbTaskFunction cb, const char *name, const size_t sz_stack, void *p_par, UBaseType_t priority):
+TTask::TTask(TaskFunction_t cb, const char *name, const size_t sz_stack, void *p_par, UBaseType_t priority):
     sz_stack(sz_stack),
     h_task(NULL)
 {
     xTaskCreate(cb, name, sz_stack, p_par, priority, &h_task);
 }
 
-TTask::TTask(TCbTaskFunction cb, const char *name, const size_t sz_stack, void *p_par, UBaseType_t priority, const BaseType_t core_id):
+TTask::TTask(TaskFunction_t cb, const char *name, const size_t sz_stack, void *p_par, UBaseType_t priority, const BaseType_t core_id):
     sz_stack(sz_stack),
     h_task(NULL)
 {

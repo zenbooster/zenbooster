@@ -8,6 +8,7 @@ namespace WiFiStuff
 using namespace MyApplication;
 
 TTask *TWiFiStuff::p_task = NULL;
+TTask *TWiFiStuff::p_mqtt_conn_task = NULL;
 SemaphoreHandle_t TWiFiStuff::xDtorMutex = NULL;
 TaskHandle_t TWiFiStuff::h_dtor_task = NULL;
 WiFiUDP TWiFiStuff::ntp_udp;
@@ -36,7 +37,7 @@ void TWiFiStuff::task(void *p)
     if(p_mqtt)
     {
       unsigned long sec = getEpochTime();
-      if(sec > old_sec)
+      if(sec - old_sec >= 3)
       {
         p_mqtt->run();
         old_sec = sec;
@@ -54,6 +55,11 @@ void TWiFiStuff::task(void *p)
   }
 }
 
+void TWiFiStuff::mqtt_conn_task(void *p)
+{
+  //
+}
+
 TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula)
 {
   time_cli.begin();
@@ -61,7 +67,7 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
   pTgmBot = new TTgmBot(dev_name, cb_change_formula);
 
   time_cli.update();
-  p_mqtt = new TMQTTClient();
+  p_mqtt = NULL;//new TMQTTClient();
 
   xDtorMutex = xSemaphoreCreateMutex();
   p_task = new TTask(task, "TWiFiStuff", TWIFISTUFF_TASK_STACK_SIZE, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
