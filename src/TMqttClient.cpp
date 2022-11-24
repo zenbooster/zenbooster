@@ -174,18 +174,6 @@ void TMQTTClient::send(const char *topic, const DynamicJsonDocument *p)
     DynamicJsonDocument *pdoc = new DynamicJsonDocument(4096+1024);
     (*pdoc)["topic"] = topic;
     (*pdoc)["msg"] = *p;
-
-    {
-        StreamString ss;
-        serializeJson(*p, ss);
-        Serial.printf("HIT.1: \"%s\"", ss.c_str());
-    }
-
-    {
-        StreamString ss;
-        serializeJson(*pdoc, ss);
-        Serial.printf("HIT.2: \"%s\"", ss.c_str());
-    }
     xQueueSend(queue, &pdoc, portMAX_DELAY);
   }
 }
