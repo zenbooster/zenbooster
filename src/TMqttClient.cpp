@@ -26,6 +26,14 @@ TTask *TMQTTClient::p_conn_task = NULL;
 void TMQTTClient::conn_task(void *p)
 {
     TWorker::println("Начинаем подключение к брокеру MQTT.");
+    unsigned long epoch = TWiFiStuff::getEpochTime();
+    const static unsigned long sec_per_day = 60 * 60 * 24;
+    p_ssl_cli->setVerificationTime(
+        // days since 1970 + days from 1970 to year 0
+        epoch / sec_per_day + 719528UL,
+        // seconds over start of day
+        epoch % sec_per_day
+    );
     if(p_mqtt_cli->connect(server.c_str(), port))
     {
         TWorker::println("Подключение к брокеру MQTT прошло успешно!");
@@ -47,6 +55,7 @@ TMQTTClient::TMQTTClient()
     s_dev_id = TWorker::sprintf("zenbooster/%02x:%02x:%02x:%02x:%02x:%02x", chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]).get();
 
     p_ssl_cli = new SSLClient(wf_cli, TAs, (size_t)TAs_NUM, A0, 1, SSLClient::SSL_ERROR);
+    //p_ssl_cli = new SSLClient(wf_cli, TAs, (size_t)TAs_NUM, A0, 1, SSLClient::SSL_WARN);
     p_mqtt_cli = new MqttClient(p_ssl_cli);
 
     p_mqtt_cli->setId(s_dev_id.c_str());
@@ -137,6 +146,11 @@ void TMQTTClient::run(void)
     if(!p_mqtt_cli->connected())
     {
         connect();
+        
+        if(!p_mqtt_cli->connected())
+        {
+            vTaskDelay(500);
+        }
         return;
     }
 
