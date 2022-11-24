@@ -2,6 +2,8 @@
 #include "TWiFiStuff.h"
 #include "TConf.h"
 #include "TMqttClient.h"
+#include "TMyApplication.h"
+#include <StreamString.h>
 
 namespace WiFiStuff
 {
@@ -16,6 +18,7 @@ TTgmBot *TWiFiStuff::pTgmBot = NULL;
 bool TWiFiStuff::is_mqtt = false;
 TMQTTClient *TWiFiStuff::p_mqtt = NULL;
 SemaphoreHandle_t TWiFiStuff::x_mqtt_send_mutex;
+bool TWiFiStuff::is_mqtt_disabling = false;
 
 const char *TWiFiStuff::get_class_name()
 {
@@ -60,15 +63,15 @@ TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_form
   pTgmBot = new TTgmBot(dev_name, cb_change_formula);
 
   time_cli.update();
-  x_mqtt_send_mutex = xSemaphoreCreateMutex();
-  p_mqtt = new TMQTTClient();
+  //x_mqtt_send_mutex = xSemaphoreCreateMutex();
+  //p_mqtt = new TMQTTClient();
+  set_mqtt_active(true);
   x_dtor_mutex = xSemaphoreCreateMutex();
   p_task = new TTask(task, "TWiFiStuff", TWIFISTUFF_TASK_STACK_SIZE, this, tskIDLE_PRIORITY + 2, portNUM_PROCESSORS - 2);
 }
 
-TWiFiStuff::~TWiFiStuff()
+void TWiFiStuff::wait_for_send()
 {
-  pTgmBot->say_goodbye(); // попрощаемся
   // Нам нужно уведомить себя о том, что цикл в задаче совершил очередную
   // итерацию, чтобы гарантировать отправку прощального сообщения:
   xSemaphoreTake(x_dtor_mutex, portMAX_DELAY);
@@ -78,6 +81,14 @@ TWiFiStuff::~TWiFiStuff()
   // Чтоб гарантировать полную итерацию, вызываем два раза:
   xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
   xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+}
+
+TWiFiStuff::~TWiFiStuff()
+{
+  set_mqtt_active(false);
+
+  pTgmBot->say_goodbye(); // попрощаемся
+  wait_for_send();
 
   // Мы всё сделали для того, чтобы сообщение ушло. Теперь можно удалить задачу:
   if(p_task)
@@ -85,9 +96,6 @@ TWiFiStuff::~TWiFiStuff()
     delete p_task;
   }
   vSemaphoreDelete(x_dtor_mutex);
-
-  set_mqtt_active(false);
-  vSemaphoreDelete(x_mqtt_send_mutex);
 
   if(pTgmBot)
   {
@@ -115,24 +123,55 @@ bool TWiFiStuff::is_mqtt_active()
 
 void TWiFiStuff::set_mqtt_active(bool is)
 {
+  if(is_mqtt_disabling)
+  {
+    return;
+  }
+  
+  is_mqtt_disabling = true;
+
   if(is)
   {
     if(!p_mqtt)
     {
+      x_mqtt_send_mutex = xSemaphoreCreateMutex();
       p_mqtt = new TMQTTClient();
+
+      if(TWiFiStuff::is_mqtt_active())
+      {
+          DynamicJsonDocument doc = TConf::get_json(); //TMyApplication::p_conf->get_json();
+
+          doc["when"] = TWiFiStuff::getEpochTime();
+          TWiFiStuff::mqtt_send("hello", &doc);
+      }
     }
   }
   else
   {
     if(p_mqtt)
     {
+      {
+          DynamicJsonDocument doc(64);
+          doc["when"] = TWiFiStuff::getEpochTime();
+          TWiFiStuff::mqtt_send("bye", &doc);
+      }
+      wait_for_send();
+
       TMQTTClient *p = p_mqtt;
       p_mqtt = NULL;
       xSemaphoreTake(x_mqtt_send_mutex, portMAX_DELAY);
       delete p;
       xSemaphoreGive(x_mqtt_send_mutex);
+      vSemaphoreDelete(x_mqtt_send_mutex);
+
+      // такое бывает, только когда нас вызвали из деструктора:
+      if(is_mqtt)
+      {
+        is_mqtt = false;
+      }
     }
   }
+  is_mqtt_disabling = false;
 }
 
 void TWiFiStuff::mqtt_send(const char *topic, const DynamicJsonDocument *p)

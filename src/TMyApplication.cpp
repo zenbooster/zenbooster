@@ -131,32 +131,31 @@ void TMyApplication::callback(TTgamParsedValues *p_tpv, TCallbackEvent evt)
       int med = calc_formula_meditation();
       ring_buffer_in_index = (ring_buffer_in_index + 1) & 3;
   
-      if(TWiFiStuff::is_mqtt_active())
+      /*if(TWiFiStuff::is_mqtt_active())
       {
         DynamicJsonDocument doc = p_tpv->get_json();
         doc["f"] = med;
         TWiFiStuff::mqtt_send("eeg_power", &doc);
-      }
+      }*/
 
       String s = p_tpv->serialize() + "; --> f=" + med;
       TWorker::println(s);
 
       xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
-      bool is_log = i_log_data_to_bot;
+      bool is_log = TMyApplication::i_log_data_to_bot;
       xSemaphoreGiveRecursive(TConf::xOptRcMutex);
       if(is_log)
       {
-        if(i_log_data++ >= i_log_data_to_bot)
+        if(TMyApplication::i_log_data++ >= TMyApplication::i_log_data_to_bot)
         {
-          TWiFiStuff::tgb_send(s_log_data);
-          s_log_data = "";
-          i_log_data = 0;
+            TWiFiStuff::tgb_send(TMyApplication::s_log_data);
+            TMyApplication::s_log_data = "";
+            TMyApplication::i_log_data = 0;
         }
         else
         {
-          s_log_data += "`" + s + "`\n";
+            TMyApplication::s_log_data += "`" + s + "`\n";
         }
-        //TWiFiStuff::tgb_send("`" + s + "`");
       }
 
       // подсветка:
@@ -205,7 +204,7 @@ void TMyApplication::callback(TTgamParsedValues *p_tpv, TCallbackEvent evt)
         break;
       }
 
-      p_med_session->calc_next(med);
+      p_med_session->calc_next(p_tpv, med);
 
       xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
       int tr = TMyApplication::threshold;
@@ -327,6 +326,7 @@ TMyApplication::TMyApplication()
     update_calc_formula(pcf);
   });
   p_bluetooth_stuff = new TBluetoothStuff(DEVICE_NAME, callback);
+
 #ifdef SOUND
   p_noise = new TNoise();
 #endif

@@ -110,14 +110,15 @@ bool TMQTTClient::ProcessQueue(void)
         String part = (*p)["topic"];
         topic += part;
 
-        TWorker::printf("Sending message (%s)...", topic.c_str());
-        if(!p_mqtt_cli->beginMessage(topic))
+        Serial.printf("Sending message \"%s\":\"%s\"...", topic.c_str(), ss.c_str());
+        //if(!p_mqtt_cli->beginMessage(topic))
+        if(!p_mqtt_cli->beginMessage(topic, ss.length(), false, 0, false))
         {
             TWorker::println("Err (beginMessage)!");
             res = false;
             break;
         }
-        if(!p_mqtt_cli->print(ss))
+        if(!p_mqtt_cli->print(ss.c_str()))
         {
             TWorker::println("Err (print)!");
             res = false;
@@ -170,9 +171,21 @@ void TMQTTClient::send(const char *topic, const DynamicJsonDocument *p)
 {
   if(p_mqtt_cli)
   {
-    DynamicJsonDocument *pdoc = new DynamicJsonDocument(256);
+    DynamicJsonDocument *pdoc = new DynamicJsonDocument(4096+1024);
     (*pdoc)["topic"] = topic;
     (*pdoc)["msg"] = *p;
+
+    {
+        StreamString ss;
+        serializeJson(*p, ss);
+        Serial.printf("HIT.1: \"%s\"", ss.c_str());
+    }
+
+    {
+        StreamString ss;
+        serializeJson(*pdoc, ss);
+        Serial.printf("HIT.2: \"%s\"", ss.c_str());
+    }
     xQueueSend(queue, &pdoc, portMAX_DELAY);
   }
 }

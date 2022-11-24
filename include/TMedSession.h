@@ -3,6 +3,7 @@
 #include <WString.h>
 #include <functional>
 #include <ArduinoJson.h>
+#include "TTgamParsedValues.h"
 
 namespace WiFiStuff {class TWiFiStuff;}
 namespace Conf {class TConf;}
@@ -12,6 +13,7 @@ namespace MedSession
 using namespace std;
 using namespace WiFiStuff;
 using namespace Conf;
+using namespace TgamParsedValues;
 
 class TMedSession
 {
@@ -33,7 +35,7 @@ class TMedSession
         uint32_t max_med_val; // максимальное значение уровня медитации
         double avg_med_val; // среднее значение уровня медитации
 
-        String gen_report(DynamicJsonDocument *p_doc) const;
+        String gen_report() const;
 
         friend class Conf::TConf;
 
@@ -41,6 +43,6 @@ class TMedSession
         TMedSession();
         ~TMedSession();
 
-        void calc_next(int32_t med);
+        void calc_next(TTgamParsedValues *p, int32_t med);
 };
 }

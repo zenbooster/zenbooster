@@ -379,7 +379,7 @@ TFormulaDB *TConf::get_fdb()
 
 DynamicJsonDocument TConf::get_json(void)
 {
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(1024+512);
 
   doc[key_options] = p_prefs->get_json();
   doc[key_formulas] = p_fdb->get_json();

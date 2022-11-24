@@ -97,6 +97,7 @@ class TMyApplication: public TSingleton<TMyApplication>
 
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
+    friend class WiFiStuff::TWiFiStuff;
 
   public:
     TMyApplication();

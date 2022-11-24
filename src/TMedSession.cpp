@@ -29,27 +29,33 @@ TMedSession::TMedSession():
 {
     TWorker::println("TMedSession::TMedSession()");
     is_minsessec = false;
-    sess_beg = TWiFiStuff::time_cli.getEpochTime();
+    sess_beg = TWiFiStuff::getEpochTime();
     // по хорошему, если порог или предпорог поменялись пока сеанс был открыт,
     // надо его закрыть, применить изменения порогов и затем снова открыть...
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     tr = TMyApplication::threshold;
     pretr = TMyApplication::pre_threshold;
     xSemaphoreGiveRecursive(TConf::xOptRcMutex);
+
+    if(TWiFiStuff::is_mqtt_active())
+    {
+        DynamicJsonDocument doc(64);
+        doc["when"] = sess_beg;
+        TWiFiStuff::mqtt_send("session_begin", &doc);
+    }
 }
 
 TMedSession::~TMedSession()
 {
-    //TWorker::println("TMedSession::~TMedSession()");
     Serial.println("TMedSession::~TMedSession()");
     xSemaphoreTakeRecursive(TConf::xOptRcMutex, portMAX_DELAY);
     if(is_minsessec)
     {
-        DynamicJsonDocument *p_doc = NULL;
-
         if(TWiFiStuff::is_mqtt_active())
         {
-            p_doc = new DynamicJsonDocument(1024);
+            DynamicJsonDocument doc(64);
+            doc["when"] = TWiFiStuff::getEpochTime();
+            TWiFiStuff::mqtt_send("session_end", &doc);
         }
 
         TWiFiStuff::tgb_send(
@@ -58,7 +64,7 @@ TMedSession::~TMedSession()
             "Формула: " + formula_name + " = " + formula_text + "\n"
             "Порог: " + String(tr) + "\n"
             "Предпорог: " + String(pretr) + "\n" +
-            gen_report(p_doc)
+            gen_report()
             ) + 
             "`"
         );
@@ -76,16 +82,20 @@ TMedSession::~TMedSession()
                 ).get()
             )
         );*/
-
-        if(p_doc)
+    }
+    else
+    {
+        if(TWiFiStuff::is_mqtt_active())
         {
-            TWiFiStuff::mqtt_send("session", p_doc);
+            DynamicJsonDocument doc(64);
+            doc["when"] = TWiFiStuff::time_cli.getEpochTime();
+            TWiFiStuff::mqtt_send("session_cancel", &doc);
         }
     }
     xSemaphoreGiveRecursive(TConf::xOptRcMutex);
 }
 
-void TMedSession::calc_next(int32_t med)
+void TMedSession::calc_next(TTgamParsedValues *p, int32_t med)
 {
     // данные приходят раз в секунду, по этому обойдёмся простым инкрементом:
     sess_time_sec++;
@@ -99,7 +109,7 @@ void TMedSession::calc_next(int32_t med)
 
         if(is_minsessec)
         {
-            TWorker::println("TMedSession::calc_next(..): По окончании сеанса будет сформирован отчёт.");
+            Serial.println("TMedSession::calc_next(..): По окончании сеанса будет сформирован отчёт.");
         }
     }
 
@@ -129,9 +139,17 @@ void TMedSession::calc_next(int32_t med)
     }
 
     avg_med_val += (med - avg_med_val) / sess_time_sec;
+
+    if(TWiFiStuff::is_mqtt_active())
+    {
+        DynamicJsonDocument doc = p->get_json();
+        doc["f"] = med;
+        doc["when"] = TWiFiStuff::time_cli.getEpochTime();
+        TWiFiStuff::mqtt_send("eeg_power", &doc);
+    }
 }
 
-String TMedSession::gen_report(DynamicJsonDocument *p_doc) const
+String TMedSession::gen_report() const
 {
     String duration(sess_time_sec);
     String tdm_sec(med_tot_time_sec);
@@ -153,22 +171,6 @@ String TMedSession::gen_report(DynamicJsonDocument *p_doc) const
         "Средняя продолжительность непрерывной медитации: " + adcm_sec + " с. (" + adcm_pc + "% ОПМ)\n"
         "Максимальное значение уровня медитации: " + mml + "\n"
         "Среднее значение уровня медитации: " + aml;
-
-    if(p_doc)
-    {
-        DynamicJsonDocument& doc = *p_doc;
-        doc["start"] = sess_beg;
-        doc["duration"] = duration;
-        doc["tdm_sec"] = tdm_sec;
-        doc["tdm_pc"] = tdm_pc;
-        doc["tncm"] = tncm;
-        doc["mdcm_sec"] = mdcm_sec;
-        doc["mdcm_pc"] = mdcm_pc;
-        doc["adcm_sec"] = adcm_sec;
-        doc["adcm_pc"] = adcm_pc;
-        doc["mml"] = mml;
-        doc["aml"] = aml;
-    }
 
     return res;
 }

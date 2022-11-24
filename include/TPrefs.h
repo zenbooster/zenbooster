@@ -4,10 +4,12 @@
 #include <map>
 #include <functional>
 #include <ArduinoJson.h>
+#include "TSingleton.h"
 
 namespace Prefs
 {
   using namespace std;
+  using namespace Singleton;
 
   typedef function<void(const String&, bool is_validate_only)> TCbChangeFunction; // может бросать исключения
 
@@ -18,7 +20,7 @@ namespace Prefs
     TCbChangeFunction cb_change;
   };
 
-  class TPrefs
+  class TPrefs: TSingleton<TPrefs>
   {
     private:
       const String name;
@@ -35,7 +37,7 @@ namespace Prefs
       //void reinit_value(const String& key);
       String get_desc(void);
       String get_values(void);
-      DynamicJsonDocument get_json(void);
+      DynamicJsonDocument get_json();
       void validate_json(const DynamicJsonDocument& doc); // может бросить исключение
       void set_json(const DynamicJsonDocument& doc);
   };

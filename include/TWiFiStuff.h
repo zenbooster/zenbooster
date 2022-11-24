@@ -30,7 +30,6 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     static WiFiUDP ntp_udp;
     static NTPClient time_cli;
     static TTgmBot *pTgmBot;
-
     static bool is_mqtt;
     static TMQTTClient *p_mqtt;
     static SemaphoreHandle_t x_mqtt_send_mutex;
@@ -38,7 +37,10 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     const char *get_class_name();
 
     static void task(void *p);
+    static void wait_for_send();
 
+    // для борьбы с неявной рекурсией:
+    static bool is_mqtt_disabling;
     static void set_mqtt_active(bool is);
 
     friend class Conf::TConf;
