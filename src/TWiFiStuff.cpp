@@ -14,6 +14,7 @@ SemaphoreHandle_t TWiFiStuff::x_dtor_mutex = NULL;
 TaskHandle_t TWiFiStuff::h_dtor_task = NULL;
 WiFiUDP TWiFiStuff::ntp_udp;
 NTPClient TWiFiStuff::time_cli(ntp_udp);
+int TWiFiStuff::timeoffset;
 TTgmBot *TWiFiStuff::pTgmBot = NULL;
 bool TWiFiStuff::is_mqtt = false;
 TMQTTClient *TWiFiStuff::p_mqtt = NULL;
@@ -54,6 +55,12 @@ void TWiFiStuff::task(void *p)
 
     yield();
   }
+}
+
+void TWiFiStuff::setTimeOffset(int t)
+{
+  time_cli.setTimeOffset(t);
+  timeoffset = t;
 }
 
 TWiFiStuff::TWiFiStuff(String dev_name, TgmBot::TCbChangeFunction cb_change_formula)
@@ -111,9 +118,19 @@ void TWiFiStuff::tgb_send(const char *m, bool isMarkdownEnabled)
   }
 }
 
+unsigned long TWiFiStuff::getUtcEpochTime()
+{
+  return UTC(getEpochTime());
+}
+
 unsigned long TWiFiStuff::getEpochTime()
 {
   return time_cli.getEpochTime();
+}
+
+unsigned long TWiFiStuff::UTC(unsigned long t)
+{
+  return t - timeoffset;
 }
 
 bool TWiFiStuff::is_mqtt_active()
@@ -141,7 +158,7 @@ void TWiFiStuff::set_mqtt_active(bool is)
       {
           DynamicJsonDocument doc = TConf::get_json(); //TMyApplication::p_conf->get_json();
 
-          doc["when"] = TWiFiStuff::getEpochTime();
+          doc["when"] = TWiFiStuff::getUtcEpochTime();
           TWiFiStuff::mqtt_send("hello", &doc);
       }
     }
@@ -152,7 +169,7 @@ void TWiFiStuff::set_mqtt_active(bool is)
     {
       {
           DynamicJsonDocument doc(64);
-          doc["when"] = TWiFiStuff::getEpochTime();
+          doc["when"] = TWiFiStuff::getUtcEpochTime();
           TWiFiStuff::mqtt_send("bye", &doc);
       }
       wait_for_send();

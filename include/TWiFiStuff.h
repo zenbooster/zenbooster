@@ -29,6 +29,7 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     static TaskHandle_t h_dtor_task;
     static WiFiUDP ntp_udp;
     static NTPClient time_cli;
+    static int timeoffset;
     static TTgmBot *pTgmBot;
     static bool is_mqtt;
     static TMQTTClient *p_mqtt;
@@ -42,6 +43,8 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
     // для борьбы с неявной рекурсией:
     static bool is_mqtt_disabling;
     static void set_mqtt_active(bool is);
+
+    static void setTimeOffset(int t);
 
     friend class Conf::TConf;
     friend class MedSession::TMedSession;
@@ -61,7 +64,9 @@ class TWiFiStuff: public TSingleton<TWiFiStuff>
       tgb_send(m.get(), isMarkdownEnabled);
     }
 
+    static unsigned long getUtcEpochTime();
     static unsigned long getEpochTime();
+    static unsigned long UTC(unsigned long t);
 
     static bool is_mqtt_active();
     static void mqtt_send(const char *topic, const DynamicJsonDocument *p);

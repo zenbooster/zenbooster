@@ -139,7 +139,7 @@ TConf::TConf()
     if(!is_validate_only)
     {
       xSemaphoreTakeRecursive(xOptRcMutex, portMAX_DELAY);
-      TWiFiStuff::time_cli.setTimeOffset(v * 3600);
+      TWiFiStuff::setTimeOffset(v * 3600);
       //TWiFiStuff::tgb_send(TUtil::screen_mark_down(TWiFiStuff::time_cli.getFormattedDate()));
       xSemaphoreGiveRecursive(xOptRcMutex);
     }

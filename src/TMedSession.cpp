@@ -40,7 +40,7 @@ TMedSession::TMedSession():
     if(TWiFiStuff::is_mqtt_active())
     {
         DynamicJsonDocument doc(64);
-        doc["when"] = sess_beg;
+        doc["when"] = TWiFiStuff::UTC(sess_beg);
         TWiFiStuff::mqtt_send("session_begin", &doc);
     }
 }
@@ -54,7 +54,7 @@ TMedSession::~TMedSession()
         if(TWiFiStuff::is_mqtt_active())
         {
             DynamicJsonDocument doc(64);
-            doc["when"] = TWiFiStuff::getEpochTime();
+            doc["when"] = TWiFiStuff::getUtcEpochTime();
             TWiFiStuff::mqtt_send("session_end", &doc);
         }
 
@@ -88,7 +88,7 @@ TMedSession::~TMedSession()
         if(TWiFiStuff::is_mqtt_active())
         {
             DynamicJsonDocument doc(64);
-            doc["when"] = TWiFiStuff::time_cli.getEpochTime();
+            doc["when"] = TWiFiStuff::getUtcEpochTime();
             TWiFiStuff::mqtt_send("session_cancel", &doc);
         }
     }
@@ -144,7 +144,7 @@ void TMedSession::calc_next(TTgamParsedValues *p, int32_t med)
     {
         DynamicJsonDocument doc = p->get_json();
         doc["f"] = med;
-        doc["when"] = TWiFiStuff::time_cli.getEpochTime();
+        doc["when"] = TWiFiStuff::getUtcEpochTime();
         TWiFiStuff::mqtt_send("eeg_power", &doc);
     }
 }
