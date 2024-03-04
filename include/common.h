@@ -15,10 +15,10 @@ namespace common {
 #   error Какой способ вывода звука будет использоваться? Нужно указать один из макросов, SOUND_DAC или SOUND_I2S!
 #endif*/
 
-#define TWORKER_TASK_STACK_SIZE 3000
-#define TWIFISTUFF_TASK_STACK_SIZE 8300
+#define TWORKER_TASK_STACK_SIZE 4000
+#define TWIFISTUFF_TASK_STACK_SIZE 9000
 #define TBLUETOOTHSTUFF_TASK_STACK_SIZE 1100
-#define TNOISE_TASK_STACK_SIZE 1000
+#define TNOISE_TASK_STACK_SIZE 1250
 
 #define SLEEP_SECOND_PRESS_DELAY_MS 500
 #define BOT_CMD_LDC_MAX 16
